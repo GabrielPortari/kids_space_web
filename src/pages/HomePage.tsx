@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { authRolePaths } from "../auth/authRoles";
+import { useAuth } from "../auth/useAuth";
 import kidsSpaceIcon from "../assets/kids_space_icon.png";
 
 const works = [
@@ -39,6 +41,9 @@ const posts = [
 ];
 
 export function HomePage() {
+  const { session } = useAuth();
+  const dashboardPath = session ? authRolePaths[session.role] : "/app";
+
   return (
     <div className="page-wrap">
       <header className="topbar">
@@ -55,12 +60,20 @@ export function HomePage() {
           <a href="#contact">Contact</a>
         </nav>
         <div className="topbar-actions">
-          <Link className="btn ghost" to="/login">
-            Login
-          </Link>
-          <Link className="btn solid" to="/signup/company">
-            Cadastrar company
-          </Link>
+          {session ? (
+            <Link className="btn solid" to={dashboardPath}>
+              Ir para painel
+            </Link>
+          ) : (
+            <>
+              <Link className="btn ghost" to="/login">
+                Login
+              </Link>
+              <Link className="btn solid" to="/signup/company">
+                Cadastrar company
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -76,12 +89,20 @@ export function HomePage() {
             atendimento.
           </p>
           <div className="hero-actions">
-            <Link to="/signup/company" className="btn solid">
-              Quero cadastrar minha company
-            </Link>
-            <Link to="/login" className="btn outline">
-              Acessar login
-            </Link>
+            {session ? (
+              <Link to={dashboardPath} className="btn solid">
+                Ir para painel
+              </Link>
+            ) : (
+              <>
+                <Link to="/signup/company" className="btn solid">
+                  Quero cadastrar minha company
+                </Link>
+                <Link to="/login" className="btn outline">
+                  Acessar login
+                </Link>
+              </>
+            )}
           </div>
           <div className="hero-metrics">
             <article>
@@ -89,8 +110,8 @@ export function HomePage() {
               <span>confianca no fluxo de checkout</span>
             </article>
             <article>
-              <strong>3 roles</strong>
-              <span>master/admin, company e collaborator</span>
+              <strong>4 roles</strong>
+              <span>master, admin, company e collaborator</span>
             </article>
             <article>
               <strong>Tempo real</strong>

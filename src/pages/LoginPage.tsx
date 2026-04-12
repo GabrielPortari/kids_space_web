@@ -1,32 +1,38 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import {
-  authRoleLabels,
-  authRolePaths,
-  type AuthRole,
-  useAuth,
-} from "../auth/AuthContext";
-
-const roleOptions: AuthRole[] = ["master-admin", "company", "collaborator"];
+import { authRolePaths } from "../auth/authRoles";
+import { useAuth } from "../auth/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, session } = useAuth();
+  const { login, session, status } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (session) {
     return <Navigate to={authRolePaths[session.role]} replace />;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") || "").trim();
-    const role = String(formData.get("role") || "company") as AuthRole;
+    const password = String(formData.get("password") || "");
 
-    login({ email, role });
-    navigate(authRolePaths[role], { replace: true });
+    try {
+      await login({ email, password });
+      navigate("/app", { replace: true });
+    } catch {
+      setError("Falha ao autenticar. Verifique credenciais e tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+
+  const disabled = isSubmitting || status === "loading";
 
   return (
     <main className="auth-shell">
@@ -34,8 +40,8 @@ export function LoginPage() {
         <p className="auth-kicker">Acesso unico</p>
         <h1>Entre com seu perfil</h1>
         <p>
-          Uma tela de login so, com separacao automatica por role apos a
-          autenticacao.
+          Uma tela de login unica com roteamento automatico por role apos
+          autenticacao JWT.
         </p>
 
         <form className="stack login-form" onSubmit={handleSubmit}>
@@ -46,6 +52,7 @@ export function LoginPage() {
             type="email"
             placeholder="operacao@empresa.com"
             required
+            disabled={disabled}
           />
 
           <label htmlFor="password">Senha</label>
@@ -55,19 +62,13 @@ export function LoginPage() {
             type="password"
             placeholder="******"
             required
+            disabled={disabled}
           />
 
-          <label htmlFor="role">Perfil de acesso</label>
-          <select id="role" name="role" defaultValue="company">
-            {roleOptions.map((role) => (
-              <option key={role} value={role}>
-                {authRoleLabels[role]}
-              </option>
-            ))}
-          </select>
+          {error ? <p className="auth-error">{error}</p> : null}
 
-          <button type="submit" className="btn solid">
-            Entrar
+          <button type="submit" className="btn solid" disabled={disabled}>
+            {disabled ? "Autenticando..." : "Entrar"}
           </button>
         </form>
 

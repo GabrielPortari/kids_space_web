@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { authRoleLabels, type AuthRole, useAuth } from "../auth/AuthContext";
+import { authRoleLabels } from "../auth/authRoles";
+import type { AuthRole } from "../auth/jwt";
+import { useAuth } from "../auth/useAuth";
 
 export function RoleWorkspacePage({ role }: { role: AuthRole }) {
-  const { logout, session } = useAuth();
+  const { logout, session, status } = useAuth();
 
   return (
     <main className="auth-shell">
@@ -13,11 +15,21 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
           Area autenticada reservada para futuras funcionalidades.
           {session?.email ? ` Usuario atual: ${session.email}` : ""}
         </p>
+        <p>
+          Sessao: {status}. {session?.userId ? `UID: ${session.userId}.` : ""}
+          {session?.companyId ? ` Company: ${session.companyId}.` : ""}
+        </p>
         <div className="auth-actions role-actions">
           <Link to="/" className="btn outline auth-back">
             Voltar para Home
           </Link>
-          <button type="button" className="btn solid" onClick={logout}>
+          <button
+            type="button"
+            className="btn solid"
+            onClick={() => {
+              void logout();
+            }}
+          >
             Sair
           </button>
         </div>

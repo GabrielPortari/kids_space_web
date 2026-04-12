@@ -1,8 +1,13 @@
 import { Navigate } from "react-router-dom";
-import { authRolePaths, useAuth } from "../auth/AuthContext";
+import { authRolePaths } from "../auth/authRoles";
+import { useAuth } from "../auth/useAuth";
 
 export function AppRedirect() {
-  const { session } = useAuth();
+  const { session, status } = useAuth();
+
+  if (status === "loading") {
+    return null;
+  }
 
   if (!session) {
     return <Navigate to="/login" replace />;

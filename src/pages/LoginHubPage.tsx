@@ -2,19 +2,24 @@ import { Link } from "react-router-dom";
 
 const roleOptions = [
   {
-    title: "Master / Admin",
-    description: "Acesso com visao global e gestao entre companies.",
-    to: "/login/master-admin",
+    title: "Master",
+    description: "Acesso global completo entre companies.",
+    to: "/login",
+  },
+  {
+    title: "Admin",
+    description: "Acesso de administracao com escopo multi-company.",
+    to: "/login",
   },
   {
     title: "Company",
     description: "Acesso de gestao da propria empresa e equipe.",
-    to: "/login/company",
+    to: "/login",
   },
   {
     title: "Collaborator",
     description: "Acesso operacional para check-in e check-out.",
-    to: "/login/collaborator",
+    to: "/login",
   },
 ];
 
