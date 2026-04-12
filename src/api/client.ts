@@ -6,16 +6,10 @@ const API_BASE_URL = String(
   import.meta.env.VITE_API_BASE_URL || "/api",
 ).replace(/\/$/, "");
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonBody = Record<string, unknown>;
 
 type ApiRequestOptions = Omit<RequestInit, "body"> & {
-  body?: JsonValue | FormData | string;
+  body?: JsonBody | FormData | string;
   skipAuth?: boolean;
 };
 
