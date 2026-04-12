@@ -384,6 +384,51 @@ input {
   color: var(--ink-soft);
 }
 
+.company-signup-form {
+  gap: 0.85rem;
+}
+
+.signup-group {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.95rem;
+  margin: 0;
+}
+
+.signup-group legend {
+  padding: 0 0.45rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.form-grid.two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.signup-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.83rem;
+  color: var(--ink-soft);
+}
+
 .auth-error {
   margin: 0.25rem 0 0.2rem;
   padding: 0.65rem 0.75rem;
@@ -447,6 +492,10 @@ input {
   .grid.three,
   .hero-metrics,
   .split {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid.two-cols {
     grid-template-columns: 1fr;
   }
 }

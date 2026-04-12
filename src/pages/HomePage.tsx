@@ -41,7 +41,7 @@ const posts = [
 ];
 
 export function HomePage() {
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const dashboardPath = session ? authRolePaths[session.role] : "/app";
 
   return (
@@ -61,9 +61,20 @@ export function HomePage() {
         </nav>
         <div className="topbar-actions">
           {session ? (
-            <Link className="btn solid" to={dashboardPath}>
-              Ir para painel
-            </Link>
+            <>
+              <Link className="btn solid" to={dashboardPath}>
+                Ir para painel
+              </Link>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => {
+                  void logout();
+                }}
+              >
+                Sair
+              </button>
+            </>
           ) : (
             <>
               <Link className="btn ghost" to="/login">
