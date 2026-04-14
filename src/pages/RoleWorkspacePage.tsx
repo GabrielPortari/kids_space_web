@@ -94,7 +94,39 @@ type ParentFormState = {
   addressCountry: string;
 };
 
+type CollaboratorFormState = {
+  name: string;
+  email: string;
+  document: string;
+  contact: string;
+  birthDate: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressDistrict: string;
+  addressCity: string;
+  addressState: string;
+  addressZipCode: string;
+  addressComplement: string;
+  addressCountry: string;
+};
+
 const PAGE_SIZE = 8;
+
+const INITIAL_COLLABORATOR_FORM: CollaboratorFormState = {
+  name: "",
+  email: "",
+  document: "",
+  contact: "",
+  birthDate: "",
+  addressStreet: "",
+  addressNumber: "",
+  addressDistrict: "",
+  addressCity: "",
+  addressState: "",
+  addressZipCode: "",
+  addressComplement: "",
+  addressCountry: "",
+};
 
 const INITIAL_PARENT_FORM: ParentFormState = {
   name: "",
@@ -403,6 +435,24 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
   const [parentForm, setParentForm] =
     useState<ParentFormState>(INITIAL_PARENT_FORM);
+  const [isCollaboratorCreateModalOpen, setIsCollaboratorCreateModalOpen] =
+    useState(false);
+  const [isCollaboratorViewModalOpen, setIsCollaboratorViewModalOpen] =
+    useState(false);
+  const [isCollaboratorEditModalOpen, setIsCollaboratorEditModalOpen] =
+    useState(false);
+  const [viewingCollaboratorId, setViewingCollaboratorId] = useState<
+    string | null
+  >(null);
+  const [editingCollaboratorId, setEditingCollaboratorId] = useState<
+    string | null
+  >(null);
+  const [collaboratorForm, setCollaboratorForm] =
+    useState<CollaboratorFormState>(INITIAL_COLLABORATOR_FORM);
+  const [isCollaboratorDeleteModalOpen, setIsCollaboratorDeleteModalOpen] =
+    useState(false);
+  const [pendingDeleteCollaboratorId, setPendingDeleteCollaboratorId] =
+    useState<string | null>(null);
 
   const isCompany = role === "company";
   const isCollaborator = role === "collaborator";
@@ -476,11 +526,27 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
       id,
       name,
       email,
+      document,
+      contact,
+      birthDate,
+      address,
     }: {
       id: string;
       name?: string;
       email?: string;
-    }) => updateCollaborator(id, { name, email }),
+      document?: string;
+      contact?: string;
+      birthDate?: string;
+      address?: Record<string, string>;
+    }) =>
+      updateCollaborator(id, {
+        name,
+        email,
+        document,
+        contact,
+        birthDate,
+        address,
+      }),
     onSuccess: async () => {
       setStatusMessage("Colaborador atualizado.");
       await queryClient.invalidateQueries({ queryKey: ["collaborators"] });
@@ -490,7 +556,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   const deleteCollaboratorMut = useMutation({
     mutationFn: deleteCollaborator,
     onSuccess: async () => {
-      setStatusMessage("Colaborador removido.");
+      setStatusMessage("Colaborador excluido com sucesso.");
       await queryClient.invalidateQueries({ queryKey: ["collaborators"] });
     },
   });
@@ -789,11 +855,28 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     return value.length ? value : null;
   }
 
-  async function onCreateCollaborator(event: FormEvent<HTMLFormElement>) {
+  async function onCreateCollaboratorModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") || "").trim();
-    const email = String(formData.get("email") || "").trim();
+    const name = collaboratorForm.name.trim();
+    const email = collaboratorForm.email.trim();
+    const document = normalizeDigits(collaboratorForm.document).slice(0, 14);
+    const contact = normalizeDigits(collaboratorForm.contact).slice(0, 11);
+    const birthDate = collaboratorForm.birthDate.trim();
+
+    const addressEntries = {
+      street: collaboratorForm.addressStreet.trim(),
+      number: collaboratorForm.addressNumber.trim(),
+      district: collaboratorForm.addressDistrict.trim(),
+      city: collaboratorForm.addressCity.trim(),
+      state: collaboratorForm.addressState.trim(),
+      zipCode: normalizeDigits(collaboratorForm.addressZipCode),
+      complement: collaboratorForm.addressComplement.trim(),
+      country: collaboratorForm.addressCountry.trim(),
+    };
+
+    const compactAddress = Object.fromEntries(
+      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
+    );
 
     if (!name || !email) {
       setStatusMessage("Nome e email sao obrigatorios para colaborador.");
@@ -803,10 +886,113 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     await createCollaboratorMut.mutateAsync({
       name,
       email,
+      document: document || undefined,
+      contact: contact || undefined,
+      birthDate: birthDate || undefined,
+      address:
+        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
       companyId: currentCompanyScope,
     });
 
-    event.currentTarget.reset();
+    setIsCollaboratorCreateModalOpen(false);
+    setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+  }
+
+  async function onUpdateCollaboratorModal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingCollaboratorId) {
+      setStatusMessage("Nao foi possivel identificar o colaborador.");
+      return;
+    }
+
+    const name = collaboratorForm.name.trim();
+    const email = collaboratorForm.email.trim();
+    const document = normalizeDigits(collaboratorForm.document).slice(0, 14);
+    const contact = normalizeDigits(collaboratorForm.contact).slice(0, 11);
+    const birthDate = collaboratorForm.birthDate.trim();
+
+    const addressEntries = {
+      street: collaboratorForm.addressStreet.trim(),
+      number: collaboratorForm.addressNumber.trim(),
+      district: collaboratorForm.addressDistrict.trim(),
+      city: collaboratorForm.addressCity.trim(),
+      state: collaboratorForm.addressState.trim(),
+      zipCode: normalizeDigits(collaboratorForm.addressZipCode),
+      complement: collaboratorForm.addressComplement.trim(),
+      country: collaboratorForm.addressCountry.trim(),
+    };
+
+    const compactAddress = Object.fromEntries(
+      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
+    );
+
+    if (!name || !email) {
+      setStatusMessage("Nome e email sao obrigatorios para colaborador.");
+      return;
+    }
+
+    await updateCollaboratorMut.mutateAsync({
+      id: editingCollaboratorId,
+      name,
+      email,
+      document: document || undefined,
+      contact: contact || undefined,
+      birthDate: birthDate || undefined,
+      address:
+        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+    });
+
+    setIsCollaboratorEditModalOpen(false);
+    setEditingCollaboratorId(null);
+    setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+  }
+
+  function openCollaboratorViewModal(item: ListItem) {
+    const id = extractId(item);
+    if (!id) {
+      setStatusMessage("Nao foi possivel abrir a visualizacao.");
+      return;
+    }
+
+    setViewingCollaboratorId(id);
+    setIsCollaboratorViewModalOpen(true);
+  }
+
+  function openCollaboratorEditModal(item: ListItem) {
+    const id = extractId(item);
+    if (!id) {
+      setStatusMessage("Nao foi possivel abrir a edicao.");
+      return;
+    }
+
+    const address =
+      item.address &&
+      typeof item.address === "object" &&
+      !Array.isArray(item.address)
+        ? (item.address as Record<string, unknown>)
+        : {};
+
+    setEditingCollaboratorId(id);
+    setCollaboratorForm({
+      name: String(item.name || ""),
+      email: String(item.email || ""),
+      document: normalizeDigits(String(item.document || "")).slice(0, 14),
+      contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
+      birthDate: normalizeDateInput(String(item.birthDate || "")),
+      addressStreet: String(address.street || ""),
+      addressNumber: String(address.number || ""),
+      addressDistrict: String(address.district || ""),
+      addressCity: String(address.city || ""),
+      addressState: String(address.state || ""),
+      addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(
+        0,
+        8,
+      ),
+      addressComplement: String(address.complement || ""),
+      addressCountry: String(address.country || ""),
+    });
+    setIsCollaboratorEditModalOpen(true);
   }
 
   async function onCreateParent(event: FormEvent<HTMLFormElement>) {
@@ -1261,6 +1447,112 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     );
   }
 
+  function renderCollaborators() {
+    return (
+      <section className="crm-panel">
+        <div className="crm-panel-head">
+          <h2>Colaboradores</h2>
+          <button
+            type="button"
+            className="btn solid"
+            onClick={() => {
+              setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+              setIsCollaboratorCreateModalOpen(true);
+            }}
+          >
+            Adicionar
+          </button>
+        </div>
+
+        <div className="crm-panel-head">
+          <input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Buscar por nome ou email"
+          />
+        </div>
+
+        <div className="crm-table">
+          {pagedCollection.map((item) => {
+            const typed = item as ListItem;
+            const id = extractId(typed);
+
+            return (
+              <article
+                key={id || JSON.stringify(item)}
+                className="crm-row"
+                onClick={() => openCollaboratorViewModal(typed)}
+                style={{ cursor: "pointer" }}
+              >
+                <div>
+                  <strong>{typed.name || "Colaborador sem nome"}</strong>
+                  <p>{typed.email || "Email nao informado"}</p>
+                </div>
+                <div className="crm-row-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    title="Editar"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openCollaboratorEditModal(typed);
+                    }}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!id) {
+                        return;
+                      }
+
+                      setPendingDeleteCollaboratorId(id);
+                      setIsCollaboratorDeleteModalOpen(true);
+                    }}
+                  >
+                    Remover
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+
+          {pagedCollection.length === 0 && (
+            <p>Nenhum colaborador encontrado para a busca informada.</p>
+          )}
+        </div>
+
+        <div className="crm-pagination">
+          <button
+            type="button"
+            className="btn outline"
+            disabled={page <= 1}
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+          >
+            Anterior
+          </button>
+          <span>
+            Pagina {page} de {totalPages}
+          </span>
+          <button
+            type="button"
+            className="btn outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+          >
+            Proxima
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   function renderParentsList() {
     return (
       <section className="crm-panel">
@@ -1486,19 +1778,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
         )}
 
         {section === "collaborators" && canManageCollaborators && (
-          <>
-            <section className="crm-panel">
-              <h2>Cadastrar colaborador</h2>
-              <form className="crm-form-inline" onSubmit={onCreateCollaborator}>
-                <input name="name" placeholder="Nome" required />
-                <input name="email" placeholder="Email" type="email" required />
-                <button className="btn solid" type="submit">
-                  Cadastrar
-                </button>
-              </form>
-            </section>
-            {renderCrudList("Colaboradores")}
-          </>
+          <>{renderCollaborators()}</>
         )}
 
         {section === "parents" && !isAdminOrMaster && (
@@ -2237,6 +2517,674 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                   </button>
                 </div>
               </form>
+            </section>
+          </div>
+        )}
+
+        {isCollaboratorViewModalOpen && viewingCollaboratorId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsCollaboratorViewModalOpen(false);
+              setViewingCollaboratorId(null);
+            }}
+          >
+            <section
+              className="crm-modal crm-modal-wide collaborator-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Visualizar colaborador"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Detalhes do Colaborador</h2>
+              {(() => {
+                const collaborator = collaborators.find(
+                  (c) => extractId(c) === viewingCollaboratorId,
+                );
+                if (!collaborator) {
+                  return <p>Colaborador nao encontrado.</p>;
+                }
+
+                const flattened = flattenRecord(
+                  collaborator as Record<string, unknown>,
+                );
+                const personalKeys = sortByPriority(
+                  Object.keys(flattened).filter(
+                    (key) => !key.startsWith("address."),
+                  ),
+                  [
+                    "name",
+                    "email",
+                    "document",
+                    "contact",
+                    "birthDate",
+                    "id",
+                    "_id",
+                    "uid",
+                    "companyId",
+                  ],
+                );
+                const addressKeys = sortByPriority(
+                  Object.keys(flattened).filter((key) =>
+                    key.startsWith("address."),
+                  ),
+                  [
+                    "address.street",
+                    "address.number",
+                    "address.district",
+                    "address.city",
+                    "address.state",
+                    "address.zipCode",
+                    "address.complement",
+                    "address.country",
+                  ],
+                );
+
+                const renderCards = (keys: string[]) =>
+                  keys.length > 0 ? (
+                    <div className="profile-grid collaborator-grid">
+                      {keys.map((key) => (
+                        <article key={key} className="profile-card">
+                          <span>{toFieldLabel(key)}</span>
+                          <strong>
+                            {maskByFieldKey(key, flattened[key]) || "-"}
+                          </strong>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="crm-empty-state">Nenhum dado encontrado.</p>
+                  );
+
+                return (
+                  <div className="crm-modal-sections">
+                    <section className="profile-section">
+                      <h3>Dados pessoais</h3>
+                      {renderCards(personalKeys)}
+                    </section>
+
+                    <section className="profile-section">
+                      <h3>Endereco</h3>
+                      {renderCards(addressKeys)}
+                    </section>
+                  </div>
+                );
+              })()}
+
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => {
+                    setIsCollaboratorViewModalOpen(false);
+                    setViewingCollaboratorId(null);
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {isCollaboratorCreateModalOpen && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsCollaboratorCreateModalOpen(false)}
+          >
+            <section
+              className="crm-modal crm-modal-wide collaborator-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Adicionar colaborador"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Novo Colaborador</h2>
+              <form
+                className="crm-form-grid collaborator-form"
+                onSubmit={onCreateCollaboratorModal}
+              >
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="collaborator-section-grid">
+                    <div className="field">
+                      <label htmlFor="col-name">Nome</label>
+                      <input
+                        id="col-name"
+                        value={collaboratorForm.name}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-email">Email</label>
+                      <input
+                        id="col-email"
+                        type="email"
+                        value={collaboratorForm.email}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-document">CPF/CNPJ</label>
+                      <input
+                        id="col-document"
+                        value={maskByFieldKey(
+                          "document",
+                          collaboratorForm.document,
+                        )}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              14,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-contact">Contato</label>
+                      <input
+                        id="col-contact"
+                        value={maskPhone(collaboratorForm.contact)}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-birth-date">Data de nascimento</label>
+                      <input
+                        id="col-birth-date"
+                        type="date"
+                        value={collaboratorForm.birthDate}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <div className="collaborator-section-grid collaborator-address-grid">
+                    <div className="field field-span-2">
+                      <label htmlFor="col-address-street">Rua</label>
+                      <input
+                        id="col-address-street"
+                        value={collaboratorForm.addressStreet}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressStreet: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-address-number">Numero</label>
+                      <input
+                        id="col-address-number"
+                        value={collaboratorForm.addressNumber}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressNumber: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-address-district">Bairro</label>
+                      <input
+                        id="col-address-district"
+                        value={collaboratorForm.addressDistrict}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressDistrict: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-address-city">Cidade</label>
+                      <input
+                        id="col-address-city"
+                        value={collaboratorForm.addressCity}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressCity: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-address-state">Estado</label>
+                      <input
+                        id="col-address-state"
+                        value={collaboratorForm.addressState}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressState: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-address-zip">CEP</label>
+                      <input
+                        id="col-address-zip"
+                        value={maskZipCode(collaboratorForm.addressZipCode)}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressZipCode: normalizeDigits(
+                              event.target.value,
+                            ).slice(0, 8),
+                          }))
+                        }
+                        placeholder="00000-000"
+                      />
+                    </div>
+
+                    <div className="field field-span-2">
+                      <label htmlFor="col-address-complement">
+                        Complemento
+                      </label>
+                      <input
+                        id="col-address-complement"
+                        value={collaboratorForm.addressComplement}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressComplement: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-address-country">Pais</label>
+                      <input
+                        id="col-address-country"
+                        value={collaboratorForm.addressCountry}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressCountry: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      setIsCollaboratorCreateModalOpen(false);
+                      setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn solid">
+                    Salvar colaborador
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {isCollaboratorEditModalOpen && editingCollaboratorId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsCollaboratorEditModalOpen(false);
+              setEditingCollaboratorId(null);
+            }}
+          >
+            <section
+              className="crm-modal crm-modal-wide collaborator-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Editar colaborador"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Editar Colaborador</h2>
+              <form
+                className="crm-form-grid collaborator-form"
+                onSubmit={onUpdateCollaboratorModal}
+              >
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="collaborator-section-grid">
+                    <div className="field">
+                      <label htmlFor="col-edit-name">Nome</label>
+                      <input
+                        id="col-edit-name"
+                        value={collaboratorForm.name}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-email">Email</label>
+                      <input
+                        id="col-edit-email"
+                        type="email"
+                        value={collaboratorForm.email}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-document">CPF/CNPJ</label>
+                      <input
+                        id="col-edit-document"
+                        value={maskByFieldKey(
+                          "document",
+                          collaboratorForm.document,
+                        )}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              14,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-contact">Contato</label>
+                      <input
+                        id="col-edit-contact"
+                        value={maskPhone(collaboratorForm.contact)}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-birth-date">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="col-edit-birth-date"
+                        type="date"
+                        value={collaboratorForm.birthDate}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <div className="collaborator-section-grid collaborator-address-grid">
+                    <div className="field field-span-2">
+                      <label htmlFor="col-edit-address-street">Rua</label>
+                      <input
+                        id="col-edit-address-street"
+                        value={collaboratorForm.addressStreet}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressStreet: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-address-number">Numero</label>
+                      <input
+                        id="col-edit-address-number"
+                        value={collaboratorForm.addressNumber}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressNumber: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-address-district">Bairro</label>
+                      <input
+                        id="col-edit-address-district"
+                        value={collaboratorForm.addressDistrict}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressDistrict: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-address-city">Cidade</label>
+                      <input
+                        id="col-edit-address-city"
+                        value={collaboratorForm.addressCity}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressCity: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-address-state">Estado</label>
+                      <input
+                        id="col-edit-address-state"
+                        value={collaboratorForm.addressState}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressState: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-address-zip">CEP</label>
+                      <input
+                        id="col-edit-address-zip"
+                        value={maskZipCode(collaboratorForm.addressZipCode)}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressZipCode: normalizeDigits(
+                              event.target.value,
+                            ).slice(0, 8),
+                          }))
+                        }
+                        placeholder="00000-000"
+                      />
+                    </div>
+
+                    <div className="field field-span-2">
+                      <label htmlFor="col-edit-address-complement">
+                        Complemento
+                      </label>
+                      <input
+                        id="col-edit-address-complement"
+                        value={collaboratorForm.addressComplement}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressComplement: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="col-edit-address-country">Pais</label>
+                      <input
+                        id="col-edit-address-country"
+                        value={collaboratorForm.addressCountry}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            addressCountry: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      setIsCollaboratorEditModalOpen(false);
+                      setEditingCollaboratorId(null);
+                      setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn solid">
+                    Salvar alteracoes
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {isCollaboratorDeleteModalOpen && pendingDeleteCollaboratorId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsCollaboratorDeleteModalOpen(false);
+              setPendingDeleteCollaboratorId(null);
+            }}
+          >
+            <section
+              className="crm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirmar exclusao"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Confirmar exclusao</h2>
+              <p>Quer mesmo excluir este colaborador?</p>
+
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => {
+                    setIsCollaboratorDeleteModalOpen(false);
+                    setPendingDeleteCollaboratorId(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={async () => {
+                    if (pendingDeleteCollaboratorId) {
+                      await deleteCollaboratorMut.mutateAsync(
+                        pendingDeleteCollaboratorId,
+                      );
+                    }
+
+                    setIsCollaboratorDeleteModalOpen(false);
+                    setPendingDeleteCollaboratorId(null);
+                  }}
+                >
+                  Excluir
+                </button>
+              </div>
             </section>
           </div>
         )}

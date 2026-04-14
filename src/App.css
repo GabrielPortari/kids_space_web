@@ -665,9 +665,39 @@ input {
 }
 
 .crm-modal-wide {
-  width: min(960px, 100%);
+  width: min(1180px, 100%);
   max-height: none;
   overflow-y: visible;
+}
+
+.collaborator-modal {
+  padding: 1.1rem;
+}
+
+.crm-modal-sections {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+
+.collaborator-form {
+  width: 100%;
+  max-width: none;
+  gap: 0.95rem;
+}
+
+.collaborator-section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.collaborator-address-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.field-span-2 {
+  grid-column: span 2;
 }
 
 .crm-modal h2 {
@@ -680,6 +710,85 @@ input {
   border-radius: var(--radius-sm);
   background: rgba(255, 253, 248, 0.75);
   padding: 0.7rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.collaborator-form .profile-section {
+  max-width: none;
+}
+
+.crm-modal .profile-section .profile-grid {
+  width: 100%;
+}
+
+.collaborator-detail-card {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(255, 251, 243, 0.96)
+  );
+  box-shadow: 0 8px 24px rgba(82, 52, 29, 0.06);
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.collaborator-detail-card-head h3 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  color: var(--ink-strong);
+}
+
+.collaborator-detail-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.collaborator-detail-row {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.6rem;
+  background: rgba(244, 238, 227, 0.6);
+  border: 1px solid rgba(191, 169, 142, 0.24);
+}
+
+.collaborator-detail-row span {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.collaborator-detail-row strong {
+  font-size: 0.95rem;
+  color: var(--ink-strong);
+  word-break: break-word;
+}
+
+.crm-modal .profile-section h3 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-title);
+  font-size: 1.02rem;
+  color: var(--ink-strong);
+}
+
+.crm-modal .profile-section .profile-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.crm-modal .profile-section .profile-card {
+  min-height: 5.4rem;
+}
+
+.crm-empty-state {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
 }
 
 .field-readonly {
@@ -790,6 +899,17 @@ input {
   .parent-fields-grid,
   .parent-address-grid {
     grid-template-columns: 1fr;
+  }
+
+  .collaborator-section-grid,
+  .collaborator-address-grid,
+  .crm-modal .profile-section .profile-grid,
+  .crm-modal-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .field-span-2 {
+    grid-column: auto;
   }
 
   .crm-modal-wide {

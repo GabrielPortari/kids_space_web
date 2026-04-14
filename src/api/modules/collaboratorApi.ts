@@ -8,6 +8,16 @@ export type CreateCollaboratorPayload = {
   document?: string;
   contact?: string;
   birthDate?: string;
+  address?: {
+    street?: string;
+    number?: string;
+    district?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    complement?: string;
+    country?: string;
+  };
   companyId?: string;
 };
 
