@@ -805,6 +805,8 @@ input {
 }
 
 .parent-modal-form {
+  width: 100%;
+  max-width: none;
   gap: 0.9rem;
 }
 
@@ -826,6 +828,256 @@ input {
 
 .parent-address-section h3 {
   margin-bottom: 0.2rem;
+}
+
+.parent-children-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.parent-children-picker {
+  position: relative;
+}
+
+.parent-children-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 8;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.45rem;
+  gap: 0.35rem;
+}
+
+.parent-children-picker:focus-within .parent-children-dropdown {
+  display: grid;
+}
+
+.parent-child-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.parent-child-option:hover {
+  background: rgba(244, 238, 227, 0.6);
+}
+
+.parent-child-option input {
+  margin: 0;
+  pointer-events: none;
+}
+
+.parent-child-option span {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.parent-child-option small {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.parent-children-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.parent-children-selected {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.child-modal-form {
+  width: 100%;
+  max-width: none;
+  gap: 0.9rem;
+}
+
+.child-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.child-address-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.child-inherit-address-field {
+  grid-column: 1 / -1;
+}
+
+.child-inherit-address-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-strong);
+  cursor: pointer;
+}
+
+.child-parents-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.child-parents-picker {
+  position: relative;
+}
+
+.child-parents-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 8;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.45rem;
+  gap: 0.35rem;
+}
+
+.child-parents-picker:focus-within .child-parents-dropdown {
+  display: grid;
+}
+
+.child-parent-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.child-parent-option:hover {
+  background: rgba(244, 238, 227, 0.6);
+}
+
+.child-parent-option input {
+  margin: 0;
+  pointer-events: none;
+}
+
+.child-parent-option span {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.child-parent-option small {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.child-parents-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.child-parents-selected {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.operation-form {
+  width: 100%;
+  max-width: none;
+  gap: 0.9rem;
+}
+
+.operation-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.operation-picker-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.operation-picker {
+  position: relative;
+}
+
+.operation-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 8;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.45rem;
+  gap: 0.35rem;
+}
+
+.operation-picker:focus-within .operation-dropdown {
+  display: grid;
+}
+
+.operation-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.operation-option:hover {
+  background: rgba(244, 238, 227, 0.6);
+}
+
+.operation-option input {
+  margin: 0;
+  pointer-events: none;
+}
+
+.operation-option span {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.operation-option small {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.operation-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.operation-selected {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
 }
 
 @keyframes rise {
@@ -897,7 +1149,10 @@ input {
   }
 
   .parent-fields-grid,
-  .parent-address-grid {
+  .parent-address-grid,
+  .child-fields-grid,
+  .child-address-grid,
+  .operation-fields-grid {
     grid-template-columns: 1fr;
   }
 

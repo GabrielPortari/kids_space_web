@@ -110,6 +110,40 @@ type CollaboratorFormState = {
   addressCountry: string;
 };
 
+type ChildFormState = {
+  name: string;
+  document: string;
+  email: string;
+  contact: string;
+  birthDate: string;
+  parents: string;
+  inheritParentAddress: boolean;
+  addressStreet: string;
+  addressNumber: string;
+  addressDistrict: string;
+  addressCity: string;
+  addressState: string;
+  addressZipCode: string;
+  addressComplement: string;
+  addressCountry: string;
+};
+
+type CompanyFormState = {
+  name: string;
+  legalName: string;
+  cnpj: string;
+  contact: string;
+  email: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressDistrict: string;
+  addressCity: string;
+  addressState: string;
+  addressZipCode: string;
+  addressComplement: string;
+  addressCountry: string;
+};
+
 const PAGE_SIZE = 8;
 
 const INITIAL_COLLABORATOR_FORM: CollaboratorFormState = {
@@ -145,6 +179,40 @@ const INITIAL_PARENT_FORM: ParentFormState = {
   addressCountry: "",
 };
 
+const INITIAL_CHILD_FORM: ChildFormState = {
+  name: "",
+  document: "",
+  email: "",
+  contact: "",
+  birthDate: "",
+  parents: "",
+  inheritParentAddress: false,
+  addressStreet: "",
+  addressNumber: "",
+  addressDistrict: "",
+  addressCity: "",
+  addressState: "",
+  addressZipCode: "",
+  addressComplement: "",
+  addressCountry: "",
+};
+
+const INITIAL_COMPANY_FORM: CompanyFormState = {
+  name: "",
+  legalName: "",
+  cnpj: "",
+  contact: "",
+  email: "",
+  addressStreet: "",
+  addressNumber: "",
+  addressDistrict: "",
+  addressCity: "",
+  addressState: "",
+  addressZipCode: "",
+  addressComplement: "",
+  addressCountry: "",
+};
+
 function extractId(item: ListItem): string {
   return String(item.id || item._id || item.uid || "");
 }
@@ -162,6 +230,13 @@ function matchesSearch(item: ListItem, search: string): boolean {
 
 function normalizeDigits(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+function parseIdList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function getParentDocument(item: ListItem): string {
@@ -204,6 +279,62 @@ function toParentFormState(item: ListItem): ParentFormState {
     contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
     birthDate: normalizeDateInput(String(item.birthDate || "")),
     children,
+    addressStreet: String(address.street || ""),
+    addressNumber: String(address.number || ""),
+    addressDistrict: String(address.district || ""),
+    addressCity: String(address.city || ""),
+    addressState: String(address.state || ""),
+    addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(0, 8),
+    addressComplement: String(address.complement || ""),
+    addressCountry: String(address.country || ""),
+  };
+}
+
+function toChildFormState(item: ListItem): ChildFormState {
+  const address =
+    item.address &&
+    typeof item.address === "object" &&
+    !Array.isArray(item.address)
+      ? (item.address as Record<string, unknown>)
+      : {};
+
+  const parents = Array.isArray(item.parents)
+    ? item.parents.map((value) => String(value)).join(", ")
+    : String(item.parents || "");
+
+  return {
+    name: String(item.name || ""),
+    document: normalizeDigits(String(item.document || "")).slice(0, 11),
+    email: String(item.email || ""),
+    contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
+    birthDate: normalizeDateInput(String(item.birthDate || "")),
+    parents,
+    inheritParentAddress: false,
+    addressStreet: String(address.street || ""),
+    addressNumber: String(address.number || ""),
+    addressDistrict: String(address.district || ""),
+    addressCity: String(address.city || ""),
+    addressState: String(address.state || ""),
+    addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(0, 8),
+    addressComplement: String(address.complement || ""),
+    addressCountry: String(address.country || ""),
+  };
+}
+
+function toCompanyFormState(item: ListItem): CompanyFormState {
+  const address =
+    item.address &&
+    typeof item.address === "object" &&
+    !Array.isArray(item.address)
+      ? (item.address as Record<string, unknown>)
+      : {};
+
+  return {
+    name: String(item.name || ""),
+    legalName: String(item.legalName || ""),
+    cnpj: normalizeDigits(String(item.cnpj || "")).slice(0, 14),
+    contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
+    email: String(item.email || ""),
     addressStreet: String(address.street || ""),
     addressNumber: String(address.number || ""),
     addressDistrict: String(address.district || ""),
@@ -435,6 +566,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
   const [parentForm, setParentForm] =
     useState<ParentFormState>(INITIAL_PARENT_FORM);
+  const [parentChildrenSearch, setParentChildrenSearch] = useState("");
   const [isCollaboratorCreateModalOpen, setIsCollaboratorCreateModalOpen] =
     useState(false);
   const [isCollaboratorViewModalOpen, setIsCollaboratorViewModalOpen] =
@@ -453,6 +585,40 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     useState(false);
   const [pendingDeleteCollaboratorId, setPendingDeleteCollaboratorId] =
     useState<string | null>(null);
+  const [isChildCreateModalOpen, setIsChildCreateModalOpen] = useState(false);
+  const [isChildEditModalOpen, setIsChildEditModalOpen] = useState(false);
+  const [isChildDeleteModalOpen, setIsChildDeleteModalOpen] = useState(false);
+  const [editingChildId, setEditingChildId] = useState<string | null>(null);
+  const [pendingDeleteChildId, setPendingDeleteChildId] = useState<
+    string | null
+  >(null);
+  const [childForm, setChildForm] =
+    useState<ChildFormState>(INITIAL_CHILD_FORM);
+  const [childParentsSearch, setChildParentsSearch] = useState("");
+  const [operationParentSearch, setOperationParentSearch] = useState("");
+  const [operationSelectedParentId, setOperationSelectedParentId] =
+    useState("");
+  const [operationChildrenSearch, setOperationChildrenSearch] = useState("");
+  const [operationSelectedChildIds, setOperationSelectedChildIds] = useState<
+    string[]
+  >([]);
+  const [operationChildSearch, setOperationChildSearch] = useState("");
+  const [operationSelectedChildId, setOperationSelectedChildId] = useState("");
+  const [operationParentsSearch, setOperationParentsSearch] = useState("");
+  const [operationSelectedParentIds, setOperationSelectedParentIds] = useState<
+    string[]
+  >([]);
+  const [isCompanyCreateModalOpen, setIsCompanyCreateModalOpen] =
+    useState(false);
+  const [isCompanyEditModalOpen, setIsCompanyEditModalOpen] = useState(false);
+  const [isCompanyDeleteModalOpen, setIsCompanyDeleteModalOpen] =
+    useState(false);
+  const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+  const [pendingDeleteCompanyId, setPendingDeleteCompanyId] = useState<
+    string | null
+  >(null);
+  const [companyForm, setCompanyForm] =
+    useState<CompanyFormState>(INITIAL_COMPANY_FORM);
 
   const isCompany = role === "company";
   const isCollaborator = role === "collaborator";
@@ -474,7 +640,9 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   const parentsQuery = useQuery({
     queryKey: ["parents", currentCompanyScope, role],
     queryFn: () => listParents(currentCompanyScope),
-    enabled: !isAdminOrMaster && (section === "parents" || section === "links"),
+    enabled:
+      !isAdminOrMaster &&
+      (section === "parents" || section === "links" || section === "children"),
   });
 
   const childrenQuery = useQuery({
@@ -483,7 +651,8 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
       isAdminOrMaster
         ? listChildrenAdmin(currentCompanyScope)
         : listChildren(currentCompanyScope),
-    enabled: section === "children" || section === "links",
+    enabled:
+      section === "children" || section === "links" || section === "parents",
   });
 
   const attendancesQuery = useQuery({
@@ -612,8 +781,13 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   });
 
   const updateChildMut = useMutation({
-    mutationFn: ({ id, name }: { id: string; name?: string }) =>
-      updateChild(id, { name }),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+    }) => updateChild(id, payload),
     onSuccess: async () => {
       setStatusMessage("Crianca atualizada.");
       await queryClient.invalidateQueries({ queryKey: ["children"] });
@@ -690,8 +864,13 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   });
 
   const updateCompanyMut = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) =>
-      updateCompany(id, { name }),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+    }) => updateCompany(id, payload),
     onSuccess: async () => {
       setStatusMessage("Company atualizada.");
       await queryClient.invalidateQueries({ queryKey: ["companies"] });
@@ -744,6 +923,218 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
   const children = childrenQuery.data || [];
   const attendances = attendancesQuery.data || [];
   const companies = companiesQuery.data || [];
+
+  const selectedParentChildrenIds = useMemo(
+    () => parseIdList(parentForm.children),
+    [parentForm.children],
+  );
+
+  const parentChildrenOptions = useMemo(() => {
+    const term = parentChildrenSearch.trim().toLowerCase();
+
+    return (children as ListItem[])
+      .map((item) => {
+        const id = extractId(item);
+        return {
+          id,
+          name: String(item.name || "Crianca sem nome"),
+        };
+      })
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [children, parentChildrenSearch]);
+
+  function toggleParentChildSelection(childId: string) {
+    setParentForm((current) => {
+      const selected = new Set(parseIdList(current.children));
+      if (selected.has(childId)) {
+        selected.delete(childId);
+      } else {
+        selected.add(childId);
+      }
+
+      return {
+        ...current,
+        children: Array.from(selected).join(", "),
+      };
+    });
+  }
+
+  const selectedChildParentIds = useMemo(
+    () => parseIdList(childForm.parents),
+    [childForm.parents],
+  );
+
+  const childParentOptions = useMemo(() => {
+    const term = childParentsSearch.trim().toLowerCase();
+
+    return (parents as ListItem[])
+      .map((item) => {
+        const id = extractId(item);
+        return {
+          id,
+          name: String(item.name || "Responsavel sem nome"),
+        };
+      })
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [parents, childParentsSearch]);
+
+  function toggleChildParentSelection(parentId: string) {
+    setChildForm((current) => {
+      const selected = new Set(parseIdList(current.parents));
+      if (selected.has(parentId)) {
+        selected.delete(parentId);
+      } else {
+        selected.add(parentId);
+      }
+
+      return {
+        ...current,
+        parents: Array.from(selected).join(", "),
+      };
+    });
+  }
+
+  const operationParentOptions = useMemo(() => {
+    const term = operationParentSearch.trim().toLowerCase();
+
+    return (parents as ListItem[])
+      .map((item) => ({
+        id: extractId(item),
+        name: String(item.name || "Responsavel sem nome"),
+      }))
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [parents, operationParentSearch]);
+
+  const operationChildrenOptions = useMemo(() => {
+    const term = operationChildrenSearch.trim().toLowerCase();
+
+    return (children as ListItem[])
+      .map((item) => ({
+        id: extractId(item),
+        name: String(item.name || "Crianca sem nome"),
+      }))
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [children, operationChildrenSearch]);
+
+  const operationChildOptions = useMemo(() => {
+    const term = operationChildSearch.trim().toLowerCase();
+
+    return (children as ListItem[])
+      .map((item) => ({
+        id: extractId(item),
+        name: String(item.name || "Crianca sem nome"),
+      }))
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [children, operationChildSearch]);
+
+  const operationParentsOptions = useMemo(() => {
+    const term = operationParentsSearch.trim().toLowerCase();
+
+    return (parents as ListItem[])
+      .map((item) => ({
+        id: extractId(item),
+        name: String(item.name || "Responsavel sem nome"),
+      }))
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [parents, operationParentsSearch]);
+
+  function toggleOperationChildSelection(childId: string) {
+    setOperationSelectedChildIds((current) => {
+      if (current.includes(childId)) {
+        return current.filter((id) => id !== childId);
+      }
+
+      return [...current, childId];
+    });
+  }
+
+  function toggleOperationParentSelection(parentId: string) {
+    setOperationSelectedParentIds((current) => {
+      if (current.includes(parentId)) {
+        return current.filter((id) => id !== parentId);
+      }
+
+      return [...current, parentId];
+    });
+  }
 
   const profileData = isCompany
     ? (myCompanyQuery.data as Record<string, unknown> | undefined) || {}
@@ -844,16 +1235,6 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     Math.ceil(filteredCollection.length / PAGE_SIZE),
   );
   const pagedCollection = paginate(filteredCollection, page, PAGE_SIZE);
-
-  function safePrompt(label: string): string | null {
-    const result = window.prompt(label);
-    if (!result) {
-      return null;
-    }
-
-    const value = result.trim();
-    return value.length ? value : null;
-  }
 
   async function onCreateCollaboratorModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1002,10 +1383,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     const email = parentForm.email.trim();
     const contact = parentForm.contact.trim();
     const birthDate = parentForm.birthDate.trim();
-    const children = parentForm.children
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const children = parseIdList(parentForm.children);
 
     const addressEntries = {
       street: parentForm.addressStreet.trim(),
@@ -1041,6 +1419,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
 
     await createParentMut.mutateAsync(payload);
     setParentForm(INITIAL_PARENT_FORM);
+    setParentChildrenSearch("");
     setIsParentModalOpen(false);
   }
 
@@ -1059,10 +1438,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     const email = parentForm.email.trim();
     const contact = parentForm.contact.trim();
     const birthDate = parentForm.birthDate.trim();
-    const children = parentForm.children
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const children = parseIdList(parentForm.children);
 
     const addressEntries = {
       street: parentForm.addressStreet.trim(),
@@ -1099,6 +1475,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     setIsParentEditModalOpen(false);
     setEditingParentId(null);
     setParentForm(INITIAL_PARENT_FORM);
+    setParentChildrenSearch("");
   }
 
   function openParentEditModal(item: ListItem) {
@@ -1110,21 +1487,218 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
 
     setEditingParentId(id);
     setParentForm(toParentFormState(item));
+    setParentChildrenSearch("");
     setIsParentEditModalOpen(true);
   }
 
-  async function onCreateChild(event: FormEvent<HTMLFormElement>) {
+  async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") || "").trim();
+    const name = childForm.name.trim();
+    const document = normalizeDigits(childForm.document).slice(0, 11);
+    const email = childForm.email.trim();
+    const contact = normalizeDigits(childForm.contact).slice(0, 11);
+    const birthDate = childForm.birthDate.trim();
+    const parents = parseIdList(childForm.parents);
+
+    const childAddressEntries = {
+      street: childForm.addressStreet.trim(),
+      number: childForm.addressNumber.trim(),
+      district: childForm.addressDistrict.trim(),
+      city: childForm.addressCity.trim(),
+      state: childForm.addressState.trim(),
+      zipCode: normalizeDigits(childForm.addressZipCode).slice(0, 8),
+      complement: childForm.addressComplement.trim(),
+      country: childForm.addressCountry.trim(),
+    };
+
+    const compactChildAddress = Object.fromEntries(
+      Object.entries(childAddressEntries).filter(([, value]) => Boolean(value)),
+    );
+
+    let addressPayload: Record<string, string> | undefined =
+      Object.keys(compactChildAddress).length > 0
+        ? compactChildAddress
+        : undefined;
+
+    if (childForm.inheritParentAddress) {
+      if (!parents.length) {
+        setStatusMessage(
+          "Selecione ao menos um responsavel para herdar endereco.",
+        );
+        return;
+      }
+
+      const sourceParent = (parentsQuery.data || []).find(
+        (item) => extractId(item as ListItem) === parents[0],
+      ) as ListItem | undefined;
+
+      const sourceAddress =
+        sourceParent?.address &&
+        typeof sourceParent.address === "object" &&
+        !Array.isArray(sourceParent.address)
+          ? (sourceParent.address as Record<string, unknown>)
+          : {};
+
+      const inheritedAddressEntries = {
+        street: String(sourceAddress.street || "").trim(),
+        number: String(sourceAddress.number || "").trim(),
+        district: String(sourceAddress.district || "").trim(),
+        city: String(sourceAddress.city || "").trim(),
+        state: String(sourceAddress.state || "").trim(),
+        zipCode: normalizeDigits(String(sourceAddress.zipCode || "")).slice(
+          0,
+          8,
+        ),
+        complement: String(sourceAddress.complement || "").trim(),
+        country: String(sourceAddress.country || "").trim(),
+      };
+
+      const compactInheritedAddress = Object.fromEntries(
+        Object.entries(inheritedAddressEntries).filter(([, value]) =>
+          Boolean(value),
+        ),
+      );
+
+      addressPayload =
+        Object.keys(compactInheritedAddress).length > 0
+          ? compactInheritedAddress
+          : undefined;
+    }
 
     if (!name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
       return;
     }
 
-    await createChildMut.mutateAsync({ name, companyId: currentCompanyScope });
-    event.currentTarget.reset();
+    await createChildMut.mutateAsync({
+      name,
+      document: document || undefined,
+      email: email || undefined,
+      contact: contact || undefined,
+      birthDate: birthDate || undefined,
+      parents: parents.length ? parents : undefined,
+      address: addressPayload,
+      companyId: currentCompanyScope,
+    });
+
+    setChildForm(INITIAL_CHILD_FORM);
+    setChildParentsSearch("");
+    setIsChildCreateModalOpen(false);
+  }
+
+  async function onUpdateChildModal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingChildId) {
+      setStatusMessage("Nao foi possivel identificar a crianca.");
+      return;
+    }
+
+    const name = childForm.name.trim();
+    const document = normalizeDigits(childForm.document).slice(0, 11);
+    const email = childForm.email.trim();
+    const contact = normalizeDigits(childForm.contact).slice(0, 11);
+    const birthDate = childForm.birthDate.trim();
+    const parents = parseIdList(childForm.parents);
+
+    const childAddressEntries = {
+      street: childForm.addressStreet.trim(),
+      number: childForm.addressNumber.trim(),
+      district: childForm.addressDistrict.trim(),
+      city: childForm.addressCity.trim(),
+      state: childForm.addressState.trim(),
+      zipCode: normalizeDigits(childForm.addressZipCode).slice(0, 8),
+      complement: childForm.addressComplement.trim(),
+      country: childForm.addressCountry.trim(),
+    };
+
+    const compactChildAddress = Object.fromEntries(
+      Object.entries(childAddressEntries).filter(([, value]) => Boolean(value)),
+    );
+
+    let addressPayload: Record<string, string> | undefined =
+      Object.keys(compactChildAddress).length > 0
+        ? compactChildAddress
+        : undefined;
+
+    if (childForm.inheritParentAddress) {
+      if (!parents.length) {
+        setStatusMessage(
+          "Selecione ao menos um responsavel para herdar endereco.",
+        );
+        return;
+      }
+
+      const sourceParent = (parentsQuery.data || []).find(
+        (item) => extractId(item as ListItem) === parents[0],
+      ) as ListItem | undefined;
+
+      const sourceAddress =
+        sourceParent?.address &&
+        typeof sourceParent.address === "object" &&
+        !Array.isArray(sourceParent.address)
+          ? (sourceParent.address as Record<string, unknown>)
+          : {};
+
+      const inheritedAddressEntries = {
+        street: String(sourceAddress.street || "").trim(),
+        number: String(sourceAddress.number || "").trim(),
+        district: String(sourceAddress.district || "").trim(),
+        city: String(sourceAddress.city || "").trim(),
+        state: String(sourceAddress.state || "").trim(),
+        zipCode: normalizeDigits(String(sourceAddress.zipCode || "")).slice(
+          0,
+          8,
+        ),
+        complement: String(sourceAddress.complement || "").trim(),
+        country: String(sourceAddress.country || "").trim(),
+      };
+
+      const compactInheritedAddress = Object.fromEntries(
+        Object.entries(inheritedAddressEntries).filter(([, value]) =>
+          Boolean(value),
+        ),
+      );
+
+      addressPayload =
+        Object.keys(compactInheritedAddress).length > 0
+          ? compactInheritedAddress
+          : undefined;
+    }
+
+    if (!name) {
+      setStatusMessage("Nome da crianca e obrigatorio.");
+      return;
+    }
+
+    const payload: Record<string, unknown> = {
+      name,
+      document: document || undefined,
+      email: email || undefined,
+      contact: contact || undefined,
+      birthDate: birthDate || undefined,
+      parents: parents.length ? parents : undefined,
+      address: addressPayload,
+    };
+
+    await updateChildMut.mutateAsync({ id: editingChildId, payload });
+    setIsChildEditModalOpen(false);
+    setEditingChildId(null);
+    setChildForm(INITIAL_CHILD_FORM);
+    setChildParentsSearch("");
+  }
+
+  function openChildEditModal(item: ListItem) {
+    const id = extractId(item);
+    if (!id) {
+      setStatusMessage("Nao foi possivel abrir a edicao desta crianca.");
+      return;
+    }
+
+    setEditingChildId(id);
+    setChildForm(toChildFormState(item));
+    setChildParentsSearch("");
+    setIsChildEditModalOpen(true);
   }
 
   async function onCheckin(event: FormEvent<HTMLFormElement>) {
@@ -1179,13 +1753,8 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
 
   async function onAssignParentChildren(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const parentId = String(formData.get("parentId") || "").trim();
-    const childIdsRaw = String(formData.get("childIds") || "").trim();
-    const childIds = childIdsRaw
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const parentId = operationSelectedParentId.trim();
+    const childIds = operationSelectedChildIds;
 
     if (!parentId || !childIds.length) {
       setStatusMessage("Informe parentId e pelo menos um childId.");
@@ -1193,18 +1762,16 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     }
 
     await assignChildrenMut.mutateAsync({ parentId, childIds });
-    event.currentTarget.reset();
+    setOperationParentSearch("");
+    setOperationSelectedParentId("");
+    setOperationChildrenSearch("");
+    setOperationSelectedChildIds([]);
   }
 
   async function onAssignChildParents(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const childId = String(formData.get("childId") || "").trim();
-    const parentIdsRaw = String(formData.get("parentIds") || "").trim();
-    const parentIds = parentIdsRaw
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const childId = operationSelectedChildId.trim();
+    const parentIds = operationSelectedParentIds;
 
     if (!childId || !parentIds.length) {
       setStatusMessage("Informe childId e pelo menos um parentId.");
@@ -1212,21 +1779,114 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
     }
 
     await assignParentsMut.mutateAsync({ childId, parentIds });
-    event.currentTarget.reset();
+    setOperationChildSearch("");
+    setOperationSelectedChildId("");
+    setOperationParentsSearch("");
+    setOperationSelectedParentIds([]);
   }
 
-  async function onCreateCompany(event: FormEvent<HTMLFormElement>) {
+  async function onCreateCompanyModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") || "").trim();
+    const name = companyForm.name.trim();
+    const legalName = companyForm.legalName.trim();
+    const cnpj = normalizeDigits(companyForm.cnpj).slice(0, 14);
+    const contact = normalizeDigits(companyForm.contact).slice(0, 11);
+    const email = companyForm.email.trim();
+
+    const addressEntries = {
+      street: companyForm.addressStreet.trim(),
+      number: companyForm.addressNumber.trim(),
+      district: companyForm.addressDistrict.trim(),
+      city: companyForm.addressCity.trim(),
+      state: companyForm.addressState.trim(),
+      zipCode: normalizeDigits(companyForm.addressZipCode),
+      complement: companyForm.addressComplement.trim(),
+      country: companyForm.addressCountry.trim(),
+    };
+
+    const compactAddress = Object.fromEntries(
+      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
+    );
 
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");
       return;
     }
 
-    await createCompanyMut.mutateAsync({ name });
-    event.currentTarget.reset();
+    await createCompanyMut.mutateAsync({
+      name,
+      legalName: legalName || undefined,
+      cnpj: cnpj || undefined,
+      contact: contact || undefined,
+      email: email || undefined,
+      address:
+        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+    });
+
+    setCompanyForm(INITIAL_COMPANY_FORM);
+    setIsCompanyCreateModalOpen(false);
+  }
+
+  async function onUpdateCompanyModal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingCompanyId) {
+      setStatusMessage("Nao foi possivel identificar a company.");
+      return;
+    }
+
+    const name = companyForm.name.trim();
+    const legalName = companyForm.legalName.trim();
+    const cnpj = normalizeDigits(companyForm.cnpj).slice(0, 14);
+    const contact = normalizeDigits(companyForm.contact).slice(0, 11);
+    const email = companyForm.email.trim();
+
+    const addressEntries = {
+      street: companyForm.addressStreet.trim(),
+      number: companyForm.addressNumber.trim(),
+      district: companyForm.addressDistrict.trim(),
+      city: companyForm.addressCity.trim(),
+      state: companyForm.addressState.trim(),
+      zipCode: normalizeDigits(companyForm.addressZipCode),
+      complement: companyForm.addressComplement.trim(),
+      country: companyForm.addressCountry.trim(),
+    };
+
+    const compactAddress = Object.fromEntries(
+      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
+    );
+
+    if (!name) {
+      setStatusMessage("Nome da company e obrigatorio.");
+      return;
+    }
+
+    const payload: Record<string, unknown> = {
+      name,
+      legalName: legalName || undefined,
+      cnpj: cnpj || undefined,
+      contact: contact || undefined,
+      email: email || undefined,
+      address:
+        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+    };
+
+    await updateCompanyMut.mutateAsync({ id: editingCompanyId, payload });
+    setIsCompanyEditModalOpen(false);
+    setEditingCompanyId(null);
+    setCompanyForm(INITIAL_COMPANY_FORM);
+  }
+
+  function openCompanyEditModal(item: ListItem) {
+    const id = extractId(item);
+    if (!id) {
+      setStatusMessage("Nao foi possivel abrir a edicao desta company.");
+      return;
+    }
+
+    setEditingCompanyId(id);
+    setCompanyForm(toCompanyFormState(item));
+    setIsCompanyEditModalOpen(true);
   }
 
   async function onBootstrapAdmin(event: FormEvent<HTMLFormElement>) {
@@ -1333,45 +1993,21 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                   </p>
                 </div>
                 <div className="crm-row-actions">
-                  {((section === "collaborators" && canManageCollaborators) ||
-                    section === "parents" ||
-                    section === "children" ||
-                    section === "companies") && (
+                  {(section === "children" || section === "companies") && (
                     <button
                       type="button"
                       className="btn outline"
-                      onClick={async () => {
-                        const name = safePrompt("Novo nome:");
-                        const email =
-                          section === "collaborators"
-                            ? safePrompt("Novo email (opcional):") || undefined
-                            : undefined;
-
-                        if (!id || !name) {
+                      onClick={() => {
+                        if (!id) {
                           return;
                         }
 
-                        if (section === "collaborators") {
-                          await updateCollaboratorMut.mutateAsync({
-                            id,
-                            name,
-                            email,
-                          });
-                        }
-
-                        if (section === "parents") {
-                          await updateParentMut.mutateAsync({
-                            id,
-                            payload: { name },
-                          });
-                        }
-
                         if (section === "children") {
-                          await updateChildMut.mutateAsync({ id, name });
+                          openChildEditModal(typed);
                         }
 
                         if (section === "companies") {
-                          await updateCompanyMut.mutateAsync({ id, name });
+                          openCompanyEditModal(typed);
                         }
                       }}
                     >
@@ -1379,9 +2015,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                     </button>
                   )}
 
-                  {((section === "collaborators" && canManageCollaborators) ||
-                    section === "parents" ||
-                    section === "children" ||
+                  {(section === "children" ||
                     section === "attendance" ||
                     section === "companies") && (
                     <button
@@ -1392,16 +2026,10 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                           return;
                         }
 
-                        if (section === "collaborators") {
-                          await deleteCollaboratorMut.mutateAsync(id);
-                        }
-
-                        if (section === "parents") {
-                          await deleteParentMut.mutateAsync(id);
-                        }
-
                         if (section === "children") {
-                          await deleteChildMut.mutateAsync(id);
+                          setPendingDeleteChildId(id);
+                          setIsChildDeleteModalOpen(true);
+                          return;
                         }
 
                         if (section === "attendance") {
@@ -1409,7 +2037,8 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                         }
 
                         if (section === "companies") {
-                          await deleteCompanyMut.mutateAsync(id);
+                          setPendingDeleteCompanyId(id);
+                          setIsCompanyDeleteModalOpen(true);
                         }
                       }}
                     >
@@ -1563,6 +2192,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
             className="btn solid"
             onClick={() => {
               setParentForm(INITIAL_PARENT_FORM);
+              setParentChildrenSearch("");
               setIsParentModalOpen(true);
             }}
           >
@@ -1622,6 +2252,114 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
 
           {pagedCollection.length === 0 && (
             <p>Nenhum responsavel encontrado para a busca informada.</p>
+          )}
+        </div>
+
+        <div className="crm-pagination">
+          <button
+            type="button"
+            className="btn outline"
+            disabled={page <= 1}
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+          >
+            Anterior
+          </button>
+          <span>
+            Pagina {page} de {totalPages}
+          </span>
+          <button
+            type="button"
+            className="btn outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+          >
+            Proxima
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  function renderChildrenList() {
+    return (
+      <section className="crm-panel">
+        <div className="crm-panel-head">
+          <h2>Criancas</h2>
+          <button
+            type="button"
+            className="btn solid"
+            onClick={() => {
+              setChildForm(INITIAL_CHILD_FORM);
+              setChildParentsSearch("");
+              setIsChildCreateModalOpen(true);
+            }}
+          >
+            Adicionar
+          </button>
+        </div>
+
+        <div className="crm-panel-head">
+          <input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Buscar por nome, email, id"
+          />
+        </div>
+
+        <div className="crm-table">
+          {pagedCollection.map((item) => {
+            const typed = item as ListItem;
+            const id = extractId(typed);
+
+            return (
+              <article className="crm-row" key={id || JSON.stringify(item)}>
+                <div>
+                  <strong>
+                    {typed.name || typed.email || id || "Registro"}
+                  </strong>
+                  <p>
+                    ID: {id || "-"}{" "}
+                    {typed.companyId ? `| Company: ${typed.companyId}` : ""}
+                  </p>
+                </div>
+                <div className="crm-row-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      if (!id) {
+                        return;
+                      }
+
+                      openChildEditModal(typed);
+                    }}
+                  >
+                    Alterar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      if (!id) {
+                        return;
+                      }
+
+                      setPendingDeleteChildId(id);
+                      setIsChildDeleteModalOpen(true);
+                    }}
+                  >
+                    Remover
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+
+          {pagedCollection.length === 0 && (
+            <p>Nenhuma crianca encontrada para a busca informada.</p>
           )}
         </div>
 
@@ -1765,13 +2503,19 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
         {section === "companies" && isAdminOrMaster && (
           <>
             <section className="crm-panel">
-              <h2>Criar company</h2>
-              <form className="crm-form-inline" onSubmit={onCreateCompany}>
-                <input name="name" placeholder="Nome da company" required />
-                <button className="btn solid" type="submit">
-                  Criar
+              <div className="crm-panel-head">
+                <h2>Companies</h2>
+                <button
+                  type="button"
+                  className="btn solid"
+                  onClick={() => {
+                    setCompanyForm(INITIAL_COMPANY_FORM);
+                    setIsCompanyCreateModalOpen(true);
+                  }}
+                >
+                  Adicionar
                 </button>
-              </form>
+              </div>
             </section>
             {renderCrudList("Companies")}
           </>
@@ -1785,50 +2529,295 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
           <>{renderParentsList()}</>
         )}
 
-        {section === "children" && (
-          <>
-            <section className="crm-panel">
-              <h2>Cadastrar crianca</h2>
-              <form className="crm-form-inline" onSubmit={onCreateChild}>
-                <input name="name" placeholder="Nome" required />
-                <button className="btn solid" type="submit">
-                  Cadastrar
-                </button>
-              </form>
-            </section>
-            {renderCrudList("Criancas")}
-          </>
-        )}
+        {section === "children" && <>{renderChildrenList()}</>}
 
         {section === "links" && !isAdminOrMaster && (
           <>
             <section className="crm-panel">
               <h2>Vincular childs a um parent</h2>
-              <form className="crm-form-grid" onSubmit={onAssignParentChildren}>
-                <input name="parentId" placeholder="parentId" required />
-                <input
-                  name="childIds"
-                  placeholder="childIds separados por virgula"
-                  required
-                />
-                <button className="btn solid" type="submit">
-                  Vincular
-                </button>
+              <form
+                className="crm-form-grid operation-form"
+                onSubmit={onAssignParentChildren}
+              >
+                <section className="profile-section">
+                  <h3>Selecao</h3>
+                  <div className="operation-fields-grid">
+                    <div className="field operation-picker-field">
+                      <label htmlFor="operation-parent-search">
+                        Responsavel
+                      </label>
+                      <div className="operation-picker">
+                        <input
+                          id="operation-parent-search"
+                          value={operationParentSearch}
+                          onChange={(event) =>
+                            setOperationParentSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="operation-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {parentsQuery.isLoading && (
+                            <p className="operation-hint">
+                              Carregando responsaveis...
+                            </p>
+                          )}
+
+                          {!parentsQuery.isLoading &&
+                            operationParentOptions.map((option) => (
+                              <label
+                                key={option.id}
+                                className="operation-option"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  setOperationSelectedParentId(option.id);
+                                  setOperationParentSearch(option.name);
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  checked={
+                                    operationSelectedParentId === option.id
+                                  }
+                                  readOnly
+                                  tabIndex={-1}
+                                />
+                                <span>
+                                  <strong>{option.name}</strong>
+                                  <small>{option.id}</small>
+                                </span>
+                              </label>
+                            ))}
+
+                          {!parentsQuery.isLoading &&
+                            operationParentOptions.length === 0 && (
+                              <p className="operation-hint">
+                                Nenhum responsavel encontrado para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="field operation-picker-field">
+                      <label htmlFor="operation-children-search">
+                        Criancas
+                      </label>
+                      <div className="operation-picker">
+                        <input
+                          id="operation-children-search"
+                          value={operationChildrenSearch}
+                          onChange={(event) =>
+                            setOperationChildrenSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="operation-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {childrenQuery.isLoading && (
+                            <p className="operation-hint">
+                              Carregando criancas...
+                            </p>
+                          )}
+
+                          {!childrenQuery.isLoading &&
+                            operationChildrenOptions.map((option) => {
+                              const isChecked =
+                                operationSelectedChildIds.includes(option.id);
+
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="operation-option"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    toggleOperationChildSelection(option.id);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    readOnly
+                                    tabIndex={-1}
+                                  />
+                                  <span>
+                                    <strong>{option.name}</strong>
+                                    <small>{option.id}</small>
+                                  </span>
+                                </label>
+                              );
+                            })}
+
+                          {!childrenQuery.isLoading &&
+                            operationChildrenOptions.length === 0 && (
+                              <p className="operation-hint">
+                                Nenhuma crianca encontrada para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                      <p className="operation-selected">
+                        {operationSelectedChildIds.length} crianca(s)
+                        selecionada(s)
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button className="btn solid" type="submit">
+                    Vincular
+                  </button>
+                </div>
               </form>
             </section>
 
             <section className="crm-panel">
               <h2>Vincular parents a um child</h2>
-              <form className="crm-form-grid" onSubmit={onAssignChildParents}>
-                <input name="childId" placeholder="childId" required />
-                <input
-                  name="parentIds"
-                  placeholder="parentIds separados por virgula"
-                  required
-                />
-                <button className="btn solid" type="submit">
-                  Vincular
-                </button>
+              <form
+                className="crm-form-grid operation-form"
+                onSubmit={onAssignChildParents}
+              >
+                <section className="profile-section">
+                  <h3>Selecao</h3>
+                  <div className="operation-fields-grid">
+                    <div className="field operation-picker-field">
+                      <label htmlFor="operation-child-search">Crianca</label>
+                      <div className="operation-picker">
+                        <input
+                          id="operation-child-search"
+                          value={operationChildSearch}
+                          onChange={(event) =>
+                            setOperationChildSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="operation-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {childrenQuery.isLoading && (
+                            <p className="operation-hint">
+                              Carregando criancas...
+                            </p>
+                          )}
+
+                          {!childrenQuery.isLoading &&
+                            operationChildOptions.map((option) => (
+                              <label
+                                key={option.id}
+                                className="operation-option"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  setOperationSelectedChildId(option.id);
+                                  setOperationChildSearch(option.name);
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  checked={
+                                    operationSelectedChildId === option.id
+                                  }
+                                  readOnly
+                                  tabIndex={-1}
+                                />
+                                <span>
+                                  <strong>{option.name}</strong>
+                                  <small>{option.id}</small>
+                                </span>
+                              </label>
+                            ))}
+
+                          {!childrenQuery.isLoading &&
+                            operationChildOptions.length === 0 && (
+                              <p className="operation-hint">
+                                Nenhuma crianca encontrada para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="field operation-picker-field">
+                      <label htmlFor="operation-parents-search">
+                        Responsaveis
+                      </label>
+                      <div className="operation-picker">
+                        <input
+                          id="operation-parents-search"
+                          value={operationParentsSearch}
+                          onChange={(event) =>
+                            setOperationParentsSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="operation-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {parentsQuery.isLoading && (
+                            <p className="operation-hint">
+                              Carregando responsaveis...
+                            </p>
+                          )}
+
+                          {!parentsQuery.isLoading &&
+                            operationParentsOptions.map((option) => {
+                              const isChecked =
+                                operationSelectedParentIds.includes(option.id);
+
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="operation-option"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    toggleOperationParentSelection(option.id);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    readOnly
+                                    tabIndex={-1}
+                                  />
+                                  <span>
+                                    <strong>{option.name}</strong>
+                                    <small>{option.id}</small>
+                                  </span>
+                                </label>
+                              );
+                            })}
+
+                          {!parentsQuery.isLoading &&
+                            operationParentsOptions.length === 0 && (
+                              <p className="operation-hint">
+                                Nenhum responsavel encontrado para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                      <p className="operation-selected">
+                        {operationSelectedParentIds.length} responsavel(is)
+                        selecionado(s)
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button className="btn solid" type="submit">
+                    Vincular
+                  </button>
+                </div>
               </form>
             </section>
           </>
@@ -1994,10 +2983,11 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
             onClick={() => {
               setIsParentModalOpen(false);
               setParentForm(INITIAL_PARENT_FORM);
+              setParentChildrenSearch("");
             }}
           >
             <section
-              className="crm-modal crm-modal-wide"
+              className="crm-modal crm-modal-wide parent-modal"
               role="dialog"
               aria-modal="true"
               aria-label="Adicionar responsavel"
@@ -2008,107 +2998,159 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                 className="crm-form-grid parent-modal-form"
                 onSubmit={onCreateParent}
               >
-                <div className="parent-fields-grid">
-                  <div className="field">
-                    <label htmlFor="parent-name">Nome</label>
-                    <input
-                      id="parent-name"
-                      value={parentForm.name}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          name: event.target.value,
-                        }))
-                      }
-                      placeholder="Nome completo"
-                      required
-                    />
-                  </div>
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="parent-fields-grid">
+                    <div className="field">
+                      <label htmlFor="parent-name">Nome</label>
+                      <input
+                        id="parent-name"
+                        value={parentForm.name}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-document">CPF</label>
-                    <input
-                      id="parent-document"
-                      value={maskCpf(parentForm.document)}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          document: normalizeDigits(event.target.value).slice(
-                            0,
-                            11,
-                          ),
-                        }))
-                      }
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-document">CPF</label>
+                      <input
+                        id="parent-document"
+                        value={maskCpf(parentForm.document)}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-email">Email</label>
-                    <input
-                      id="parent-email"
-                      type="email"
-                      value={parentForm.email}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-email">Email</label>
+                      <input
+                        id="parent-email"
+                        type="email"
+                        value={parentForm.email}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-contact">Contato</label>
-                    <input
-                      id="parent-contact"
-                      value={maskPhone(parentForm.contact)}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          contact: normalizeDigits(event.target.value).slice(
-                            0,
-                            11,
-                          ),
-                        }))
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-contact">Contato</label>
+                      <input
+                        id="parent-contact"
+                        value={maskPhone(parentForm.contact)}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-birth-date">
-                      Data de nascimento
-                    </label>
-                    <input
-                      id="parent-birth-date"
-                      type="date"
-                      value={parentForm.birthDate}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          birthDate: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-birth-date">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="parent-birth-date"
+                        type="date"
+                        value={parentForm.birthDate}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-children">Children IDs</label>
-                    <input
-                      id="parent-children"
-                      value={parentForm.children}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          children: event.target.value,
-                        }))
-                      }
-                      placeholder="id1, id2"
-                    />
+                    <div className="field parent-children-field">
+                      <label htmlFor="parent-children-search">Criancas</label>
+                      <div className="parent-children-picker">
+                        <input
+                          id="parent-children-search"
+                          value={parentChildrenSearch}
+                          onChange={(event) =>
+                            setParentChildrenSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="parent-children-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {childrenQuery.isLoading && (
+                            <p className="parent-children-hint">
+                              Carregando criancas...
+                            </p>
+                          )}
+
+                          {!childrenQuery.isLoading &&
+                            parentChildrenOptions.map((option) => {
+                              const isChecked =
+                                selectedParentChildrenIds.includes(option.id);
+
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="parent-child-option"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    toggleParentChildSelection(option.id);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    readOnly
+                                    tabIndex={-1}
+                                  />
+                                  <span>
+                                    <strong>{option.name}</strong>
+                                    <small>{option.id}</small>
+                                  </span>
+                                </label>
+                              );
+                            })}
+
+                          {!childrenQuery.isLoading &&
+                            parentChildrenOptions.length === 0 && (
+                              <p className="parent-children-hint">
+                                Nenhuma crianca encontrada para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                      <p className="parent-children-selected">
+                        {selectedParentChildrenIds.length} crianca(s)
+                        selecionada(s)
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </section>
 
                 <div className="profile-section parent-address-section">
                   <h3>Endereco</h3>
@@ -2239,6 +3281,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                     onClick={() => {
                       setIsParentModalOpen(false);
                       setParentForm(INITIAL_PARENT_FORM);
+                      setParentChildrenSearch("");
                     }}
                   >
                     Cancelar
@@ -2260,10 +3303,11 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
               setIsParentEditModalOpen(false);
               setEditingParentId(null);
               setParentForm(INITIAL_PARENT_FORM);
+              setParentChildrenSearch("");
             }}
           >
             <section
-              className="crm-modal crm-modal-wide"
+              className="crm-modal crm-modal-wide parent-modal"
               role="dialog"
               aria-modal="true"
               aria-label="Editar responsavel"
@@ -2274,107 +3318,161 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                 className="crm-form-grid parent-modal-form"
                 onSubmit={onUpdateParent}
               >
-                <div className="parent-fields-grid">
-                  <div className="field">
-                    <label htmlFor="parent-edit-name">Nome</label>
-                    <input
-                      id="parent-edit-name"
-                      value={parentForm.name}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          name: event.target.value,
-                        }))
-                      }
-                      placeholder="Nome completo"
-                      required
-                    />
-                  </div>
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="parent-fields-grid">
+                    <div className="field">
+                      <label htmlFor="parent-edit-name">Nome</label>
+                      <input
+                        id="parent-edit-name"
+                        value={parentForm.name}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-edit-document">CPF</label>
-                    <input
-                      id="parent-edit-document"
-                      value={maskCpf(parentForm.document)}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          document: normalizeDigits(event.target.value).slice(
-                            0,
-                            11,
-                          ),
-                        }))
-                      }
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-edit-document">CPF</label>
+                      <input
+                        id="parent-edit-document"
+                        value={maskCpf(parentForm.document)}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-edit-email">Email</label>
-                    <input
-                      id="parent-edit-email"
-                      type="email"
-                      value={parentForm.email}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-edit-email">Email</label>
+                      <input
+                        id="parent-edit-email"
+                        type="email"
+                        value={parentForm.email}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-edit-contact">Contato</label>
-                    <input
-                      id="parent-edit-contact"
-                      value={maskPhone(parentForm.contact)}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          contact: normalizeDigits(event.target.value).slice(
-                            0,
-                            11,
-                          ),
-                        }))
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-edit-contact">Contato</label>
+                      <input
+                        id="parent-edit-contact"
+                        value={maskPhone(parentForm.contact)}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-edit-birth-date">
-                      Data de nascimento
-                    </label>
-                    <input
-                      id="parent-edit-birth-date"
-                      type="date"
-                      value={parentForm.birthDate}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          birthDate: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
+                    <div className="field">
+                      <label htmlFor="parent-edit-birth-date">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="parent-edit-birth-date"
+                        type="date"
+                        value={parentForm.birthDate}
+                        onChange={(event) =>
+                          setParentForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="parent-edit-children">Children IDs</label>
-                    <input
-                      id="parent-edit-children"
-                      value={parentForm.children}
-                      onChange={(event) =>
-                        setParentForm((current) => ({
-                          ...current,
-                          children: event.target.value,
-                        }))
-                      }
-                      placeholder="id1, id2"
-                    />
+                    <div className="field parent-children-field">
+                      <label htmlFor="parent-edit-children-search">
+                        Criancas
+                      </label>
+                      <div className="parent-children-picker">
+                        <input
+                          id="parent-edit-children-search"
+                          value={parentChildrenSearch}
+                          onChange={(event) =>
+                            setParentChildrenSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="parent-children-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {childrenQuery.isLoading && (
+                            <p className="parent-children-hint">
+                              Carregando criancas...
+                            </p>
+                          )}
+
+                          {!childrenQuery.isLoading &&
+                            parentChildrenOptions.map((option) => {
+                              const isChecked =
+                                selectedParentChildrenIds.includes(option.id);
+
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="parent-child-option"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    toggleParentChildSelection(option.id);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    readOnly
+                                    tabIndex={-1}
+                                  />
+                                  <span>
+                                    <strong>{option.name}</strong>
+                                    <small>{option.id}</small>
+                                  </span>
+                                </label>
+                              );
+                            })}
+
+                          {!childrenQuery.isLoading &&
+                            parentChildrenOptions.length === 0 && (
+                              <p className="parent-children-hint">
+                                Nenhuma crianca encontrada para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                      <p className="parent-children-selected">
+                        {selectedParentChildrenIds.length} crianca(s)
+                        selecionada(s)
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </section>
 
                 <div className="profile-section parent-address-section">
                   <h3>Endereco</h3>
@@ -2508,6 +3606,7 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                       setIsParentEditModalOpen(false);
                       setEditingParentId(null);
                       setParentForm(INITIAL_PARENT_FORM);
+                      setParentChildrenSearch("");
                     }}
                   >
                     Cancelar
@@ -2517,6 +3616,1358 @@ export function RoleWorkspacePage({ role }: { role: AuthRole }) {
                   </button>
                 </div>
               </form>
+            </section>
+          </div>
+        )}
+
+        {isChildCreateModalOpen && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsChildCreateModalOpen(false);
+              setChildForm(INITIAL_CHILD_FORM);
+              setChildParentsSearch("");
+            }}
+          >
+            <section
+              className="crm-modal crm-modal-wide child-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Adicionar crianca"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Nova Crianca</h2>
+              <form
+                className="crm-form-grid child-modal-form"
+                onSubmit={onCreateChildModal}
+              >
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="child-fields-grid">
+                    <div className="field">
+                      <label htmlFor="child-name">Nome</label>
+                      <input
+                        id="child-name"
+                        value={childForm.name}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-document">CPF</label>
+                      <input
+                        id="child-document"
+                        value={maskCpf(childForm.document)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-email">Email</label>
+                      <input
+                        id="child-email"
+                        type="email"
+                        value={childForm.email}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-contact">Contato</label>
+                      <input
+                        id="child-contact"
+                        value={maskPhone(childForm.contact)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-birth-date">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="child-birth-date"
+                        type="date"
+                        value={childForm.birthDate}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field child-parents-field">
+                      <label htmlFor="child-parents-search">Responsaveis</label>
+                      <div className="child-parents-picker">
+                        <input
+                          id="child-parents-search"
+                          value={childParentsSearch}
+                          onChange={(event) =>
+                            setChildParentsSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="child-parents-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {parentsQuery.isLoading && (
+                            <p className="child-parents-hint">
+                              Carregando responsaveis...
+                            </p>
+                          )}
+
+                          {!parentsQuery.isLoading &&
+                            childParentOptions.map((option) => {
+                              const isChecked = selectedChildParentIds.includes(
+                                option.id,
+                              );
+
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="child-parent-option"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    toggleChildParentSelection(option.id);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    readOnly
+                                    tabIndex={-1}
+                                  />
+                                  <span>
+                                    <strong>{option.name}</strong>
+                                    <small>{option.id}</small>
+                                  </span>
+                                </label>
+                              );
+                            })}
+
+                          {!parentsQuery.isLoading &&
+                            childParentOptions.length === 0 && (
+                              <p className="child-parents-hint">
+                                Nenhum responsavel encontrado para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                      <p className="child-parents-selected">
+                        {selectedChildParentIds.length} responsavel(is)
+                        selecionado(s)
+                      </p>
+                    </div>
+
+                    <div className="field child-inherit-address-field">
+                      <label className="child-inherit-address-toggle">
+                        <input
+                          type="checkbox"
+                          checked={childForm.inheritParentAddress}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              inheritParentAddress: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span>
+                          Herdar endereco do primeiro responsavel selecionado
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <div className="child-fields-grid child-address-grid">
+                    <div className="field field-span-2">
+                      <label htmlFor="child-address-street">Rua</label>
+                      <input
+                        id="child-address-street"
+                        value={childForm.addressStreet}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressStreet: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-address-number">Numero</label>
+                      <input
+                        id="child-address-number"
+                        value={childForm.addressNumber}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressNumber: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-address-district">Bairro</label>
+                      <input
+                        id="child-address-district"
+                        value={childForm.addressDistrict}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressDistrict: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-address-city">Cidade</label>
+                      <input
+                        id="child-address-city"
+                        value={childForm.addressCity}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressCity: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-address-state">Estado</label>
+                      <input
+                        id="child-address-state"
+                        value={childForm.addressState}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressState: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-address-zip">CEP</label>
+                      <input
+                        id="child-address-zip"
+                        value={maskZipCode(childForm.addressZipCode)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressZipCode: normalizeDigits(
+                              event.target.value,
+                            ).slice(0, 8),
+                          }))
+                        }
+                        placeholder="00000-000"
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field field-span-2">
+                      <label htmlFor="child-address-complement">
+                        Complemento
+                      </label>
+                      <input
+                        id="child-address-complement"
+                        value={childForm.addressComplement}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressComplement: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-address-country">Pais</label>
+                      <input
+                        id="child-address-country"
+                        value={childForm.addressCountry}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressCountry: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      setIsChildCreateModalOpen(false);
+                      setChildForm(INITIAL_CHILD_FORM);
+                      setChildParentsSearch("");
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn solid">
+                    Salvar crianca
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {isChildEditModalOpen && editingChildId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsChildEditModalOpen(false);
+              setEditingChildId(null);
+              setChildForm(INITIAL_CHILD_FORM);
+              setChildParentsSearch("");
+            }}
+          >
+            <section
+              className="crm-modal crm-modal-wide child-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Editar crianca"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Editar Crianca</h2>
+              <form
+                className="crm-form-grid child-modal-form"
+                onSubmit={onUpdateChildModal}
+              >
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="child-fields-grid">
+                    <div className="field">
+                      <label htmlFor="child-edit-name">Nome</label>
+                      <input
+                        id="child-edit-name"
+                        value={childForm.name}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-document">CPF</label>
+                      <input
+                        id="child-edit-document"
+                        value={maskCpf(childForm.document)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-email">Email</label>
+                      <input
+                        id="child-edit-email"
+                        type="email"
+                        value={childForm.email}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-contact">Contato</label>
+                      <input
+                        id="child-edit-contact"
+                        value={maskPhone(childForm.contact)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-birth-date">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="child-edit-birth-date"
+                        type="date"
+                        value={childForm.birthDate}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field child-parents-field">
+                      <label htmlFor="child-edit-parents-search">
+                        Responsaveis
+                      </label>
+                      <div className="child-parents-picker">
+                        <input
+                          id="child-edit-parents-search"
+                          value={childParentsSearch}
+                          onChange={(event) =>
+                            setChildParentsSearch(event.target.value)
+                          }
+                          placeholder="Buscar por nome ou ID"
+                        />
+                        <div
+                          className="child-parents-dropdown"
+                          role="listbox"
+                          onMouseDown={(event) => event.preventDefault()}
+                        >
+                          {parentsQuery.isLoading && (
+                            <p className="child-parents-hint">
+                              Carregando responsaveis...
+                            </p>
+                          )}
+
+                          {!parentsQuery.isLoading &&
+                            childParentOptions.map((option) => {
+                              const isChecked = selectedChildParentIds.includes(
+                                option.id,
+                              );
+
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="child-parent-option"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    toggleChildParentSelection(option.id);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    readOnly
+                                    tabIndex={-1}
+                                  />
+                                  <span>
+                                    <strong>{option.name}</strong>
+                                    <small>{option.id}</small>
+                                  </span>
+                                </label>
+                              );
+                            })}
+
+                          {!parentsQuery.isLoading &&
+                            childParentOptions.length === 0 && (
+                              <p className="child-parents-hint">
+                                Nenhum responsavel encontrado para a busca.
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                      <p className="child-parents-selected">
+                        {selectedChildParentIds.length} responsavel(is)
+                        selecionado(s)
+                      </p>
+                    </div>
+
+                    <div className="field child-inherit-address-field">
+                      <label className="child-inherit-address-toggle">
+                        <input
+                          type="checkbox"
+                          checked={childForm.inheritParentAddress}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              inheritParentAddress: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span>
+                          Herdar endereco do primeiro responsavel selecionado
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <div className="child-fields-grid child-address-grid">
+                    <div className="field field-span-2">
+                      <label htmlFor="child-edit-address-street">Rua</label>
+                      <input
+                        id="child-edit-address-street"
+                        value={childForm.addressStreet}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressStreet: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-address-number">Numero</label>
+                      <input
+                        id="child-edit-address-number"
+                        value={childForm.addressNumber}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressNumber: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-address-district">
+                        Bairro
+                      </label>
+                      <input
+                        id="child-edit-address-district"
+                        value={childForm.addressDistrict}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressDistrict: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-address-city">Cidade</label>
+                      <input
+                        id="child-edit-address-city"
+                        value={childForm.addressCity}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressCity: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-address-state">Estado</label>
+                      <input
+                        id="child-edit-address-state"
+                        value={childForm.addressState}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressState: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-address-zip">CEP</label>
+                      <input
+                        id="child-edit-address-zip"
+                        value={maskZipCode(childForm.addressZipCode)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressZipCode: normalizeDigits(
+                              event.target.value,
+                            ).slice(0, 8),
+                          }))
+                        }
+                        placeholder="00000-000"
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field field-span-2">
+                      <label htmlFor="child-edit-address-complement">
+                        Complemento
+                      </label>
+                      <input
+                        id="child-edit-address-complement"
+                        value={childForm.addressComplement}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressComplement: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="child-edit-address-country">Pais</label>
+                      <input
+                        id="child-edit-address-country"
+                        value={childForm.addressCountry}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            addressCountry: event.target.value,
+                          }))
+                        }
+                        disabled={childForm.inheritParentAddress}
+                        className={
+                          childForm.inheritParentAddress ? "field-readonly" : ""
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      setIsChildEditModalOpen(false);
+                      setEditingChildId(null);
+                      setChildForm(INITIAL_CHILD_FORM);
+                      setChildParentsSearch("");
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn solid">
+                    Salvar alteracoes
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {isChildDeleteModalOpen && pendingDeleteChildId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsChildDeleteModalOpen(false);
+              setPendingDeleteChildId(null);
+            }}
+          >
+            <section
+              className="crm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirmar exclusao de crianca"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Confirmar exclusao</h2>
+              <p>Quer mesmo excluir esta crianca?</p>
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => {
+                    setIsChildDeleteModalOpen(false);
+                    setPendingDeleteChildId(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={async () => {
+                    if (pendingDeleteChildId) {
+                      await deleteChildMut.mutateAsync(pendingDeleteChildId);
+                    }
+
+                    setIsChildDeleteModalOpen(false);
+                    setPendingDeleteChildId(null);
+                  }}
+                >
+                  Excluir
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {isCompanyCreateModalOpen && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsCompanyCreateModalOpen(false);
+              setCompanyForm(INITIAL_COMPANY_FORM);
+            }}
+          >
+            <section
+              className="crm-modal crm-modal-wide company-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Adicionar company"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Nova Company</h2>
+              <form
+                className="crm-form-grid collaborator-form"
+                onSubmit={onCreateCompanyModal}
+              >
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="collaborator-section-grid">
+                    <div className="field">
+                      <label htmlFor="company-name">Nome</label>
+                      <input
+                        id="company-name"
+                        value={companyForm.name}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome fantasia"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-legal-name">Razao social</label>
+                      <input
+                        id="company-legal-name"
+                        value={companyForm.legalName}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            legalName: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-cnpj">CNPJ</label>
+                      <input
+                        id="company-cnpj"
+                        value={maskCnpj(companyForm.cnpj)}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            cnpj: normalizeDigits(event.target.value).slice(
+                              0,
+                              14,
+                            ),
+                          }))
+                        }
+                        placeholder="00.000.000/0000-00"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-contact">Contato</label>
+                      <input
+                        id="company-contact"
+                        value={maskPhone(companyForm.contact)}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-email">Email</label>
+                      <input
+                        id="company-email"
+                        type="email"
+                        value={companyForm.email}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@empresa.com"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <div className="collaborator-section-grid collaborator-address-grid">
+                    <div className="field field-span-2">
+                      <label htmlFor="company-address-street">Rua</label>
+                      <input
+                        id="company-address-street"
+                        value={companyForm.addressStreet}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressStreet: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-address-number">Numero</label>
+                      <input
+                        id="company-address-number"
+                        value={companyForm.addressNumber}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressNumber: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-address-district">Bairro</label>
+                      <input
+                        id="company-address-district"
+                        value={companyForm.addressDistrict}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressDistrict: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-address-city">Cidade</label>
+                      <input
+                        id="company-address-city"
+                        value={companyForm.addressCity}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressCity: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-address-state">Estado</label>
+                      <input
+                        id="company-address-state"
+                        value={companyForm.addressState}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressState: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-address-zip">CEP</label>
+                      <input
+                        id="company-address-zip"
+                        value={maskZipCode(companyForm.addressZipCode)}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressZipCode: normalizeDigits(
+                              event.target.value,
+                            ).slice(0, 8),
+                          }))
+                        }
+                        placeholder="00000-000"
+                      />
+                    </div>
+
+                    <div className="field field-span-2">
+                      <label htmlFor="company-address-complement">
+                        Complemento
+                      </label>
+                      <input
+                        id="company-address-complement"
+                        value={companyForm.addressComplement}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressComplement: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-address-country">Pais</label>
+                      <input
+                        id="company-address-country"
+                        value={companyForm.addressCountry}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressCountry: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      setIsCompanyCreateModalOpen(false);
+                      setCompanyForm(INITIAL_COMPANY_FORM);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn solid">
+                    Salvar company
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {isCompanyEditModalOpen && editingCompanyId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsCompanyEditModalOpen(false);
+              setEditingCompanyId(null);
+              setCompanyForm(INITIAL_COMPANY_FORM);
+            }}
+          >
+            <section
+              className="crm-modal crm-modal-wide company-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Editar company"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Editar Company</h2>
+              <form
+                className="crm-form-grid collaborator-form"
+                onSubmit={onUpdateCompanyModal}
+              >
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="collaborator-section-grid">
+                    <div className="field">
+                      <label htmlFor="company-edit-name">Nome</label>
+                      <input
+                        id="company-edit-name"
+                        value={companyForm.name}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome fantasia"
+                        required
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-legal-name">
+                        Razao social
+                      </label>
+                      <input
+                        id="company-edit-legal-name"
+                        value={companyForm.legalName}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            legalName: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-cnpj">CNPJ</label>
+                      <input
+                        id="company-edit-cnpj"
+                        value={maskCnpj(companyForm.cnpj)}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            cnpj: normalizeDigits(event.target.value).slice(
+                              0,
+                              14,
+                            ),
+                          }))
+                        }
+                        placeholder="00.000.000/0000-00"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-contact">Contato</label>
+                      <input
+                        id="company-edit-contact"
+                        value={maskPhone(companyForm.contact)}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-email">Email</label>
+                      <input
+                        id="company-edit-email"
+                        type="email"
+                        value={companyForm.email}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@empresa.com"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <div className="collaborator-section-grid collaborator-address-grid">
+                    <div className="field field-span-2">
+                      <label htmlFor="company-edit-address-street">Rua</label>
+                      <input
+                        id="company-edit-address-street"
+                        value={companyForm.addressStreet}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressStreet: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-address-number">
+                        Numero
+                      </label>
+                      <input
+                        id="company-edit-address-number"
+                        value={companyForm.addressNumber}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressNumber: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-address-district">
+                        Bairro
+                      </label>
+                      <input
+                        id="company-edit-address-district"
+                        value={companyForm.addressDistrict}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressDistrict: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-address-city">Cidade</label>
+                      <input
+                        id="company-edit-address-city"
+                        value={companyForm.addressCity}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressCity: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-address-state">Estado</label>
+                      <input
+                        id="company-edit-address-state"
+                        value={companyForm.addressState}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressState: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-address-zip">CEP</label>
+                      <input
+                        id="company-edit-address-zip"
+                        value={maskZipCode(companyForm.addressZipCode)}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressZipCode: normalizeDigits(
+                              event.target.value,
+                            ).slice(0, 8),
+                          }))
+                        }
+                        placeholder="00000-000"
+                      />
+                    </div>
+
+                    <div className="field field-span-2">
+                      <label htmlFor="company-edit-address-complement">
+                        Complemento
+                      </label>
+                      <input
+                        id="company-edit-address-complement"
+                        value={companyForm.addressComplement}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressComplement: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="company-edit-address-country">Pais</label>
+                      <input
+                        id="company-edit-address-country"
+                        value={companyForm.addressCountry}
+                        onChange={(event) =>
+                          setCompanyForm((current) => ({
+                            ...current,
+                            addressCountry: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => {
+                      setIsCompanyEditModalOpen(false);
+                      setEditingCompanyId(null);
+                      setCompanyForm(INITIAL_COMPANY_FORM);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn solid">
+                    Salvar alteracoes
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {isCompanyDeleteModalOpen && pendingDeleteCompanyId && (
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => {
+              setIsCompanyDeleteModalOpen(false);
+              setPendingDeleteCompanyId(null);
+            }}
+          >
+            <section
+              className="crm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirmar exclusao de company"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Confirmar exclusao</h2>
+              <p>Quer mesmo excluir esta company?</p>
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => {
+                    setIsCompanyDeleteModalOpen(false);
+                    setPendingDeleteCompanyId(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={async () => {
+                    if (pendingDeleteCompanyId) {
+                      await deleteCompanyMut.mutateAsync(
+                        pendingDeleteCompanyId,
+                      );
+                    }
+
+                    setIsCompanyDeleteModalOpen(false);
+                    setPendingDeleteCompanyId(null);
+                  }}
+                >
+                  Excluir
+                </button>
+              </div>
             </section>
           </div>
         )}

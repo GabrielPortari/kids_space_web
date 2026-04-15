@@ -10,6 +10,16 @@ export type CreateChildPayload = {
   birthDate?: string;
   companyId?: string;
   parents?: string[];
+  address?: {
+    street?: string;
+    number?: string;
+    district?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    complement?: string;
+    country?: string;
+  };
 };
 
 export async function listChildren(companyId?: string) {
