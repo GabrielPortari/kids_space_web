@@ -2,15 +2,15 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { z } from "zod";
-import { authRoleLabels } from "../auth/authRoles";
-import type { AuthRole } from "../auth/jwt";
-import { useAuth } from "../auth/useAuth";
+import { authRoleLabels } from "../../auth/authRoles";
+import type { AuthRole } from "../../auth/jwt";
+import { useAuth } from "../../auth/useAuth";
 import {
   createCollaborator,
   deleteCollaborator,
   listCollaborators,
   updateCollaborator,
-} from "../api/modules/collaboratorApi";
+} from "../../api/modules/collaboratorApi";
 import {
   assignChildrenToParent,
   createParent,
@@ -18,26 +18,26 @@ import {
   listParents,
   type CreateParentPayload,
   updateParent,
-} from "../api/modules/parentApi";
+} from "../../api/modules/parentApi";
 import {
   assignParentsToChild,
   createChild,
   deleteChild,
   listChildren,
   updateChild,
-} from "../api/modules/childApi";
+} from "../../api/modules/childApi";
 import {
   checkin,
   checkout,
   deleteAttendance,
   listAttendances,
-} from "../api/modules/attendanceApi";
+} from "../../api/modules/attendanceApi";
 import {
   bootstrapAdmin,
   listAttendancesAdmin,
   listChildrenAdmin,
   listCollaboratorsAdmin,
-} from "../api/modules/adminApi";
+} from "../../api/modules/adminApi";
 import {
   createCompany,
   deleteCompany,
@@ -45,11 +45,11 @@ import {
   listCompanies,
   updateCompany,
   updateMyCompany,
-} from "../api/modules/companyApi";
+} from "../../api/modules/companyApi";
 import {
   getMyCollaborator,
   updateMyCollaborator,
-} from "../api/modules/profileApi";
+} from "../../api/modules/profileApi";
 
 type CrmSection =
   | "profile"

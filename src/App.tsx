@@ -6,7 +6,7 @@ import { CompanySignupPage } from "./pages/CompanySignupPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { LoginPage } from "./pages/LoginPage";
-import { RoleWorkspacePage } from "./pages/RoleWorkspacePage";
+import { RoleWorkspacePage } from "./pages/workspace/RoleWorkspacePage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { AppRedirect } from "./routes/AppRedirect";
 import "./App.css";
