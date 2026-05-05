@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import {
@@ -8,6 +9,7 @@ import {
   type CheckinPayload,
   type CheckoutPayload,
 } from "../../../api/modules/attendanceApi";
+import { getChildName } from "../../../api/modules/childApi";
 import { listAttendancesAdmin } from "../../../api/modules/adminApi";
 import type { ListItem } from "../types";
 import { matchesSearch, paginate } from "../formatter";
@@ -25,6 +27,20 @@ export function useAttendance() {
     isAdminOrMaster,
     currentCompanyScope,
   } = useWorkspaceContext();
+
+  // State
+  const [isAttendanceViewModalOpen, setIsAttendanceViewModalOpen] =
+    useState(false);
+  const [viewingAttendanceId, setViewingAttendanceId] = useState<string | null>(
+    null,
+  );
+  const [viewingAttendance, setViewingAttendance] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [childNamesMap, setChildNamesMap] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   // Queries
   const attendancesQuery = useQuery({
@@ -61,9 +77,16 @@ export function useAttendance() {
     },
   });
 
-  // Derived
+  // Resolve child names
   const attendances = attendancesQuery.data || [];
-  const filteredCollection = attendances.filter((item: ListItem) =>
+  const resolvedAttendances = attendances.map((item: any) => ({
+    ...item,
+    childName:
+      childNamesMap.get(item.childId) || item.childName || "Crianca sem nome",
+  }));
+
+  // Derived
+  const filteredCollection = resolvedAttendances.filter((item: ListItem) =>
     matchesSearch(item as ListItem, search),
   );
   const totalPages = Math.max(
@@ -71,6 +94,31 @@ export function useAttendance() {
     Math.ceil(filteredCollection.length / PAGE_SIZE),
   );
   const pagedCollection = paginate(filteredCollection, page, PAGE_SIZE);
+
+  // Resolve child names from endpoint
+  useEffect(() => {
+    const unresolvedChildIds = attendances
+      .map((item: any) => item.childId)
+      .filter(
+        (childId: string) =>
+          childId && !childNamesMap.has(childId) && !childNamesMap.get(childId),
+      );
+
+    if (unresolvedChildIds.length === 0) return;
+
+    (async () => {
+      const newNames = new Map(childNamesMap);
+      await Promise.all(
+        unresolvedChildIds.map(async (childId: string) => {
+          const name = await getChildName(childId);
+          if (name) {
+            newNames.set(childId, name);
+          }
+        }),
+      );
+      setChildNamesMap(newNames);
+    })();
+  }, [attendances, childNamesMap]);
 
   // Handlers
   async function onCheckin(event: FormEvent<HTMLFormElement>) {
@@ -127,7 +175,21 @@ export function useAttendance() {
     await deleteAttendanceMut.mutateAsync(attendanceId);
   }
 
+  function openAttendanceViewModal(item: Record<string, unknown>) {
+    setViewingAttendance(item);
+    setViewingAttendanceId(String(item.id || ""));
+    setIsAttendanceViewModalOpen(true);
+  }
+
   return {
+    // state
+    isAttendanceViewModalOpen,
+    setIsAttendanceViewModalOpen,
+    viewingAttendanceId,
+    setViewingAttendanceId,
+    viewingAttendance,
+    setViewingAttendance,
+
     // queries/mutations
     attendancesQuery,
     checkinMut,
@@ -135,7 +197,7 @@ export function useAttendance() {
     deleteAttendanceMut,
 
     // derived
-    attendances,
+    attendances: resolvedAttendances,
     filteredCollection,
     totalPages,
     pagedCollection,
@@ -144,5 +206,6 @@ export function useAttendance() {
     onCheckin,
     onCheckout,
     onDeleteAttendance,
+    openAttendanceViewModal,
   };
 }

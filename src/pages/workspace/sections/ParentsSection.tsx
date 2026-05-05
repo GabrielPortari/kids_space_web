@@ -6,8 +6,30 @@ import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { EntitySearchList } from "../components/EntitySearchList";
 import { Pagination } from "../components/Pagination";
-import { maskCpf, normalizeDigits, extractId, maskPhone } from "../formatter";
+import {
+  maskCpf,
+  normalizeDigits,
+  extractId,
+  maskPhone,
+  parseIdList,
+} from "../formatter";
 import type { ListItem } from "../types";
+
+function formatLinkedNames(idsValue: string, items: ListItem[]): string {
+  const ids = parseIdList(idsValue);
+  if (ids.length === 0) {
+    return "-";
+  }
+
+  const nameById = new Map(
+    items.map((item) => [extractId(item), String(item.name || "")]),
+  );
+
+  return ids
+    .map((id) => nameById.get(id) || id)
+    .filter(Boolean)
+    .join(", ");
+}
 
 export function ParentsSection() {
   const { page, setPage, search, setSearch } = useWorkspaceContext();
@@ -17,6 +39,8 @@ export function ParentsSection() {
 
   const {
     filteredParents,
+    isParentViewModalOpen,
+    setIsParentViewModalOpen,
     parentForm,
     setParentForm,
     isParentModalOpen,
@@ -27,6 +51,7 @@ export function ParentsSection() {
     setParentChildrenSearch,
     selectedParentChildrenIds,
     toggleParentChildSelection,
+    openParentViewModal,
     onCreateParent,
     onUpdateParent,
     openParentEditModal,
@@ -76,7 +101,12 @@ export function ParentsSection() {
             const id = extractId(typed);
 
             return (
-              <article key={id || JSON.stringify(item)} className="crm-row">
+              <article
+                key={id || JSON.stringify(item)}
+                className="crm-row"
+                onClick={() => openParentViewModal(typed)}
+                style={{ cursor: "pointer" }}
+              >
                 <div>
                   <strong>{typed.name || "Responsavel sem nome"}</strong>
                   <p>{maskCpf(typed.document || "") || "CPF nao informado"}</p>
@@ -86,14 +116,18 @@ export function ParentsSection() {
                     type="button"
                     className="btn outline"
                     title="Editar"
-                    onClick={() => openParentEditModal(typed)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openParentEditModal(typed);
+                    }}
                   >
                     ✏️
                   </button>
                   <button
                     type="button"
                     className="btn ghost"
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       if (!id) return;
                       setPendingDeleteParentId(id);
                     }}
@@ -116,6 +150,108 @@ export function ParentsSection() {
           onPageChange={setPage}
         />
       </section>
+
+      {isParentViewModalOpen && (
+        <div
+          className="crm-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsParentViewModalOpen(false)}
+        >
+          <section
+            className="crm-modal collaborator-view-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Visualizar responsavel"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2>Detalhes do Responsavel</h2>
+            <div className="collaborator-view-content">
+              <section className="profile-section">
+                <h3>Dados pessoais</h3>
+                <div className="profile-grid">
+                  <article className="profile-card">
+                    <span>Nome</span>
+                    <strong>{parentForm.name || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>CPF</span>
+                    <strong>{maskCpf(parentForm.document) || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Email</span>
+                    <strong>{parentForm.email || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Contato</span>
+                    <strong>{maskPhone(parentForm.contact) || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Data de nascimento</span>
+                    <strong>{parentForm.birthDate || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Criancas vinculadas</span>
+                    <strong>
+                      {formatLinkedNames(
+                        parentForm.children,
+                        childrenHook.children as ListItem[],
+                      )}
+                    </strong>
+                  </article>
+                </div>
+              </section>
+
+              <section className="profile-section">
+                <h3>Endereco</h3>
+                <div className="profile-grid">
+                  <article className="profile-card">
+                    <span>Rua</span>
+                    <strong>{parentForm.addressStreet || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Numero</span>
+                    <strong>{parentForm.addressNumber || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Bairro</span>
+                    <strong>{parentForm.addressDistrict || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Cidade</span>
+                    <strong>{parentForm.addressCity || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Estado</span>
+                    <strong>{parentForm.addressState || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>CEP</span>
+                    <strong>{parentForm.addressZipCode || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Complemento</span>
+                    <strong>{parentForm.addressComplement || "-"}</strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Pais</span>
+                    <strong>{parentForm.addressCountry || "-"}</strong>
+                  </article>
+                </div>
+              </section>
+            </div>
+
+            <div className="crm-modal-actions">
+              <button
+                type="button"
+                className="btn outline"
+                onClick={() => setIsParentViewModalOpen(false)}
+              >
+                Fechar
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {isParentModalOpen && (
         <div

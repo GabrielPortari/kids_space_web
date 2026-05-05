@@ -46,10 +46,6 @@ export function RoleWorkspacePageContent({
       />
 
       <section className="crm-main">
-        <div className="crm-header">
-          <h1 className="crm-title">Painel CRM</h1>
-        </div>
-
         <StatusMessage message={statusMessage} />
 
         {section === "profile" && <ProfileSection />}
@@ -62,21 +58,6 @@ export function RoleWorkspacePageContent({
         {section === "master-bootstrap" && isAdminOrMaster && (
           <BootstrapSection />
         )}
-
-        <div className="crm-sidebar-actions">
-          <Link to="/" className="btn outline auth-back">
-            Voltar para Home
-          </Link>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => {
-              void logout();
-            }}
-          >
-            Sair
-          </button>
-        </div>
       </section>
     </main>
   );

@@ -9,6 +9,7 @@ import {
   type UpdateCompanyPayload,
 } from "../../../api/modules/companyApi";
 import { bootstrapAdmin } from "../../../api/modules/adminApi";
+import { buildBackendAddressPayload } from "../../../api/address";
 import type { CompanyFormState, ListItem } from "../types";
 import { INITIAL_COMPANY_FORM, PAGE_SIZE } from "../constants";
 import {
@@ -117,21 +118,6 @@ export function useCompanies() {
     const contact = normalizeDigits(companyForm.contact).slice(0, 11);
     const email = companyForm.email.trim();
 
-    const addressEntries = {
-      street: companyForm.addressStreet.trim(),
-      number: companyForm.addressNumber.trim(),
-      district: companyForm.addressDistrict.trim(),
-      city: companyForm.addressCity.trim(),
-      state: companyForm.addressState.trim(),
-      zipCode: normalizeDigits(companyForm.addressZipCode),
-      complement: companyForm.addressComplement.trim(),
-      country: companyForm.addressCountry.trim(),
-    };
-
-    const compactAddress = Object.fromEntries(
-      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
-    );
-
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");
       return;
@@ -143,8 +129,7 @@ export function useCompanies() {
       cnpj: cnpj || undefined,
       contact: contact || undefined,
       email: email || undefined,
-      address:
-        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+      address: buildBackendAddressPayload(companyForm),
     });
 
     setCompanyForm(INITIAL_COMPANY_FORM);
@@ -165,21 +150,6 @@ export function useCompanies() {
     const contact = normalizeDigits(companyForm.contact).slice(0, 11);
     const email = companyForm.email.trim();
 
-    const addressEntries = {
-      street: companyForm.addressStreet.trim(),
-      number: companyForm.addressNumber.trim(),
-      district: companyForm.addressDistrict.trim(),
-      city: companyForm.addressCity.trim(),
-      state: companyForm.addressState.trim(),
-      zipCode: normalizeDigits(companyForm.addressZipCode),
-      complement: companyForm.addressComplement.trim(),
-      country: companyForm.addressCountry.trim(),
-    };
-
-    const compactAddress = Object.fromEntries(
-      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
-    );
-
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");
       return;
@@ -191,8 +161,7 @@ export function useCompanies() {
       cnpj: cnpj || undefined,
       contact: contact || undefined,
       email: email || undefined,
-      address:
-        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+      address: buildBackendAddressPayload(companyForm),
     };
 
     await updateCompanyMut.mutateAsync({ id: editingCompanyId, payload });

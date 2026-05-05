@@ -9,6 +9,7 @@ import {
   type CreateParentPayload,
   updateParent,
 } from "../../../api/modules/parentApi";
+import { buildBackendAddressPayload } from "../../../api/address";
 import type { ParentFormState, ListItem } from "../types";
 import { INITIAL_PARENT_FORM } from "../constants";
 import {
@@ -33,8 +34,10 @@ export function useParents() {
 
   // State
   const [isParentModalOpen, setIsParentModalOpen] = useState(false);
+  const [isParentViewModalOpen, setIsParentViewModalOpen] = useState(false);
   const [isParentEditModalOpen, setIsParentEditModalOpen] = useState(false);
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
+  const [viewingParentId, setViewingParentId] = useState<string | null>(null);
   const [parentForm, setParentForm] =
     useState<ParentFormState>(INITIAL_PARENT_FORM);
   const [parentChildrenSearch, setParentChildrenSearch] = useState("");
@@ -132,21 +135,6 @@ export function useParents() {
     const birthDate = parentForm.birthDate.trim();
     const children = parseIdList(parentForm.children);
 
-    const addressEntries = {
-      street: parentForm.addressStreet.trim(),
-      number: parentForm.addressNumber.trim(),
-      district: parentForm.addressDistrict.trim(),
-      city: parentForm.addressCity.trim(),
-      state: parentForm.addressState.trim(),
-      zipCode: normalizeDigits(parentForm.addressZipCode),
-      complement: parentForm.addressComplement.trim(),
-      country: parentForm.addressCountry.trim(),
-    };
-
-    const compactAddress = Object.fromEntries(
-      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
-    );
-
     if (!name) {
       setStatusMessage("Nome do responsavel e obrigatorio.");
       return;
@@ -160,8 +148,7 @@ export function useParents() {
       contact: contact || undefined,
       birthDate: birthDate || undefined,
       children: children.length ? children : undefined,
-      address:
-        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+      address: buildBackendAddressPayload(parentForm),
     };
 
     await createParentMut.mutateAsync(payload);
@@ -187,21 +174,6 @@ export function useParents() {
     const birthDate = parentForm.birthDate.trim();
     const children = parseIdList(parentForm.children);
 
-    const addressEntries = {
-      street: parentForm.addressStreet.trim(),
-      number: parentForm.addressNumber.trim(),
-      district: parentForm.addressDistrict.trim(),
-      city: parentForm.addressCity.trim(),
-      state: parentForm.addressState.trim(),
-      zipCode: normalizeDigits(parentForm.addressZipCode),
-      complement: parentForm.addressComplement.trim(),
-      country: parentForm.addressCountry.trim(),
-    };
-
-    const compactAddress = Object.fromEntries(
-      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
-    );
-
     if (!name) {
       setStatusMessage("Nome do responsavel e obrigatorio.");
       return;
@@ -214,8 +186,7 @@ export function useParents() {
       contact: contact || undefined,
       birthDate: birthDate || undefined,
       children: children.length ? children : undefined,
-      address:
-        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+      address: buildBackendAddressPayload(parentForm),
     };
 
     await updateParentMut.mutateAsync({ id: editingParentId, payload });
@@ -238,6 +209,21 @@ export function useParents() {
     setIsParentEditModalOpen(true);
   }
 
+  function openParentViewModal(item: ListItem) {
+    const id = extractId(item);
+    if (!id) {
+      setStatusMessage(
+        "Nao foi possivel abrir a visualizacao deste responsavel.",
+      );
+      return;
+    }
+
+    setViewingParentId(id);
+    setParentForm(toParentFormState(item));
+    setParentChildrenSearch("");
+    setIsParentViewModalOpen(true);
+  }
+
   async function onDeleteParent(parentId: string) {
     await deleteParentMut.mutateAsync(parentId);
   }
@@ -246,10 +232,14 @@ export function useParents() {
     // state
     isParentModalOpen,
     setIsParentModalOpen,
+    isParentViewModalOpen,
+    setIsParentViewModalOpen,
     isParentEditModalOpen,
     setIsParentEditModalOpen,
     editingParentId,
     setEditingParentId,
+    viewingParentId,
+    setViewingParentId,
     parentForm,
     setParentForm,
     parentChildrenSearch,
@@ -271,6 +261,7 @@ export function useParents() {
     // handlers
     onCreateParent,
     onUpdateParent,
+    openParentViewModal,
     openParentEditModal,
     onDeleteParent,
     toggleParentChildSelection,

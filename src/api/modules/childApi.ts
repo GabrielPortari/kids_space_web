@@ -1,4 +1,5 @@
 import { apiRequest } from "../client";
+import type { BackendAddressPayload } from "../address";
 import type { Child } from "../../domain/entities";
 import { getList, toQueryString } from "./utils";
 
@@ -11,15 +12,13 @@ export type CreateChildPayload = {
   companyId?: string;
   parents?: string[];
   address?: {
-    street?: string;
+    address?: string;
     number?: string;
-    district?: string;
+    neighborhood?: string;
     city?: string;
     state?: string;
-    zipCode?: string;
     complement?: string;
-    country?: string;
-  };
+  } & Pick<BackendAddressPayload, "zipcode">;
 };
 
 export async function listChildren(companyId?: string) {
@@ -54,4 +53,18 @@ export async function assignParentsToChild(childId: string, parents: string[]) {
     method: "POST",
     body: { parents },
   });
+}
+
+export async function getChildName(childId: string): Promise<string> {
+  try {
+    const response = await apiRequest<{ name?: string }>(
+      `/v2/children/${childId}/name`,
+      {
+        method: "GET",
+      },
+    );
+    return response.name || "";
+  } catch {
+    return "";
+  }
 }

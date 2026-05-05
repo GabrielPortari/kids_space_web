@@ -8,14 +8,15 @@ import {
   updateCollaborator,
   type CreateCollaboratorPayload,
 } from "../../../api/modules/collaboratorApi";
+import { buildBackendAddressPayload } from "../../../api/address";
 import { listCollaboratorsAdmin } from "../../../api/modules/adminApi";
 import type { CollaboratorFormState, ListItem } from "../types";
 import { INITIAL_COLLABORATOR_FORM } from "../constants";
 import {
   extractId,
   normalizeDigits,
-  normalizeDateInput,
   matchesSearch,
+  toCollaboratorFormState,
 } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { PAGE_SIZE } from "../constants";
@@ -137,21 +138,6 @@ export function useCollaborators() {
     const contact = normalizeDigits(collaboratorForm.contact).slice(0, 11);
     const birthDate = collaboratorForm.birthDate.trim();
 
-    const addressEntries = {
-      street: collaboratorForm.addressStreet.trim(),
-      number: collaboratorForm.addressNumber.trim(),
-      district: collaboratorForm.addressDistrict.trim(),
-      city: collaboratorForm.addressCity.trim(),
-      state: collaboratorForm.addressState.trim(),
-      zipCode: normalizeDigits(collaboratorForm.addressZipCode),
-      complement: collaboratorForm.addressComplement.trim(),
-      country: collaboratorForm.addressCountry.trim(),
-    };
-
-    const compactAddress = Object.fromEntries(
-      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
-    );
-
     if (!name || !email) {
       setStatusMessage("Nome e email sao obrigatorios para colaborador.");
       return;
@@ -163,8 +149,7 @@ export function useCollaborators() {
       document: document || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      address:
-        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+      address: buildBackendAddressPayload(collaboratorForm),
       companyId: currentCompanyScope,
     });
 
@@ -186,21 +171,6 @@ export function useCollaborators() {
     const contact = normalizeDigits(collaboratorForm.contact).slice(0, 11);
     const birthDate = collaboratorForm.birthDate.trim();
 
-    const addressEntries = {
-      street: collaboratorForm.addressStreet.trim(),
-      number: collaboratorForm.addressNumber.trim(),
-      district: collaboratorForm.addressDistrict.trim(),
-      city: collaboratorForm.addressCity.trim(),
-      state: collaboratorForm.addressState.trim(),
-      zipCode: normalizeDigits(collaboratorForm.addressZipCode),
-      complement: collaboratorForm.addressComplement.trim(),
-      country: collaboratorForm.addressCountry.trim(),
-    };
-
-    const compactAddress = Object.fromEntries(
-      Object.entries(addressEntries).filter(([, value]) => Boolean(value)),
-    );
-
     if (!name || !email) {
       setStatusMessage("Nome e email sao obrigatorios para colaborador.");
       return;
@@ -213,8 +183,7 @@ export function useCollaborators() {
       document: document || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      address:
-        Object.keys(compactAddress).length > 0 ? compactAddress : undefined,
+      address: buildBackendAddressPayload(collaboratorForm),
     });
 
     setIsCollaboratorEditModalOpen(false);
@@ -230,6 +199,7 @@ export function useCollaborators() {
     }
 
     setViewingCollaboratorId(id);
+    setCollaboratorForm(toCollaboratorFormState(item));
     setIsCollaboratorViewModalOpen(true);
   }
 
@@ -240,32 +210,8 @@ export function useCollaborators() {
       return;
     }
 
-    const address =
-      item.address &&
-      typeof item.address === "object" &&
-      !Array.isArray(item.address)
-        ? (item.address as Record<string, unknown>)
-        : {};
-
     setEditingCollaboratorId(id);
-    setCollaboratorForm({
-      name: String(item.name || ""),
-      email: String(item.email || ""),
-      document: normalizeDigits(String(item.document || "")).slice(0, 14),
-      contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
-      birthDate: normalizeDateInput(String(item.birthDate || "")),
-      addressStreet: String(address.street || ""),
-      addressNumber: String(address.number || ""),
-      addressDistrict: String(address.district || ""),
-      addressCity: String(address.city || ""),
-      addressState: String(address.state || ""),
-      addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(
-        0,
-        8,
-      ),
-      addressComplement: String(address.complement || ""),
-      addressCountry: String(address.country || ""),
-    });
+    setCollaboratorForm(toCollaboratorFormState(item));
     setIsCollaboratorEditModalOpen(true);
   }
 

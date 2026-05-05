@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { buildBackendAddressPayload } from "../api/address";
 import { authRolePaths } from "../auth/authRoles";
 import { useAuth } from "../auth/useAuth";
 
@@ -56,16 +57,15 @@ export function CompanySignupPage() {
       name: String(formData.get("name") || "").trim(),
       legalName: String(formData.get("legalName") || "").trim(),
       cnpj: String(formData.get("cnpj") || "").replace(/\D/g, ""),
-      address: {
-        street: String(formData.get("street") || "").trim(),
-        number: String(formData.get("number") || "").trim(),
-        district: String(formData.get("district") || "").trim(),
-        city: String(formData.get("city") || "").trim(),
-        state: String(formData.get("state") || "").trim(),
-        zipCode: String(formData.get("zipCode") || "").replace(/\D/g, ""),
-        complement:
-          String(formData.get("complement") || "").trim() || undefined,
-      },
+      address: buildBackendAddressPayload({
+        addressStreet: String(formData.get("street") || "").trim(),
+        addressNumber: String(formData.get("number") || "").trim(),
+        addressDistrict: String(formData.get("district") || "").trim(),
+        addressCity: String(formData.get("city") || "").trim(),
+        addressState: String(formData.get("state") || "").trim(),
+        addressZipCode: String(formData.get("zipCode") || "").trim(),
+        addressComplement: String(formData.get("complement") || "").trim(),
+      }),
       contact: String(formData.get("contact") || "").trim(),
       email: String(formData.get("email") || "").trim(),
       password: String(formData.get("password") || ""),
@@ -295,11 +295,6 @@ export function CompanySignupPage() {
             {disabled ? "Criando conta..." : "Criar conta company"}
           </button>
         </form>
-        <div className="auth-actions">
-          <Link to="/" className="btn outline auth-back">
-            Voltar para Home
-          </Link>
-        </div>
       </section>
     </main>
   );

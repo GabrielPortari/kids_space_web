@@ -1,4 +1,5 @@
 import { apiRequest } from "../client";
+import type { BackendAddressPayload } from "../address";
 import type { Parent } from "../../domain/entities";
 import { getList, toQueryString } from "./utils";
 
@@ -8,7 +9,7 @@ export type CreateParentPayload = {
   email?: string;
   contact?: string;
   birthDate?: string;
-  address?: Record<string, unknown>;
+  address?: BackendAddressPayload;
   companyId?: string;
   children?: string[];
 };

@@ -71,12 +71,14 @@ export function toParentFormState(item: ListItem): ParentFormState {
     contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
     birthDate: normalizeDateInput(String(item.birthDate || "")),
     children,
-    addressStreet: String(address.street || ""),
+    addressStreet: String(address.address || address.street || ""),
     addressNumber: String(address.number || ""),
-    addressDistrict: String(address.district || ""),
+    addressDistrict: String(address.neighborhood || address.district || ""),
     addressCity: String(address.city || ""),
     addressState: String(address.state || ""),
-    addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(0, 8),
+    addressZipCode: normalizeDigits(
+      String(address.zipcode || address.zipCode || ""),
+    ).slice(0, 8),
     addressComplement: String(address.complement || ""),
     addressCountry: String(address.country || ""),
   };
@@ -102,12 +104,14 @@ export function toChildFormState(item: ListItem): ChildFormState {
     birthDate: normalizeDateInput(String(item.birthDate || "")),
     parents,
     inheritParentAddress: false,
-    addressStreet: String(address.street || ""),
+    addressStreet: String(address.address || address.street || ""),
     addressNumber: String(address.number || ""),
-    addressDistrict: String(address.district || ""),
+    addressDistrict: String(address.neighborhood || address.district || ""),
     addressCity: String(address.city || ""),
     addressState: String(address.state || ""),
-    addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(0, 8),
+    addressZipCode: normalizeDigits(
+      String(address.zipcode || address.zipCode || ""),
+    ).slice(0, 8),
     addressComplement: String(address.complement || ""),
     addressCountry: String(address.country || ""),
   };
@@ -127,12 +131,41 @@ export function toCompanyFormState(item: ListItem): CompanyFormState {
     cnpj: normalizeDigits(String(item.cnpj || "")).slice(0, 14),
     contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
     email: String(item.email || ""),
-    addressStreet: String(address.street || ""),
+    addressStreet: String(address.address || address.street || ""),
     addressNumber: String(address.number || ""),
-    addressDistrict: String(address.district || ""),
+    addressDistrict: String(address.neighborhood || address.district || ""),
     addressCity: String(address.city || ""),
     addressState: String(address.state || ""),
-    addressZipCode: normalizeDigits(String(address.zipCode || "")).slice(0, 8),
+    addressZipCode: normalizeDigits(
+      String(address.zipcode || address.zipCode || ""),
+    ).slice(0, 8),
+    addressComplement: String(address.complement || ""),
+    addressCountry: String(address.country || ""),
+  };
+}
+
+export function toCollaboratorFormState(item: ListItem) {
+  const address =
+    item.address &&
+    typeof item.address === "object" &&
+    !Array.isArray(item.address)
+      ? (item.address as Record<string, unknown>)
+      : {};
+
+  return {
+    name: String(item.name || ""),
+    email: String(item.email || ""),
+    document: normalizeDigits(String(item.document || "")).slice(0, 14),
+    contact: normalizeDigits(String(item.contact || "")).slice(0, 11),
+    birthDate: normalizeDateInput(String(item.birthDate || "")),
+    addressStreet: String(address.address || address.street || ""),
+    addressNumber: String(address.number || ""),
+    addressDistrict: String(address.neighborhood || address.district || ""),
+    addressCity: String(address.city || ""),
+    addressState: String(address.state || ""),
+    addressZipCode: normalizeDigits(
+      String(address.zipcode || address.zipCode || ""),
+    ).slice(0, 8),
     addressComplement: String(address.complement || ""),
     addressCountry: String(address.country || ""),
   };

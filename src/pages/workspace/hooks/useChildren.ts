@@ -9,6 +9,7 @@ import {
   updateChild,
   type CreateChildPayload,
 } from "../../../api/modules/childApi";
+import { buildBackendAddressPayload } from "../../../api/address";
 import { listChildrenAdmin } from "../../../api/modules/adminApi";
 import { listParents } from "../../../api/modules/parentApi";
 import type { ChildFormState, ListItem } from "../types";
@@ -37,9 +38,11 @@ export function useChildren() {
 
   // State
   const [isChildCreateModalOpen, setIsChildCreateModalOpen] = useState(false);
+  const [isChildViewModalOpen, setIsChildViewModalOpen] = useState(false);
   const [isChildEditModalOpen, setIsChildEditModalOpen] = useState(false);
   const [isChildDeleteModalOpen, setIsChildDeleteModalOpen] = useState(false);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
+  const [viewingChildId, setViewingChildId] = useState<string | null>(null);
   const [pendingDeleteChildId, setPendingDeleteChildId] = useState<
     string | null
   >(null);
@@ -179,25 +182,8 @@ export function useChildren() {
     const birthDate = childForm.birthDate.trim();
     const parents = parseIdList(childForm.parents);
 
-    const childAddressEntries = {
-      street: childForm.addressStreet.trim(),
-      number: childForm.addressNumber.trim(),
-      district: childForm.addressDistrict.trim(),
-      city: childForm.addressCity.trim(),
-      state: childForm.addressState.trim(),
-      zipCode: normalizeDigits(childForm.addressZipCode).slice(0, 8),
-      complement: childForm.addressComplement.trim(),
-      country: childForm.addressCountry.trim(),
-    };
-
-    const compactChildAddress = Object.fromEntries(
-      Object.entries(childAddressEntries).filter(([, value]) => Boolean(value)),
-    );
-
-    let addressPayload: Record<string, string> | undefined =
-      Object.keys(compactChildAddress).length > 0
-        ? compactChildAddress
-        : undefined;
+    let addressPayload: Record<string, unknown> | undefined =
+      buildBackendAddressPayload(childForm);
 
     if (childForm.inheritParentAddress) {
       if (!parents.length) {
@@ -218,30 +204,22 @@ export function useChildren() {
           ? (sourceParent.address as Record<string, unknown>)
           : {};
 
-      const inheritedAddressEntries = {
-        street: String(sourceAddress.street || "").trim(),
-        number: String(sourceAddress.number || "").trim(),
-        district: String(sourceAddress.district || "").trim(),
-        city: String(sourceAddress.city || "").trim(),
-        state: String(sourceAddress.state || "").trim(),
-        zipCode: normalizeDigits(String(sourceAddress.zipCode || "")).slice(
-          0,
-          8,
-        ),
-        complement: String(sourceAddress.complement || "").trim(),
-        country: String(sourceAddress.country || "").trim(),
-      };
-
-      const compactInheritedAddress = Object.fromEntries(
-        Object.entries(inheritedAddressEntries).filter(([, value]) =>
-          Boolean(value),
-        ),
-      );
-
-      addressPayload =
-        Object.keys(compactInheritedAddress).length > 0
-          ? compactInheritedAddress
-          : undefined;
+      addressPayload = buildBackendAddressPayload({
+        addressStreet: String(
+          sourceAddress.street || sourceAddress.address || "",
+        ).trim(),
+        addressNumber: String(sourceAddress.number || "").trim(),
+        addressDistrict: String(
+          sourceAddress.district || sourceAddress.neighborhood || "",
+        ).trim(),
+        addressCity: String(sourceAddress.city || "").trim(),
+        addressState: String(sourceAddress.state || "").trim(),
+        addressZipCode: normalizeDigits(
+          String(sourceAddress.zipCode || sourceAddress.zipcode || ""),
+        ).slice(0, 8),
+        addressComplement: String(sourceAddress.complement || "").trim(),
+        addressCountry: String(sourceAddress.country || "").trim(),
+      });
     }
 
     if (!name) {
@@ -280,25 +258,8 @@ export function useChildren() {
     const birthDate = childForm.birthDate.trim();
     const parents = parseIdList(childForm.parents);
 
-    const childAddressEntries = {
-      street: childForm.addressStreet.trim(),
-      number: childForm.addressNumber.trim(),
-      district: childForm.addressDistrict.trim(),
-      city: childForm.addressCity.trim(),
-      state: childForm.addressState.trim(),
-      zipCode: normalizeDigits(childForm.addressZipCode).slice(0, 8),
-      complement: childForm.addressComplement.trim(),
-      country: childForm.addressCountry.trim(),
-    };
-
-    const compactChildAddress = Object.fromEntries(
-      Object.entries(childAddressEntries).filter(([, value]) => Boolean(value)),
-    );
-
-    let addressPayload: Record<string, string> | undefined =
-      Object.keys(compactChildAddress).length > 0
-        ? compactChildAddress
-        : undefined;
+    let addressPayload: Record<string, unknown> | undefined =
+      buildBackendAddressPayload(childForm);
 
     if (childForm.inheritParentAddress) {
       if (!parents.length) {
@@ -319,30 +280,22 @@ export function useChildren() {
           ? (sourceParent.address as Record<string, unknown>)
           : {};
 
-      const inheritedAddressEntries = {
-        street: String(sourceAddress.street || "").trim(),
-        number: String(sourceAddress.number || "").trim(),
-        district: String(sourceAddress.district || "").trim(),
-        city: String(sourceAddress.city || "").trim(),
-        state: String(sourceAddress.state || "").trim(),
-        zipCode: normalizeDigits(String(sourceAddress.zipCode || "")).slice(
-          0,
-          8,
-        ),
-        complement: String(sourceAddress.complement || "").trim(),
-        country: String(sourceAddress.country || "").trim(),
-      };
-
-      const compactInheritedAddress = Object.fromEntries(
-        Object.entries(inheritedAddressEntries).filter(([, value]) =>
-          Boolean(value),
-        ),
-      );
-
-      addressPayload =
-        Object.keys(compactInheritedAddress).length > 0
-          ? compactInheritedAddress
-          : undefined;
+      addressPayload = buildBackendAddressPayload({
+        addressStreet: String(
+          sourceAddress.street || sourceAddress.address || "",
+        ).trim(),
+        addressNumber: String(sourceAddress.number || "").trim(),
+        addressDistrict: String(
+          sourceAddress.district || sourceAddress.neighborhood || "",
+        ).trim(),
+        addressCity: String(sourceAddress.city || "").trim(),
+        addressState: String(sourceAddress.state || "").trim(),
+        addressZipCode: normalizeDigits(
+          String(sourceAddress.zipCode || sourceAddress.zipcode || ""),
+        ).slice(0, 8),
+        addressComplement: String(sourceAddress.complement || "").trim(),
+        addressCountry: String(sourceAddress.country || "").trim(),
+      });
     }
 
     if (!name) {
@@ -380,6 +333,19 @@ export function useChildren() {
     setIsChildEditModalOpen(true);
   }
 
+  function openChildViewModal(item: ListItem) {
+    const id = extractId(item);
+    if (!id) {
+      setStatusMessage("Nao foi possivel abrir a visualizacao desta crianca.");
+      return;
+    }
+
+    setViewingChildId(id);
+    setChildForm(toChildFormState(item));
+    setChildParentsSearch("");
+    setIsChildViewModalOpen(true);
+  }
+
   async function onDeleteChild(childId: string) {
     await deleteChildMut.mutateAsync(childId);
   }
@@ -388,12 +354,16 @@ export function useChildren() {
     // state
     isChildCreateModalOpen,
     setIsChildCreateModalOpen,
+    isChildViewModalOpen,
+    setIsChildViewModalOpen,
     isChildEditModalOpen,
     setIsChildEditModalOpen,
     isChildDeleteModalOpen,
     setIsChildDeleteModalOpen,
     editingChildId,
     setEditingChildId,
+    viewingChildId,
+    setViewingChildId,
     pendingDeleteChildId,
     setPendingDeleteChildId,
     childForm,
@@ -421,6 +391,7 @@ export function useChildren() {
     // handlers
     onCreateChildModal,
     onUpdateChildModal,
+    openChildViewModal,
     openChildEditModal,
     onDeleteChild,
     toggleChildParentSelection,

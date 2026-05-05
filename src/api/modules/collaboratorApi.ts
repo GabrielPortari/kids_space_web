@@ -1,4 +1,5 @@
 import { apiRequest } from "../client";
+import type { BackendAddressPayload } from "../address";
 import type { Collaborator } from "../../domain/entities";
 import { getList, toQueryString } from "./utils";
 
@@ -9,15 +10,13 @@ export type CreateCollaboratorPayload = {
   contact?: string;
   birthDate?: string;
   address?: {
-    street?: string;
+    address?: string;
     number?: string;
-    district?: string;
+    neighborhood?: string;
     city?: string;
     state?: string;
-    zipCode?: string;
     complement?: string;
-    country?: string;
-  };
+  } & Pick<BackendAddressPayload, "zipcode">;
   companyId?: string;
 };
 

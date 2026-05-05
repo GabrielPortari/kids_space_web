@@ -15,12 +15,12 @@ export type CompanySignupPayload = {
   legalName: string;
   cnpj: string;
   address: {
-    street: string;
+    address: string;
     number: string;
-    district: string;
+    neighborhood: string;
     city: string;
     state: string;
-    zipCode: string;
+    zipcode?: string;
     complement?: string;
   };
   contact: string;

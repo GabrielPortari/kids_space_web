@@ -1,5 +1,6 @@
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { authRoleLabels } from "../../../auth/authRoles";
+import { Link } from "react-router-dom";
 import type { CrmSection } from "../types";
 
 type SectionNavProps = {
@@ -13,8 +14,14 @@ export function SectionNav({
   activeSection,
   onSelect,
 }: SectionNavProps) {
-  const { role, session, isAdminOrMaster, companyScope, setCompanyScope } =
-    useWorkspaceContext();
+  const {
+    role,
+    session,
+    isAdminOrMaster,
+    companyScope,
+    setCompanyScope,
+    logout,
+  } = useWorkspaceContext();
 
   return (
     <aside className="crm-sidebar">
@@ -53,7 +60,23 @@ export function SectionNav({
         ))}
       </nav>
 
-      <div className="crm-sidebar-actions"></div>
+      <div className="crm-sidebar-actions">
+        <hr className="crm-divider" />
+
+        <Link to="/" className="btn outline auth-back">
+          Voltar para Home
+        </Link>
+
+        <button
+          type="button"
+          className="btn solid"
+          onClick={() => {
+            void logout();
+          }}
+        >
+          Sair
+        </button>
+      </div>
     </aside>
   );
 }
