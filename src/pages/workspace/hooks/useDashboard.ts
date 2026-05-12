@@ -151,7 +151,7 @@ export function useDashboard() {
       isAdminOrMaster
         ? listCollaboratorsAdmin(currentCompanyScope)
         : listCollaborators(currentCompanyScope),
-    enabled: section === "dashboard",
+    enabled: section === "dashboard" && role === "company",
     staleTime: 60_000,
   });
 

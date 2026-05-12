@@ -1,8 +1,10 @@
 import { EntitySearchList } from "../components/EntitySearchList";
 import { useDashboard } from "../hooks/useDashboard";
+import { useWorkspaceContext } from "../WorkspaceContext";
 import { maskCpf, normalizeDigits } from "../formatter";
 
 export function DashboardSection() {
+  const { role } = useWorkspaceContext();
   const {
     childrenQuery,
     parentsQuery,
@@ -76,10 +78,12 @@ export function DashboardSection() {
             <span>👨‍👩‍👧 Responsaveis cadastrados</span>
             <strong>{dashboardMetrics.totalParents}</strong>
           </article>
-          <article className="profile-card">
-            <span>👷 Colaboradores</span>
-            <strong>{dashboardMetrics.totalCollaborators}</strong>
-          </article>
+          {role === "company" && (
+            <article className="profile-card">
+              <span>👷 Colaboradores</span>
+              <strong>{dashboardMetrics.totalCollaborators}</strong>
+            </article>
+          )}
           <article className="profile-card">
             <span>✅ Criancas no espaco agora</span>
             <strong>{dashboardMetrics.totalActiveAttendances}</strong>
