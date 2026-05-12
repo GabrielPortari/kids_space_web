@@ -54,7 +54,7 @@ export function WorkspaceProvider({
   children: ReactNode;
 }) {
   const { session, logout } = useAuth();
-  const [section, setSection] = useState<CrmSection>("profile");
+  const [section, setSection] = useState<CrmSection>("dashboard");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [companyScope, setCompanyScope] = useState("");
@@ -71,6 +71,7 @@ export function WorkspaceProvider({
 
   const availableSections = useMemo(() => {
     const base: { id: CrmSection; label: string }[] = [
+      { id: "dashboard", label: "Dashboard" },
       { id: "profile", label: "Perfil" },
     ];
 
@@ -82,12 +83,11 @@ export function WorkspaceProvider({
     base.push({ id: "attendance", label: "Attendances" });
 
     if (!isAdminOrMaster) {
-      base.splice(2, 0, { id: "parents", label: "Responsaveis" });
-      base.splice(4, 0, { id: "links", label: "Vinculos" });
+      base.splice(3, 0, { id: "parents", label: "Responsaveis" });
     }
 
     if (isAdminOrMaster) {
-      base.unshift({ id: "companies", label: "Companies" });
+      base.splice(1, 0, { id: "companies", label: "Companies" });
     }
 
     if (role === "master") {

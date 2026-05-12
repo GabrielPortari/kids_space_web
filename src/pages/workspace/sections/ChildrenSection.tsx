@@ -1,5 +1,4 @@
 import { useChildren } from "../hooks/useChildren";
-import { useParents } from "../hooks/useParents";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
@@ -28,7 +27,6 @@ export function ChildrenSection() {
   const { page, setPage, search, setSearch } = useWorkspaceContext();
 
   const childrenHook = useChildren();
-  const parentsHook = useParents();
 
   const {
     pagedCollection,
@@ -37,9 +35,13 @@ export function ChildrenSection() {
     openChildViewModal,
     openChildEditModal,
     onDeleteChild,
+    openChildAssignParentsModal,
+    onAssignParentsToChild,
+    toggleAssignChildParentSelection,
     deleteChildMut,
     createChildMut,
     updateChildMut,
+    assignParentsMut,
     childForm,
     setChildForm,
     isChildCreateModalOpen,
@@ -50,17 +52,15 @@ export function ChildrenSection() {
     setIsChildEditModalOpen,
     isChildDeleteModalOpen,
     setIsChildDeleteModalOpen,
+    isChildAssignParentsModalOpen,
+    setIsChildAssignParentsModalOpen,
     childParentsSearch,
     setChildParentsSearch,
-    selectedChildParentIds,
-    toggleChildParentSelection,
+    assigningChildParentIds,
+    assigningChildParentOptions,
     pendingDeleteChildId,
+    parents: childParents,
   } = childrenHook;
-
-  const childParentOptions = parentsHook.filteredParents.map((p: any) => ({
-    id: p.id,
-    name: p.name || "Parent sem nome",
-  }));
 
   const PAGE_SIZE = 8;
   const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
@@ -110,6 +110,18 @@ export function ChildrenSection() {
                   <button
                     type="button"
                     className="btn outline"
+                    title="Vincular responsaveis"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!id) return;
+                      openChildAssignParentsModal(id);
+                    }}
+                  >
+                    🔗
+                  </button>
+                  <button
+                    type="button"
+                    className="btn outline"
                     title="Editar"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -124,6 +136,7 @@ export function ChildrenSection() {
                     onClick={(event) => {
                       event.stopPropagation();
                       if (!id) return;
+                      childrenHook.setPendingDeleteChildId(id);
                       setIsChildDeleteModalOpen(true);
                     }}
                   >
@@ -189,7 +202,7 @@ export function ChildrenSection() {
                     <strong>
                       {formatLinkedNames(
                         childForm.parents,
-                        parentsHook.parents as ListItem[],
+                        childParents as ListItem[],
                       )}
                     </strong>
                   </article>
@@ -263,7 +276,7 @@ export function ChildrenSection() {
           >
             <h2>Nova Crianca</h2>
             <form
-              className="crm-form-grid child-form"
+              className="crm-form-grid child-modal-form"
               onSubmit={onCreateChildModal}
             >
               <section className="profile-section">
@@ -319,55 +332,25 @@ export function ChildrenSection() {
               </section>
 
               <section className="profile-section">
-                <h3>Vincular responsaveis</h3>
-                <EntitySearchList
-                  label="Responsaveis"
-                  searchValue={childParentsSearch}
-                  onSearchChange={setChildParentsSearch}
-                  options={childParentOptions}
-                  selectedIds={selectedChildParentIds}
-                  onToggle={toggleChildParentSelection}
-                  isLoading={parentsHook.parentsQuery.isLoading}
-                  mode="checkbox"
-                />
-              </section>
-
-              <section className="profile-section">
                 <h3>Endereco</h3>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={childForm.inheritParentAddress}
-                    onChange={(event) =>
-                      setChildForm((current) => ({
-                        ...current,
-                        inheritParentAddress: event.target.checked,
-                      }))
-                    }
-                  />
-                  Herdar endereco do primeiro responsavel selecionado
-                </label>
-
-                {!childForm.inheritParentAddress && (
-                  <AddressFormFields
-                    values={{
-                      addressStreet: childForm.addressStreet,
-                      addressNumber: childForm.addressNumber,
-                      addressDistrict: childForm.addressDistrict,
-                      addressCity: childForm.addressCity,
-                      addressState: childForm.addressState,
-                      addressZipCode: childForm.addressZipCode,
-                      addressComplement: childForm.addressComplement,
-                      addressCountry: childForm.addressCountry,
-                    }}
-                    onChange={(key, value) =>
-                      setChildForm((current) => ({
-                        ...current,
-                        [key]: value,
-                      }))
-                    }
-                  />
-                )}
+                <AddressFormFields
+                  values={{
+                    addressStreet: childForm.addressStreet,
+                    addressNumber: childForm.addressNumber,
+                    addressDistrict: childForm.addressDistrict,
+                    addressCity: childForm.addressCity,
+                    addressState: childForm.addressState,
+                    addressZipCode: childForm.addressZipCode,
+                    addressComplement: childForm.addressComplement,
+                    addressCountry: childForm.addressCountry,
+                  }}
+                  onChange={(key, value) =>
+                    setChildForm((current) => ({
+                      ...current,
+                      [key]: value,
+                    }))
+                  }
+                />
               </section>
 
               <div className="crm-modal-actions">
@@ -462,55 +445,25 @@ export function ChildrenSection() {
               </section>
 
               <section className="profile-section">
-                <h3>Vincular responsaveis</h3>
-                <EntitySearchList
-                  label="Responsaveis"
-                  searchValue={childParentsSearch}
-                  onSearchChange={setChildParentsSearch}
-                  options={childParentOptions}
-                  selectedIds={selectedChildParentIds}
-                  onToggle={toggleChildParentSelection}
-                  isLoading={parentsHook.parentsQuery.isLoading}
-                  mode="checkbox"
-                />
-              </section>
-
-              <section className="profile-section">
                 <h3>Endereco</h3>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={childForm.inheritParentAddress}
-                    onChange={(event) =>
-                      setChildForm((current) => ({
-                        ...current,
-                        inheritParentAddress: event.target.checked,
-                      }))
-                    }
-                  />
-                  Herdar endereco do primeiro responsavel selecionado
-                </label>
-
-                {!childForm.inheritParentAddress && (
-                  <AddressFormFields
-                    values={{
-                      addressStreet: childForm.addressStreet,
-                      addressNumber: childForm.addressNumber,
-                      addressDistrict: childForm.addressDistrict,
-                      addressCity: childForm.addressCity,
-                      addressState: childForm.addressState,
-                      addressZipCode: childForm.addressZipCode,
-                      addressComplement: childForm.addressComplement,
-                      addressCountry: childForm.addressCountry,
-                    }}
-                    onChange={(key, value) =>
-                      setChildForm((current) => ({
-                        ...current,
-                        [key]: value,
-                      }))
-                    }
-                  />
-                )}
+                <AddressFormFields
+                  values={{
+                    addressStreet: childForm.addressStreet,
+                    addressNumber: childForm.addressNumber,
+                    addressDistrict: childForm.addressDistrict,
+                    addressCity: childForm.addressCity,
+                    addressState: childForm.addressState,
+                    addressZipCode: childForm.addressZipCode,
+                    addressComplement: childForm.addressComplement,
+                    addressCountry: childForm.addressCountry,
+                  }}
+                  onChange={(key, value) =>
+                    setChildForm((current) => ({
+                      ...current,
+                      [key]: value,
+                    }))
+                  }
+                />
               </section>
 
               <div className="crm-modal-actions">
@@ -544,13 +497,74 @@ export function ChildrenSection() {
           if (pendingDeleteChildId) {
             await onDeleteChild(pendingDeleteChildId);
           }
+          childrenHook.setPendingDeleteChildId(null);
           setIsChildDeleteModalOpen(false);
         }}
-        onCancel={() => setIsChildDeleteModalOpen(false)}
+        onCancel={() => {
+          childrenHook.setPendingDeleteChildId(null);
+          setIsChildDeleteModalOpen(false);
+        }}
         isLoading={deleteChildMut.isPending}
         confirmLabel="Excluir"
         cancelLabel="Cancelar"
       />
+
+      {isChildAssignParentsModalOpen && (
+        <div
+          className="crm-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsChildAssignParentsModalOpen(false)}
+        >
+          <section
+            className="crm-modal crm-modal-wide"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Vincular responsaveis"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2>Vincular Responsaveis</h2>
+            <form onSubmit={onAssignParentsToChild}>
+              <section className="profile-section">
+                <EntitySearchList
+                  label="Responsaveis"
+                  searchValue={childParentsSearch}
+                  onSearchChange={setChildParentsSearch}
+                  options={
+                    assigningChildParentOptions.length === 0
+                      ? childParents.map((p: ListItem) => ({
+                          id: extractId(p),
+                          name: String(p.name || "Responsavel sem nome"),
+                        }))
+                      : assigningChildParentOptions
+                  }
+                  selectedIds={assigningChildParentIds}
+                  onToggle={toggleAssignChildParentSelection}
+                  isLoading={false}
+                  mode="checkbox"
+                />
+              </section>
+
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => setIsChildAssignParentsModalOpen(false)}
+                  disabled={assignParentsMut.isPending}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn solid"
+                  disabled={assignParentsMut.isPending}
+                >
+                  {assignParentsMut.isPending ? "Salvando..." : "Vincular"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </>
   );
 }

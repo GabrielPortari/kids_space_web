@@ -47,25 +47,28 @@ export function ParentsSection() {
     setIsParentModalOpen,
     isParentEditModalOpen,
     setIsParentEditModalOpen,
+    isParentAssignChildrenModalOpen,
+    setIsParentAssignChildrenModalOpen,
     parentChildrenSearch,
     setParentChildrenSearch,
-    selectedParentChildrenIds,
-    toggleParentChildSelection,
+    assigningParentChildIds,
+    assigningParentChildOptions,
     openParentViewModal,
     onCreateParent,
     onUpdateParent,
     openParentEditModal,
     onDeleteParent,
+    openParentAssignChildrenModal,
+    onAssignChildrenToParent,
+    toggleAssignParentChildSelection,
     deleteParentMut,
     createParentMut,
     updateParentMut,
+    assignChildrenMut,
   } = useParents();
 
   const childrenHook = useChildren();
-  const parentChildrenOptions = childrenHook.pagedCollection.map((c: any) => ({
-    id: c.id,
-    name: c.name || "Crianca sem nome",
-  }));
+  const allChildren = childrenHook.pagedCollection;
 
   const pagedParents = filteredParents.slice((page - 1) * 8, page * 8);
   const totalPages = Math.ceil(filteredParents.length / 8) || 1;
@@ -112,6 +115,18 @@ export function ParentsSection() {
                   <p>{maskCpf(typed.document || "") || "CPF nao informado"}</p>
                 </div>
                 <div className="crm-row-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    title="Vincular criancas"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!id) return;
+                      openParentAssignChildrenModal(id);
+                    }}
+                  >
+                    🔗
+                  </button>
                   <button
                     type="button"
                     className="btn outline"
@@ -268,7 +283,7 @@ export function ParentsSection() {
           >
             <h2>Novo Responsavel</h2>
             <form
-              className="crm-form-grid parent-form"
+              className="crm-form-grid parent-modal-form"
               onSubmit={onCreateParent}
             >
               <section className="profile-section">
@@ -346,20 +361,6 @@ export function ParentsSection() {
                   }))
                 }
               />
-
-              <section className="profile-section">
-                <h3>Vincular criancas</h3>
-                <EntitySearchList
-                  label="Criancas"
-                  searchValue={parentChildrenSearch}
-                  onSearchChange={setParentChildrenSearch}
-                  options={parentChildrenOptions}
-                  selectedIds={selectedParentChildrenIds}
-                  onToggle={toggleParentChildSelection}
-                  isLoading={childrenHook.childrenQuery.isLoading}
-                  mode="checkbox"
-                />
-              </section>
 
               <div className="crm-modal-actions">
                 <button
@@ -476,20 +477,6 @@ export function ParentsSection() {
                 }
               />
 
-              <section className="profile-section">
-                <h3>Vincular criancas</h3>
-                <EntitySearchList
-                  label="Criancas"
-                  searchValue={parentChildrenSearch}
-                  onSearchChange={setParentChildrenSearch}
-                  options={parentChildrenOptions}
-                  selectedIds={selectedParentChildrenIds}
-                  onToggle={toggleParentChildSelection}
-                  isLoading={childrenHook.childrenQuery.isLoading}
-                  mode="checkbox"
-                />
-              </section>
-
               <div className="crm-modal-actions">
                 <button
                   type="button"
@@ -528,6 +515,63 @@ export function ParentsSection() {
         confirmLabel="Excluir"
         cancelLabel="Cancelar"
       />
+
+      {isParentAssignChildrenModalOpen && (
+        <div
+          className="crm-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsParentAssignChildrenModalOpen(false)}
+        >
+          <section
+            className="crm-modal crm-modal-wide"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Vincular criancas"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2>Vincular Criancas</h2>
+            <form onSubmit={onAssignChildrenToParent}>
+              <section className="profile-section">
+                <EntitySearchList
+                  label="Criancas"
+                  searchValue={parentChildrenSearch}
+                  onSearchChange={setParentChildrenSearch}
+                  options={
+                    assigningParentChildOptions.length === 0
+                      ? allChildren.map((c: ListItem) => ({
+                          id: extractId(c),
+                          name: String(c.name || "Crianca sem nome"),
+                        }))
+                      : assigningParentChildOptions
+                  }
+                  selectedIds={assigningParentChildIds}
+                  onToggle={toggleAssignParentChildSelection}
+                  isLoading={false}
+                  mode="checkbox"
+                />
+              </section>
+
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => setIsParentAssignChildrenModalOpen(false)}
+                  disabled={assignChildrenMut.isPending}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn solid"
+                  disabled={assignChildrenMut.isPending}
+                >
+                  {assignChildrenMut.isPending ? "Salvando..." : "Vincular"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </>
   );
 }

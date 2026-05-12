@@ -24,11 +24,23 @@ export function normalizeDigits(value: string): string {
   return value.replace(/\D/g, "");
 }
 
-export function parseIdList(value: string): string[] {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+export function parseIdList(value: string | string[] | unknown): string[] {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
 }
 
 export function getParentDocument(item: ListItem): string {

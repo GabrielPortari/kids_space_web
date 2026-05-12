@@ -804,6 +804,11 @@ input {
   margin-top: 0.3rem;
 }
 
+.parent-form {
+  max-width: none;
+  width: 100%;
+}
+
 .parent-modal-form {
   width: 100%;
   max-width: none;

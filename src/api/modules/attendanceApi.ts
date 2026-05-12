@@ -20,6 +20,12 @@ export async function listAttendances(companyId?: string) {
   return getList<Attendance>(`/v2/attendance${toQueryString({ companyId })}`);
 }
 
+export async function listActiveCheckins(companyId?: string) {
+  return getList<Attendance>(
+    `/v2/attendance/company/active-checkins${toQueryString({ companyId })}`,
+  );
+}
+
 export async function checkin(payload: CheckinPayload) {
   return apiRequest<Attendance>("/v2/attendance/checkin", {
     method: "POST",

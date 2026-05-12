@@ -1,10 +1,10 @@
 export type CrmSection =
+  | "dashboard"
   | "profile"
   | "companies"
   | "collaborators"
   | "parents"
   | "children"
-  | "links"
   | "attendance"
   | "master-bootstrap";
 

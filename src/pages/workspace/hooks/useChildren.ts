@@ -41,14 +41,22 @@ export function useChildren() {
   const [isChildViewModalOpen, setIsChildViewModalOpen] = useState(false);
   const [isChildEditModalOpen, setIsChildEditModalOpen] = useState(false);
   const [isChildDeleteModalOpen, setIsChildDeleteModalOpen] = useState(false);
+  const [isChildAssignParentsModalOpen, setIsChildAssignParentsModalOpen] =
+    useState(false);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [viewingChildId, setViewingChildId] = useState<string | null>(null);
   const [pendingDeleteChildId, setPendingDeleteChildId] = useState<
     string | null
   >(null);
+  const [assigningChildParentsId, setAssigningChildParentsId] = useState<
+    string | null
+  >(null);
   const [childForm, setChildForm] =
     useState<ChildFormState>(INITIAL_CHILD_FORM);
   const [childParentsSearch, setChildParentsSearch] = useState("");
+  const [assigningChildParentIds, setAssigningChildParentIds] = useState<
+    string[]
+  >([]);
 
   // Queries
   const childrenQuery = useQuery({
@@ -57,16 +65,14 @@ export function useChildren() {
       isAdminOrMaster
         ? listChildrenAdmin(currentCompanyScope)
         : listChildren(currentCompanyScope),
-    enabled:
-      section === "children" || section === "links" || section === "parents",
+    enabled: section === "children" || section === "parents",
   });
 
   const parentsQuery = useQuery({
     queryKey: ["parents", currentCompanyScope, role],
     queryFn: () => listParents(currentCompanyScope),
     enabled:
-      !isAdminOrMaster &&
-      (section === "parents" || section === "links" || section === "children"),
+      !isAdminOrMaster && (section === "parents" || section === "children"),
   });
 
   // Mutations
@@ -124,12 +130,7 @@ export function useChildren() {
   );
   const pagedCollection = paginate(filteredCollection, page, PAGE_SIZE);
 
-  const selectedChildParentIds = useMemo(
-    () => parseIdList(childForm.parents),
-    [childForm.parents],
-  );
-
-  const childParentOptions = useMemo(() => {
+  const assigningChildParentOptions = useMemo(() => {
     const term = childParentsSearch.trim().toLowerCase();
 
     return (parents as ListItem[])
@@ -156,22 +157,6 @@ export function useChildren() {
       });
   }, [parents, childParentsSearch]);
 
-  function toggleChildParentSelection(parentId: string) {
-    setChildForm((current) => {
-      const selected = new Set(parseIdList(current.parents));
-      if (selected.has(parentId)) {
-        selected.delete(parentId);
-      } else {
-        selected.add(parentId);
-      }
-
-      return {
-        ...current,
-        parents: Array.from(selected).join(", "),
-      };
-    });
-  }
-
   // Handlers
   async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -180,47 +165,9 @@ export function useChildren() {
     const email = childForm.email.trim();
     const contact = normalizeDigits(childForm.contact).slice(0, 11);
     const birthDate = childForm.birthDate.trim();
-    const parents = parseIdList(childForm.parents);
 
     let addressPayload: Record<string, unknown> | undefined =
       buildBackendAddressPayload(childForm);
-
-    if (childForm.inheritParentAddress) {
-      if (!parents.length) {
-        setStatusMessage(
-          "Selecione ao menos um responsavel para herdar endereco.",
-        );
-        return;
-      }
-
-      const sourceParent = (parentsQuery.data || []).find(
-        (item: ListItem) => extractId(item) === parents[0],
-      ) as ListItem | undefined;
-
-      const sourceAddress =
-        sourceParent?.address &&
-        typeof sourceParent.address === "object" &&
-        !Array.isArray(sourceParent.address)
-          ? (sourceParent.address as Record<string, unknown>)
-          : {};
-
-      addressPayload = buildBackendAddressPayload({
-        addressStreet: String(
-          sourceAddress.street || sourceAddress.address || "",
-        ).trim(),
-        addressNumber: String(sourceAddress.number || "").trim(),
-        addressDistrict: String(
-          sourceAddress.district || sourceAddress.neighborhood || "",
-        ).trim(),
-        addressCity: String(sourceAddress.city || "").trim(),
-        addressState: String(sourceAddress.state || "").trim(),
-        addressZipCode: normalizeDigits(
-          String(sourceAddress.zipCode || sourceAddress.zipcode || ""),
-        ).slice(0, 8),
-        addressComplement: String(sourceAddress.complement || "").trim(),
-        addressCountry: String(sourceAddress.country || "").trim(),
-      });
-    }
 
     if (!name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
@@ -233,13 +180,11 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      parents: parents.length ? parents : undefined,
       address: addressPayload,
       companyId: currentCompanyScope,
     });
 
     setChildForm(INITIAL_CHILD_FORM);
-    setChildParentsSearch("");
     setIsChildCreateModalOpen(false);
   }
 
@@ -256,47 +201,9 @@ export function useChildren() {
     const email = childForm.email.trim();
     const contact = normalizeDigits(childForm.contact).slice(0, 11);
     const birthDate = childForm.birthDate.trim();
-    const parents = parseIdList(childForm.parents);
 
     let addressPayload: Record<string, unknown> | undefined =
       buildBackendAddressPayload(childForm);
-
-    if (childForm.inheritParentAddress) {
-      if (!parents.length) {
-        setStatusMessage(
-          "Selecione ao menos um responsavel para herdar endereco.",
-        );
-        return;
-      }
-
-      const sourceParent = (parentsQuery.data || []).find(
-        (item: ListItem) => extractId(item) === parents[0],
-      ) as ListItem | undefined;
-
-      const sourceAddress =
-        sourceParent?.address &&
-        typeof sourceParent.address === "object" &&
-        !Array.isArray(sourceParent.address)
-          ? (sourceParent.address as Record<string, unknown>)
-          : {};
-
-      addressPayload = buildBackendAddressPayload({
-        addressStreet: String(
-          sourceAddress.street || sourceAddress.address || "",
-        ).trim(),
-        addressNumber: String(sourceAddress.number || "").trim(),
-        addressDistrict: String(
-          sourceAddress.district || sourceAddress.neighborhood || "",
-        ).trim(),
-        addressCity: String(sourceAddress.city || "").trim(),
-        addressState: String(sourceAddress.state || "").trim(),
-        addressZipCode: normalizeDigits(
-          String(sourceAddress.zipCode || sourceAddress.zipcode || ""),
-        ).slice(0, 8),
-        addressComplement: String(sourceAddress.complement || "").trim(),
-        addressCountry: String(sourceAddress.country || "").trim(),
-      });
-    }
 
     if (!name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
@@ -309,7 +216,6 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      parents: parents.length ? parents : undefined,
       address: addressPayload,
     };
 
@@ -317,7 +223,6 @@ export function useChildren() {
     setIsChildEditModalOpen(false);
     setEditingChildId(null);
     setChildForm(INITIAL_CHILD_FORM);
-    setChildParentsSearch("");
   }
 
   function openChildEditModal(item: ListItem) {
@@ -350,6 +255,60 @@ export function useChildren() {
     await deleteChildMut.mutateAsync(childId);
   }
 
+  function openChildAssignParentsModal(childId: string) {
+    if (!childId) {
+      setStatusMessage("ID da crianca nao informado.");
+      return;
+    }
+
+    const childData = children.find(
+      (item: ListItem) => extractId(item) === childId,
+    ) as ListItem | undefined;
+
+    setAssigningChildParentsId(childId);
+
+    if (childData) {
+      const currentParentIds = parseIdList(childData.parents);
+      setAssigningChildParentIds(currentParentIds);
+    } else {
+      setAssigningChildParentIds([]);
+    }
+
+    setChildParentsSearch("");
+    setIsChildAssignParentsModalOpen(true);
+  }
+
+  async function onAssignParentsToChild(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+
+    if (!assigningChildParentsId) {
+      setStatusMessage("Nao foi possivel vincular responsaveis.");
+      return;
+    }
+
+    await assignParentsMut.mutateAsync({
+      childId: assigningChildParentsId,
+      parentIds: assigningChildParentIds,
+    });
+
+    setIsChildAssignParentsModalOpen(false);
+    setAssigningChildParentsId(null);
+    setAssigningChildParentIds([]);
+    setChildParentsSearch("");
+  }
+
+  function toggleAssignChildParentSelection(parentId: string) {
+    setAssigningChildParentIds((current) => {
+      const selected = new Set(current);
+      if (selected.has(parentId)) {
+        selected.delete(parentId);
+      } else {
+        selected.add(parentId);
+      }
+      return Array.from(selected);
+    });
+  }
+
   return {
     // state
     isChildCreateModalOpen,
@@ -360,16 +319,22 @@ export function useChildren() {
     setIsChildEditModalOpen,
     isChildDeleteModalOpen,
     setIsChildDeleteModalOpen,
+    isChildAssignParentsModalOpen,
+    setIsChildAssignParentsModalOpen,
     editingChildId,
     setEditingChildId,
     viewingChildId,
     setViewingChildId,
     pendingDeleteChildId,
     setPendingDeleteChildId,
+    assigningChildParentsId,
+    setAssigningChildParentsId,
     childForm,
     setChildForm,
     childParentsSearch,
     setChildParentsSearch,
+    assigningChildParentIds,
+    setAssigningChildParentIds,
 
     // queries/mutations
     childrenQuery,
@@ -385,8 +350,7 @@ export function useChildren() {
     filteredCollection,
     totalPages,
     pagedCollection,
-    selectedChildParentIds,
-    childParentOptions,
+    assigningChildParentOptions,
 
     // handlers
     onCreateChildModal,
@@ -394,6 +358,8 @@ export function useChildren() {
     openChildViewModal,
     openChildEditModal,
     onDeleteChild,
-    toggleChildParentSelection,
+    openChildAssignParentsModal,
+    onAssignParentsToChild,
+    toggleAssignChildParentSelection,
   };
 }

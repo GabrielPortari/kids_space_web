@@ -36,19 +36,26 @@ export function useParents() {
   const [isParentModalOpen, setIsParentModalOpen] = useState(false);
   const [isParentViewModalOpen, setIsParentViewModalOpen] = useState(false);
   const [isParentEditModalOpen, setIsParentEditModalOpen] = useState(false);
+  const [isParentAssignChildrenModalOpen, setIsParentAssignChildrenModalOpen] =
+    useState(false);
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
   const [viewingParentId, setViewingParentId] = useState<string | null>(null);
+  const [assigningParentChildrenId, setAssigningParentChildrenId] = useState<
+    string | null
+  >(null);
   const [parentForm, setParentForm] =
     useState<ParentFormState>(INITIAL_PARENT_FORM);
   const [parentChildrenSearch, setParentChildrenSearch] = useState("");
+  const [assigningParentChildIds, setAssigningParentChildIds] = useState<
+    string[]
+  >([]);
 
   // Query
   const parentsQuery = useQuery({
     queryKey: ["parents", currentCompanyScope, role],
     queryFn: () => listParents(currentCompanyScope),
     enabled:
-      !isAdminOrMaster &&
-      (section === "parents" || section === "links" || section === "children"),
+      !isAdminOrMaster && (section === "parents" || section === "children"),
   });
 
   // Mutations
@@ -100,30 +107,7 @@ export function useParents() {
     matchesParentSearch(item as ListItem, search),
   );
 
-  const selectedParentChildrenIds = useMemo(
-    () => parseIdList(parentForm.children),
-    [parentForm.children],
-  );
-
-  // We'll need children from context, but for now we create an empty array
-  // This will be passed from useChildren hook
-  const parentChildrenOptions = useMemo(() => [], [parentChildrenSearch]);
-
-  function toggleParentChildSelection(childId: string) {
-    setParentForm((current) => {
-      const selected = new Set(parseIdList(current.children));
-      if (selected.has(childId)) {
-        selected.delete(childId);
-      } else {
-        selected.add(childId);
-      }
-
-      return {
-        ...current,
-        children: Array.from(selected).join(", "),
-      };
-    });
-  }
+  const assigningParentChildOptions = useMemo(() => [], [parentChildrenSearch]);
 
   // Handlers
   async function onCreateParent(event: FormEvent<HTMLFormElement>) {
@@ -133,7 +117,6 @@ export function useParents() {
     const email = parentForm.email.trim();
     const contact = parentForm.contact.trim();
     const birthDate = parentForm.birthDate.trim();
-    const children = parseIdList(parentForm.children);
 
     if (!name) {
       setStatusMessage("Nome do responsavel e obrigatorio.");
@@ -147,13 +130,11 @@ export function useParents() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      children: children.length ? children : undefined,
       address: buildBackendAddressPayload(parentForm),
     };
 
     await createParentMut.mutateAsync(payload);
     setParentForm(INITIAL_PARENT_FORM);
-    setParentChildrenSearch("");
     setIsParentModalOpen(false);
   }
 
@@ -172,7 +153,6 @@ export function useParents() {
     const email = parentForm.email.trim();
     const contact = parentForm.contact.trim();
     const birthDate = parentForm.birthDate.trim();
-    const children = parseIdList(parentForm.children);
 
     if (!name) {
       setStatusMessage("Nome do responsavel e obrigatorio.");
@@ -185,7 +165,6 @@ export function useParents() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      children: children.length ? children : undefined,
       address: buildBackendAddressPayload(parentForm),
     };
 
@@ -193,7 +172,6 @@ export function useParents() {
     setIsParentEditModalOpen(false);
     setEditingParentId(null);
     setParentForm(INITIAL_PARENT_FORM);
-    setParentChildrenSearch("");
   }
 
   function openParentEditModal(item: ListItem) {
@@ -228,6 +206,60 @@ export function useParents() {
     await deleteParentMut.mutateAsync(parentId);
   }
 
+  function openParentAssignChildrenModal(parentId: string) {
+    if (!parentId) {
+      setStatusMessage("ID do responsavel nao informado.");
+      return;
+    }
+
+    const parentData = parents.find(
+      (item: ListItem) => extractId(item) === parentId,
+    ) as ListItem | undefined;
+
+    setAssigningParentChildrenId(parentId);
+
+    if (parentData) {
+      const currentChildIds = parseIdList(parentData.children);
+      setAssigningParentChildIds(currentChildIds);
+    } else {
+      setAssigningParentChildIds([]);
+    }
+
+    setParentChildrenSearch("");
+    setIsParentAssignChildrenModalOpen(true);
+  }
+
+  async function onAssignChildrenToParent(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+
+    if (!assigningParentChildrenId) {
+      setStatusMessage("Nao foi possivel vincular criancas.");
+      return;
+    }
+
+    await assignChildrenMut.mutateAsync({
+      parentId: assigningParentChildrenId,
+      childIds: assigningParentChildIds,
+    });
+
+    setIsParentAssignChildrenModalOpen(false);
+    setAssigningParentChildrenId(null);
+    setAssigningParentChildIds([]);
+    setParentChildrenSearch("");
+  }
+
+  function toggleAssignParentChildSelection(childId: string) {
+    setAssigningParentChildIds((current) => {
+      const selected = new Set(current);
+      if (selected.has(childId)) {
+        selected.delete(childId);
+      } else {
+        selected.add(childId);
+      }
+      return Array.from(selected);
+    });
+  }
+
   return {
     // state
     isParentModalOpen,
@@ -236,14 +268,20 @@ export function useParents() {
     setIsParentViewModalOpen,
     isParentEditModalOpen,
     setIsParentEditModalOpen,
+    isParentAssignChildrenModalOpen,
+    setIsParentAssignChildrenModalOpen,
     editingParentId,
     setEditingParentId,
     viewingParentId,
     setViewingParentId,
+    assigningParentChildrenId,
+    setAssigningParentChildrenId,
     parentForm,
     setParentForm,
     parentChildrenSearch,
     setParentChildrenSearch,
+    assigningParentChildIds,
+    setAssigningParentChildIds,
 
     // queries/mutations
     parentsQuery,
@@ -255,8 +293,7 @@ export function useParents() {
     // derived
     parents,
     filteredParents,
-    selectedParentChildrenIds,
-    parentChildrenOptions,
+    assigningParentChildOptions,
 
     // handlers
     onCreateParent,
@@ -264,6 +301,8 @@ export function useParents() {
     openParentViewModal,
     openParentEditModal,
     onDeleteParent,
-    toggleParentChildSelection,
+    openParentAssignChildrenModal,
+    onAssignChildrenToParent,
+    toggleAssignParentChildSelection,
   };
 }

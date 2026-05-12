@@ -48,10 +48,13 @@ export async function deleteChild(childId: string) {
   });
 }
 
-export async function assignParentsToChild(childId: string, parents: string[]) {
+export async function assignParentsToChild(
+  childId: string,
+  parentIds: string[],
+) {
   return apiRequest<void>(`/v2/children/${childId}/parents`, {
     method: "POST",
-    body: { parents },
+    body: { parentIds },
   });
 }
 

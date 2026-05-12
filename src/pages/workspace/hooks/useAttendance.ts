@@ -41,6 +41,9 @@ export function useAttendance() {
   const [childNamesMap, setChildNamesMap] = useState<Map<string, string>>(
     new Map(),
   );
+  const [requestedChildIds, setRequestedChildIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Queries
   const attendancesQuery = useQuery({
@@ -101,24 +104,31 @@ export function useAttendance() {
       .map((item: any) => item.childId)
       .filter(
         (childId: string) =>
-          childId && !childNamesMap.has(childId) && !childNamesMap.get(childId),
+          childId &&
+          !childNamesMap.has(childId) &&
+          !requestedChildIds.has(childId),
       );
 
     if (unresolvedChildIds.length === 0) return;
 
     (async () => {
       const newNames = new Map(childNamesMap);
+      const newRequested = new Set(requestedChildIds);
+
       await Promise.all(
         unresolvedChildIds.map(async (childId: string) => {
+          newRequested.add(childId);
           const name = await getChildName(childId);
           if (name) {
             newNames.set(childId, name);
           }
         }),
       );
+
       setChildNamesMap(newNames);
+      setRequestedChildIds(newRequested);
     })();
-  }, [attendances, childNamesMap]);
+  }, [attendances]);
 
   // Handlers
   async function onCheckin(event: FormEvent<HTMLFormElement>) {

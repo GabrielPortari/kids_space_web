@@ -29,12 +29,11 @@ export function AttendanceSection() {
     isAttendanceViewModalOpen,
     setIsAttendanceViewModalOpen,
     viewingAttendance,
+    openAttendanceViewModal,
   } = useAttendance();
 
   const PAGE_SIZE = 8;
   const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
-
-  const { openAttendanceViewModal } = useAttendance();
 
   return (
     <>
