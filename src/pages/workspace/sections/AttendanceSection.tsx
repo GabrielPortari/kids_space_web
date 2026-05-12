@@ -66,7 +66,11 @@ export function AttendanceSection() {
                 style={{ cursor: "pointer" }}
               >
                 <div>
-                  <strong>{typed.childName || "Crianca sem nome"}</strong>
+                  <strong>
+                    {(typed as any).childSnapshot?.name ||
+                      typed.childName ||
+                      "Crianca sem nome"}
+                  </strong>
                   <div
                     style={{
                       display: "flex",
@@ -153,7 +157,9 @@ export function AttendanceSection() {
                   <article className="profile-card">
                     <span>Crianca</span>
                     <strong>
-                      {(viewingAttendance as any).childName || "-"}
+                      {(viewingAttendance as any).childSnapshot?.name ||
+                        (viewingAttendance as any).childName ||
+                        "-"}
                     </strong>
                   </article>
                   <article className="profile-card">
@@ -189,28 +195,39 @@ export function AttendanceSection() {
                   <article className="profile-card">
                     <span>Responsavel de entrada</span>
                     <strong>
-                      {(viewingAttendance as any).responsibleIdWhoCheckedInId ||
+                      {(viewingAttendance as any).responsibleCheckedInSnapshot
+                        ?.name ||
+                        (viewingAttendance as any)
+                          .responsibleIdWhoCheckedInId ||
                         "-"}
                     </strong>
                   </article>
                   <article className="profile-card">
                     <span>Responsavel de saida</span>
                     <strong>
-                      {(viewingAttendance as any)
-                        .responsibleIdWhoCheckedOutId || "-"}
+                      {(viewingAttendance as any).responsibleCheckedOutSnapshot
+                        ?.name ||
+                        (viewingAttendance as any)
+                          .responsibleIdWhoCheckedOutId ||
+                        "-"}
                     </strong>
                   </article>
                   <article className="profile-card">
                     <span>Colaborador de entrada</span>
                     <strong>
-                      {(viewingAttendance as any).collaboratorWhoCheckedInId ||
+                      {(viewingAttendance as any).collaboratorCheckedInSnapshot
+                        ?.name ||
+                        (viewingAttendance as any).collaboratorWhoCheckedInId ||
                         "-"}
                     </strong>
                   </article>
                   <article className="profile-card">
                     <span>Colaborador de saida</span>
                     <strong>
-                      {(viewingAttendance as any).collaboratorWhoCheckedOutId ||
+                      {(viewingAttendance as any).collaboratorCheckedOutSnapshot
+                        ?.name ||
+                        (viewingAttendance as any)
+                          .collaboratorWhoCheckedOutId ||
                         "-"}
                     </strong>
                   </article>
