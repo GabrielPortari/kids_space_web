@@ -105,10 +105,6 @@ function resolveChildName(item: Child): string {
   return String(item.name || "Crianca sem nome");
 }
 
-function resolveCollaboratorName(item: Collaborator): string {
-  return String(item.name || "Colaborador sem nome");
-}
-
 export function useDashboard() {
   const queryClient = useQueryClient();
   const {
@@ -121,6 +117,11 @@ export function useDashboard() {
 
   const [checkinChildSearch, setCheckinChildSearch] = useState("");
   const [selectedCheckinChildId, setSelectedCheckinChildId] = useState("");
+  const [isCheckinModalOpen, setIsCheckinModalOpen] = useState(false);
+  const [checkinResponsibleSearch, setCheckinResponsibleSearch] = useState("");
+  const [selectedCheckinResponsibleId, setSelectedCheckinResponsibleId] =
+    useState("");
+  const [checkinNotes, setCheckinNotes] = useState("");
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [selectedCheckoutAttendance, setSelectedCheckoutAttendance] =
     useState<DashboardAttendanceItem | null>(null);
@@ -169,6 +170,10 @@ export function useDashboard() {
       setStatusMessage("Check-in realizado com sucesso.");
       setCheckinChildSearch("");
       setSelectedCheckinChildId("");
+      setIsCheckinModalOpen(false);
+      setCheckinResponsibleSearch("");
+      setSelectedCheckinResponsibleId("");
+      setCheckinNotes("");
       await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (error) => {
@@ -218,6 +223,52 @@ export function useDashboard() {
     [children, checkinChildSearch],
   );
 
+  const selectedCheckinChild = useMemo(
+    () =>
+      children.find((item) => extractId(item) === selectedCheckinChildId) ||
+      null,
+    [children, selectedCheckinChildId],
+  );
+
+  const responsibleOptions = useMemo(() => {
+    if (!selectedCheckinChildId) {
+      return [];
+    }
+
+    const childParentIds = selectedCheckinChild?.parents
+      ? Array.isArray(selectedCheckinChild.parents)
+        ? selectedCheckinChild.parents
+        : (selectedCheckinChild.parents as unknown as string)
+            .split(",")
+            .map((id: string) => id.trim())
+      : [];
+
+    return parents
+      .filter((parent) => childParentIds.includes(extractId(parent)))
+      .map((item) => ({
+        id: extractId(item),
+        name: resolveParentName(item),
+      }))
+      .filter((option) => {
+        const term = checkinResponsibleSearch.trim().toLowerCase();
+        if (!option.id) {
+          return false;
+        }
+        if (!term) {
+          return true;
+        }
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [
+    parents,
+    selectedCheckinChild,
+    selectedCheckinChildId,
+    checkinResponsibleSearch,
+  ]);
+
   const dashboardAttendances = useMemo<DashboardAttendanceItem[]>(() => {
     return activeAttendances
       .map((item) => {
@@ -250,6 +301,26 @@ export function useDashboard() {
     setSelectedCheckinChildId(childId);
   }
 
+  function toggleCheckinResponsibleSelection(parentId: string) {
+    setSelectedCheckinResponsibleId(parentId);
+  }
+
+  function openCheckinModal() {
+    setCheckinChildSearch("");
+    setSelectedCheckinChildId("");
+    setCheckinResponsibleSearch("");
+    setSelectedCheckinResponsibleId("");
+    setCheckinNotes("");
+    setIsCheckinModalOpen(true);
+  }
+
+  function closeCheckinModal() {
+    setIsCheckinModalOpen(false);
+    setCheckinResponsibleSearch("");
+    setSelectedCheckinResponsibleId("");
+    setCheckinNotes("");
+  }
+
   function openCheckoutModal(attendance: DashboardAttendanceItem) {
     setSelectedCheckoutAttendance(attendance);
     setCheckoutResponsibleDocument("");
@@ -270,6 +341,11 @@ export function useDashboard() {
       return;
     }
 
+    if (!selectedCheckinResponsibleId) {
+      setStatusMessage("Selecione o responsavel que esta fazendo o check-in.");
+      return;
+    }
+
     if (isAdminOrMaster && !currentCompanyScope) {
       setStatusMessage("Informe o companyId para registrar o check-in.");
       return;
@@ -277,6 +353,8 @@ export function useDashboard() {
 
     await checkinMut.mutateAsync({
       childId: selectedCheckinChildId,
+      responsibleIdWhoCheckedInId: selectedCheckinResponsibleId,
+      notes: checkinNotes.trim() || undefined,
       companyId: currentCompanyScope,
     });
   }
@@ -321,7 +399,18 @@ export function useDashboard() {
     setCheckinChildSearch,
     selectedCheckinChildId,
     toggleCheckinChildSelection,
+    isCheckinModalOpen,
+    setIsCheckinModalOpen,
+    checkinResponsibleSearch,
+    setCheckinResponsibleSearch,
+    selectedCheckinResponsibleId,
+    toggleCheckinResponsibleSelection,
+    checkinNotes,
+    setCheckinNotes,
+    openCheckinModal,
+    closeCheckinModal,
     childOptions,
+    responsibleOptions,
     dashboardMetrics,
     dashboardAttendances,
     isCheckoutModalOpen,

@@ -14,13 +14,23 @@ export function DashboardSection() {
     setCheckinChildSearch,
     selectedCheckinChildId,
     toggleCheckinChildSelection,
+    isCheckinModalOpen,
+    checkinResponsibleSearch,
+    setCheckinResponsibleSearch,
+    selectedCheckinResponsibleId,
+    toggleCheckinResponsibleSelection,
+    checkinNotes,
+    setCheckinNotes,
     childOptions,
+    responsibleOptions,
     dashboardMetrics,
     dashboardAttendances,
     isCheckoutModalOpen,
     selectedCheckoutAttendance,
     checkoutResponsibleDocument,
     setCheckoutResponsibleDocument,
+    openCheckinModal,
+    closeCheckinModal,
     openCheckoutModal,
     closeCheckoutModal,
     onCheckinSubmit,
@@ -99,6 +109,14 @@ export function DashboardSection() {
         <div className="crm-panel-head">
           <h2>Criancas no espaco agora</h2>
           <span className="pill">Atualizado automaticamente</span>
+          <button
+            type="button"
+            className="btn solid"
+            onClick={openCheckinModal}
+            disabled={childrenQuery.isLoading}
+          >
+            Registrar Check-in
+          </button>
         </div>
 
         <div className="crm-table">
@@ -132,43 +150,90 @@ export function DashboardSection() {
         </div>
       </section>
 
-      <section className="crm-panel">
-        <div className="crm-panel-head">
-          <h2>Novo Check-in</h2>
+      {isCheckinModalOpen && (
+        <div
+          className="crm-modal-backdrop"
+          role="presentation"
+          onClick={closeCheckinModal}
+        >
+          <section
+            className="crm-modal crm-modal-wide"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Registrar check-in"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2>Registrar Check-in</h2>
+
+            <form className="crm-form-grid" onSubmit={onCheckinSubmit}>
+              <EntitySearchList
+                label="Crianca"
+                searchValue={checkinChildSearch}
+                onSearchChange={setCheckinChildSearch}
+                options={childOptions}
+                selectedIds={selectedCheckinChildId}
+                onToggle={toggleCheckinChildSelection}
+                isLoading={childrenQuery.isLoading}
+                placeholder="Buscar por nome ou ID"
+                mode="radio"
+              />
+
+              {selectedCheckinChildId && (
+                <EntitySearchList
+                  label="Responsavel"
+                  searchValue={checkinResponsibleSearch}
+                  onSearchChange={setCheckinResponsibleSearch}
+                  options={responsibleOptions}
+                  selectedIds={selectedCheckinResponsibleId}
+                  onToggle={toggleCheckinResponsibleSelection}
+                  isLoading={parentsQuery.isLoading}
+                  placeholder="Buscar por nome ou ID"
+                  mode="radio"
+                />
+              )}
+
+              <div className="field">
+                <label htmlFor="checkin-notes">Observacoes</label>
+                <textarea
+                  id="checkin-notes"
+                  value={checkinNotes}
+                  onChange={(event) => setCheckinNotes(event.target.value)}
+                  placeholder="Adicione observacoes do check-in"
+                  rows={4}
+                />
+              </div>
+
+              {checkinMut.isPending && (
+                <p className="operation-hint">Processando check-in...</p>
+              )}
+
+              {checkinMut.error && !checkinMut.isPending && (
+                <p className="operation-hint">{checkinMut.error.message}</p>
+              )}
+
+              <div className="crm-modal-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={closeCheckinModal}
+                  disabled={checkinMut.isPending}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn solid"
+                  disabled={checkinMut.isPending}
+                >
+                  {checkinMut.isPending
+                    ? "Registrando..."
+                    : "Confirmar Check-in"}
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
-
-        <form className="crm-form-grid" onSubmit={onCheckinSubmit}>
-          <EntitySearchList
-            label="Crianca"
-            searchValue={checkinChildSearch}
-            onSearchChange={setCheckinChildSearch}
-            options={childOptions}
-            selectedIds={selectedCheckinChildId}
-            onToggle={toggleCheckinChildSelection}
-            isLoading={childrenQuery.isLoading}
-            placeholder="Buscar por nome ou ID"
-            mode="radio"
-          />
-
-          <div className="crm-modal-actions">
-            <button
-              type="submit"
-              className="btn solid"
-              disabled={checkinMut.isPending}
-            >
-              {checkinMut.isPending ? "Registrando..." : "Registrar Check-in"}
-            </button>
-          </div>
-
-          {checkinMut.isPending && (
-            <p className="operation-hint">Processando check-in...</p>
-          )}
-
-          {checkinMut.error && !checkinMut.isPending && (
-            <p className="operation-hint">{checkinMut.error.message}</p>
-          )}
-        </form>
-      </section>
+      )}
 
       {isCheckoutModalOpen && selectedCheckoutAttendance && (
         <div
