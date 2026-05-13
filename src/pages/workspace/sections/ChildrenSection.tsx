@@ -75,7 +75,7 @@ export function ChildrenSection() {
             className="btn solid"
             onClick={() => setIsChildCreateModalOpen(true)}
           >
-            Adicionar
+            Nova criança
           </button>
         </div>
 

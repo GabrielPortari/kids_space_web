@@ -50,7 +50,7 @@ export function CollaboratorsSection() {
               setIsCollaboratorCreateModalOpen(true);
             }}
           >
-            Adicionar
+            Novo colaborador
           </button>
         </div>
 

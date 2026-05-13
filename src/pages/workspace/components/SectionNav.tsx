@@ -27,7 +27,7 @@ export function SectionNav({
     <aside className="crm-sidebar">
       <div>
         <p className="auth-kicker">{authRoleLabels[role]}</p>
-        <h1>Painel CRM</h1>
+        <h1>Painel</h1>
         <p>{session?.email || "Usuario autenticado"}</p>
       </div>
 

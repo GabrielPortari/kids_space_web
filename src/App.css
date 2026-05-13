@@ -906,6 +906,11 @@ input {
   font-size: 0.82rem;
 }
 
+.child-form {
+  max-width: none;
+  width: 100%;
+}
+
 .child-modal-form {
   width: 100%;
   max-width: none;
