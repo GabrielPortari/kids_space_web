@@ -169,7 +169,7 @@ export function DashboardSection() {
           >
             <h2>Registrar Check-in</h2>
 
-            <form className="crm-form-grid" onSubmit={onCheckinSubmit}>
+            <form className="crm-form-grid checkin-modal-form" onSubmit={onCheckinSubmit}>
               <EntitySearchList
                 label="Crianca"
                 searchValue={checkinChildSearch}
@@ -200,6 +200,7 @@ export function DashboardSection() {
                 <label htmlFor="checkin-notes">Observacoes</label>
                 <textarea
                   id="checkin-notes"
+                  className="checkin-notes-field"
                   value={checkinNotes}
                   onChange={(event) => setCheckinNotes(event.target.value)}
                   placeholder="Adicione observacoes do check-in"

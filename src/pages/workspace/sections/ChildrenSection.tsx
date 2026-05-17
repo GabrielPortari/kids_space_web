@@ -30,6 +30,7 @@ export function ChildrenSection() {
 
   const {
     pagedCollection,
+    totalPages,
     onCreateChildModal,
     onUpdateChildModal,
     openChildViewModal,
@@ -61,9 +62,6 @@ export function ChildrenSection() {
     pendingDeleteChildId,
     parents: childParents,
   } = childrenHook;
-
-  const PAGE_SIZE = 8;
-  const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
 
   return (
     <>
