@@ -22,7 +22,7 @@ Estas instruções devem ser consultadas e aplicadas antes de qualquer ação no
 
 ## Padrão de resposta
 
-- Evite textos desnecessários, não precisa dizer o que está sendo feito, apenas faça e me passe o relatório reduzido do que foi feito no final.
+- Evite textos desnecessários (ex. Vou fazer isso, isso e isso... ou Ajuste aplicado, alteração feita... etc), não precisa dizer o que está sendo feito, apenas faça as operações, e ao fim me passe um pequeno relatório do que foi feito.
 - Informe proximos passos ou sugestões de melhoria, mas sem ser prolixo.
 - Se algo não estiver claro, peça confirmação antes de agir.
 

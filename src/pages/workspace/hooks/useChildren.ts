@@ -9,6 +9,7 @@ import {
   updateChild,
   type CreateChildPayload,
 } from "../../../api/modules/childApi";
+import { listActiveCheckins } from "../../../api/modules/attendanceApi";
 import { buildBackendAddressPayload } from "../../../api/address";
 import { listChildrenAdmin } from "../../../api/modules/adminApi";
 import { listParents } from "../../../api/modules/parentApi";
@@ -75,6 +76,15 @@ export function useChildren() {
       !isAdminOrMaster && (section === "parents" || section === "children"),
   });
 
+  const activeAttendancesQuery = useQuery({
+    queryKey: ["children", "active-checkins", currentCompanyScope, role],
+    queryFn: () => listActiveCheckins(currentCompanyScope),
+    enabled: section === "children" || section === "parents",
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
+  });
+
   // Mutations
   const createChildMut = useMutation<unknown, Error, CreateChildPayload>({
     mutationFn: createChild,
@@ -121,6 +131,7 @@ export function useChildren() {
   // Derived
   const children = childrenQuery.data || [];
   const parents = parentsQuery.data || [];
+  const activeAttendances = activeAttendancesQuery.data || [];
   const filteredCollection = children.filter((item: ListItem) =>
     matchesSearch(item as ListItem, search),
   );
@@ -156,6 +167,16 @@ export function useChildren() {
         );
       });
   }, [parents, childParentsSearch]);
+
+  const activeChildIds = useMemo(
+    () =>
+      new Set(
+        activeAttendances
+          .map((attendance) => String(attendance.childId || ""))
+          .filter(Boolean),
+      ),
+    [activeAttendances],
+  );
 
   // Handlers
   async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
@@ -339,6 +360,7 @@ export function useChildren() {
     // queries/mutations
     childrenQuery,
     parentsQuery,
+    activeAttendancesQuery,
     createChildMut,
     updateChildMut,
     deleteChildMut,
@@ -347,6 +369,7 @@ export function useChildren() {
     // derived
     children,
     parents,
+    activeChildIds,
     filteredCollection,
     totalPages,
     pagedCollection,

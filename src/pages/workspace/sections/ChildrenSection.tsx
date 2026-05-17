@@ -61,6 +61,7 @@ export function ChildrenSection() {
     assigningChildParentOptions,
     pendingDeleteChildId,
     parents: childParents,
+    activeChildIds,
   } = childrenHook;
 
   return (
@@ -101,7 +102,16 @@ export function ChildrenSection() {
                 style={{ cursor: "pointer" }}
               >
                 <div>
-                  <strong>{typed.name || "Crianca sem nome"}</strong>
+                  <div className="child-row-title">
+                    <strong>{typed.name || "Crianca sem nome"}</strong>
+                    {id && activeChildIds.has(id) && (
+                      <span
+                        className="child-status-dot"
+                        title="Check-in ativo"
+                        aria-label="Check-in ativo"
+                      />
+                    )}
+                  </div>
                   <p>{typed.email || "Email nao informado"}</p>
                 </div>
                 <div className="crm-row-actions">

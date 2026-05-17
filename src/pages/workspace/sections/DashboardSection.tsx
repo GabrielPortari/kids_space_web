@@ -3,6 +3,21 @@ import { useDashboard } from "../hooks/useDashboard";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { maskCpf, normalizeDigits } from "../formatter";
 
+function getAttendanceKindIcon(item: {
+  checkOutLabel?: string;
+  checkInLabel?: string;
+}): { icon: string; label: string } {
+  if (item.checkOutLabel) {
+    return { icon: "↗", label: "Check-out" };
+  }
+
+  if (item.checkInLabel) {
+    return { icon: "↘", label: "Check-in" };
+  }
+
+  return { icon: "•", label: "Atendimento" };
+}
+
 export function DashboardSection() {
   const { role } = useWorkspaceContext();
   const {
@@ -10,6 +25,8 @@ export function DashboardSection() {
     parentsQuery,
     collaboratorsQuery,
     activeAttendancesQuery,
+    latestCheckinAndCheckoutQuery,
+    last10AttendancesQuery,
     checkinMut,
     checkoutMut,
     checkinChildSearch,
@@ -27,6 +44,9 @@ export function DashboardSection() {
     responsibleOptions,
     dashboardMetrics,
     dashboardAttendances,
+    latestCheckinCard,
+    latestCheckoutCard,
+    last10AttendanceCards,
     isCheckoutModalOpen,
     selectedCheckoutAttendance,
     checkoutResponsibleDocument,
@@ -44,6 +64,8 @@ export function DashboardSection() {
     parentsQuery,
     collaboratorsQuery,
     activeAttendancesQuery,
+    latestCheckinAndCheckoutQuery,
+    last10AttendancesQuery,
   ];
 
   const isDashboardLoading = dashboardQueries.some((query) => query.isLoading);
@@ -69,13 +91,13 @@ export function DashboardSection() {
           <p className="operation-hint">{dashboardErrorMessage}</p>
         )}
 
-        <div className="profile-grid">
+        <div className="profile-grid dashboard-metrics-grid">
           <article className="profile-card">
-            <span>👶 Criancas cadastradas</span>
+            <span>👶 Crianças</span>
             <strong>{dashboardMetrics.totalChildren}</strong>
           </article>
           <article className="profile-card">
-            <span>👨‍👩‍👧 Responsaveis cadastrados</span>
+            <span>👨‍👩‍👧 Responsáveis</span>
             <strong>{dashboardMetrics.totalParents}</strong>
           </article>
           {role === "company" && (
@@ -85,26 +107,69 @@ export function DashboardSection() {
             </article>
           )}
           <article className="profile-card">
-            <span>✅ Criancas no espaco agora</span>
+            <span>✅ No espaço agora</span>
             <strong>{dashboardMetrics.totalActiveAttendances}</strong>
-            <span
-              className="pill"
-              style={{
-                backgroundColor:
-                  dashboardMetrics.totalActiveAttendances > 0
-                    ? "#d4edda"
-                    : "#e9ecef",
-                color:
-                  dashboardMetrics.totalActiveAttendances > 0
-                    ? "#155724"
-                    : "#495057",
-                marginTop: "0.5rem",
-              }}
-            >
-              {dashboardMetrics.totalActiveAttendances > 0
-                ? "Em tempo real"
-                : "Nenhuma crianca no momento"}
-            </span>
+          </article>
+        </div>
+      </section>
+
+      <section className="crm-panel">
+        <div className="crm-panel-head">
+          <h2>Movimento recente</h2>
+          <span className="pill">Ultimos eventos da empresa</span>
+        </div>
+
+        <div className="dashboard-movement-layout">
+          <div className="dashboard-movement-stack">
+            <article className="profile-card">
+              <span>Ultimo check-in</span>
+              <strong>{latestCheckinCard?.childDisplayName || "-"}</strong>
+              <p className="dashboard-card-meta">
+                {latestCheckinCard
+                  ? `${latestCheckinCard.checkInLabel || "Sem horario"} • ${latestCheckinCard.collaboratorDisplayName}`
+                  : "Nenhum check-in localizado."}
+              </p>
+            </article>
+
+            <article className="profile-card">
+              <span>Ultimo check-out</span>
+              <strong>{latestCheckoutCard?.childDisplayName || "-"}</strong>
+              <p className="dashboard-card-meta">
+                {latestCheckoutCard
+                  ? `${latestCheckoutCard.checkOutLabel || "Sem horario"} • ${latestCheckoutCard.collaboratorDisplayName}`
+                  : "Nenhum check-out localizado."}
+              </p>
+            </article>
+          </div>
+
+          <article className="profile-card dashboard-recent-card">
+            <span>Ultimos 10 atendimentos</span>
+            <strong>{last10AttendanceCards.length}</strong>
+            <ul className="dashboard-recent-list">
+              {last10AttendanceCards.slice(0, 10).map((item) => {
+                const kind = getAttendanceKindIcon(item);
+
+                return (
+                  <li
+                    key={`${item.id || item.childDisplayName}-${item.sortEpoch}`}
+                  >
+                    <span className="dashboard-recent-item-label">
+                      <span
+                        className={`dashboard-recent-kind dashboard-recent-kind-${kind.label.toLowerCase()}`}
+                        title={kind.label}
+                        aria-label={kind.label}
+                      >
+                        {kind.icon}
+                      </span>
+                      {item.childDisplayName}
+                    </span>
+                    <small>
+                      {item.checkInLabel || item.checkOutLabel || "-"}
+                    </small>
+                  </li>
+                );
+              })}
+            </ul>
           </article>
         </div>
       </section>
@@ -169,7 +234,10 @@ export function DashboardSection() {
           >
             <h2>Registrar Check-in</h2>
 
-            <form className="crm-form-grid checkin-modal-form" onSubmit={onCheckinSubmit}>
+            <form
+              className="crm-form-grid checkin-modal-form"
+              onSubmit={onCheckinSubmit}
+            >
               <EntitySearchList
                 label="Crianca"
                 searchValue={checkinChildSearch}

@@ -617,6 +617,26 @@ input {
   gap: 0.6rem;
 }
 
+.dashboard-movement-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.dashboard-metrics-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboard-movement-stack {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.dashboard-recent-card {
+  min-height: 100%;
+}
+
 .profile-card {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
@@ -636,6 +656,89 @@ input {
 .profile-card strong {
   font-size: 0.95rem;
   color: var(--ink-strong);
+}
+
+.dashboard-card-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.dashboard-recent-list {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 12.5rem;
+  overflow: auto;
+}
+
+.dashboard-recent-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed rgba(191, 169, 142, 0.35);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.dashboard-recent-item-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.dashboard-recent-list span {
+  color: var(--ink-strong);
+  font-weight: 600;
+}
+
+.dashboard-recent-list small {
+  white-space: nowrap;
+}
+
+.dashboard-recent-kind {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.dashboard-recent-kind-check-in {
+  background: rgba(47, 179, 68, 0.14);
+  color: #2b8a3e;
+}
+
+.dashboard-recent-kind-check-out {
+  background: rgba(228, 121, 67, 0.16);
+  color: #c35b24;
+}
+
+.dashboard-recent-kind-atendimento {
+  background: rgba(90, 107, 148, 0.14);
+  color: #44546f;
+}
+
+.child-row-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.child-status-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: #2fb344;
+  box-shadow: 0 0 0 4px rgba(47, 179, 68, 0.16);
+  flex: 0 0 auto;
 }
 
 .profile-section {
@@ -1226,6 +1329,14 @@ input {
   }
 
   .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-movement-layout {
     grid-template-columns: 1fr;
   }
 
