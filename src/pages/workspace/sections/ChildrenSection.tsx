@@ -4,6 +4,7 @@ import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { EntitySearchList } from "../components/EntitySearchList";
 import { Pagination } from "../components/Pagination";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { extractId, parseIdList } from "../formatter";
 import type { ListItem } from "../types";
 
@@ -27,6 +28,10 @@ export function ChildrenSection() {
   const { page, setPage, search, setSearch } = useWorkspaceContext();
 
   const childrenHook = useChildren();
+  const isLoading =
+    childrenHook.childrenQuery.isLoading ||
+    childrenHook.parentsQuery.isLoading ||
+    childrenHook.activeAttendancesQuery.isLoading;
 
   const {
     pagedCollection,
@@ -90,73 +95,94 @@ export function ChildrenSection() {
         </div>
 
         <div className="crm-table">
-          {pagedCollection.map((item) => {
-            const typed = item as ListItem;
-            const id = extractId(typed);
-
-            return (
+          {isLoading && pagedCollection.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
               <article
-                key={id || JSON.stringify(item)}
-                className="crm-row"
-                onClick={() => openChildViewModal(typed)}
-                style={{ cursor: "pointer" }}
+                key={`child-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
               >
-                <div>
-                  <div className="child-row-title">
-                    <strong>{typed.name || "Crianca sem nome"}</strong>
-                    {id && activeChildIds.has(id) && (
-                      <span
-                        className="child-status-dot"
-                        title="Check-in ativo"
-                        aria-label="Check-in ativo"
-                      />
-                    )}
-                  </div>
-                  <p>{typed.email || "Email nao informado"}</p>
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="45%" height="1rem" />
+                  <SkeletonBlock width="64%" height="0.8rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Vincular responsaveis"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      openChildAssignParentsModal(id);
-                    }}
-                  >
-                    🔗
-                  </button>
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Editar"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openChildEditModal(typed);
-                    }}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      childrenHook.setPendingDeleteChildId(id);
-                      setIsChildDeleteModalOpen(true);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedCollection.map((item) => {
+                const typed = item as ListItem;
+                const id = extractId(typed);
 
-          {pagedCollection.length === 0 && (
-            <p>Nenhuma crianca encontrada para a busca informada.</p>
+                return (
+                  <article
+                    key={id || JSON.stringify(item)}
+                    className="crm-row"
+                    onClick={() => openChildViewModal(typed)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div>
+                      <div className="child-row-title">
+                        <strong>{typed.name || "Crianca sem nome"}</strong>
+                        {id && activeChildIds.has(id) && (
+                          <span
+                            className="child-status-dot"
+                            title="Check-in ativo"
+                            aria-label="Check-in ativo"
+                          />
+                        )}
+                      </div>
+                      <p>{typed.email || "Email nao informado"}</p>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="btn outline"
+                        title="Vincular responsaveis"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          openChildAssignParentsModal(id);
+                        }}
+                      >
+                        🔗
+                      </button>
+                      <button
+                        type="button"
+                        className="btn outline"
+                        title="Editar"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openChildEditModal(typed);
+                        }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          childrenHook.setPendingDeleteChildId(id);
+                          setIsChildDeleteModalOpen(true);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedCollection.length === 0 && (
+                <p>Nenhuma crianca encontrada para a busca informada.</p>
+              )}
+            </>
           )}
         </div>
 

@@ -6,6 +6,7 @@ import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { EntitySearchList } from "../components/EntitySearchList";
 import { Pagination } from "../components/Pagination";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import {
   maskCpf,
   normalizeDigits,
@@ -39,6 +40,7 @@ export function ParentsSection() {
 
   const {
     filteredParents,
+    parentsQuery,
     isParentViewModalOpen,
     setIsParentViewModalOpen,
     parentForm,
@@ -69,6 +71,7 @@ export function ParentsSection() {
 
   const childrenHook = useChildren();
   const allChildren = childrenHook.pagedCollection;
+  const isLoading = parentsQuery.isLoading || childrenHook.childrenQuery.isLoading;
 
   const pagedParents = filteredParents.slice((page - 1) * 8, page * 8);
   const totalPages = Math.ceil(filteredParents.length / 8) || 1;
@@ -99,63 +102,84 @@ export function ParentsSection() {
         </div>
 
         <div className="crm-table">
-          {pagedParents.map((item) => {
-            const typed = item as ListItem;
-            const id = extractId(typed);
-
-            return (
+          {isLoading && pagedParents.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
               <article
-                key={id || JSON.stringify(item)}
-                className="crm-row"
-                onClick={() => openParentViewModal(typed)}
-                style={{ cursor: "pointer" }}
+                key={`parent-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
               >
-                <div>
-                  <strong>{typed.name || "Responsavel sem nome"}</strong>
-                  <p>{maskCpf(typed.document || "") || "CPF nao informado"}</p>
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="42%" height="1rem" />
+                  <SkeletonBlock width="58%" height="0.8rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Vincular criancas"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      openParentAssignChildrenModal(id);
-                    }}
-                  >
-                    🔗
-                  </button>
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Editar"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openParentEditModal(typed);
-                    }}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      setPendingDeleteParentId(id);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedParents.map((item) => {
+                const typed = item as ListItem;
+                const id = extractId(typed);
 
-          {pagedParents.length === 0 && (
-            <p>Nenhum responsavel encontrado para a busca informada.</p>
+                return (
+                  <article
+                    key={id || JSON.stringify(item)}
+                    className="crm-row"
+                    onClick={() => openParentViewModal(typed)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div>
+                      <strong>{typed.name || "Responsavel sem nome"}</strong>
+                      <p>{maskCpf(typed.document || "") || "CPF nao informado"}</p>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="btn outline"
+                        title="Vincular criancas"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          openParentAssignChildrenModal(id);
+                        }}
+                      >
+                        🔗
+                      </button>
+                      <button
+                        type="button"
+                        className="btn outline"
+                        title="Editar"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openParentEditModal(typed);
+                        }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          setPendingDeleteParentId(id);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedParents.length === 0 && (
+                <p>Nenhum responsavel encontrado para a busca informada.</p>
+              )}
+            </>
           )}
         </div>
 

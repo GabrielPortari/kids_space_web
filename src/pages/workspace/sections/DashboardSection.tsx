@@ -1,4 +1,5 @@
 import { EntitySearchList } from "../components/EntitySearchList";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { useDashboard } from "../hooks/useDashboard";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { maskCpf, normalizeDigits } from "../formatter";
@@ -83,34 +84,46 @@ export function DashboardSection() {
           <span className="pill">Visao geral</span>
         </div>
 
-        {isDashboardLoading && (
-          <p className="operation-hint">Carregando dashboard...</p>
-        )}
-
         {dashboardErrorMessage && !isDashboardLoading && (
           <p className="operation-hint">{dashboardErrorMessage}</p>
         )}
 
-        <div className="profile-grid dashboard-metrics-grid">
-          <article className="profile-card">
-            <span>👶 Crianças</span>
-            <strong>{dashboardMetrics.totalChildren}</strong>
-          </article>
-          <article className="profile-card">
-            <span>👨‍👩‍👧 Responsáveis</span>
-            <strong>{dashboardMetrics.totalParents}</strong>
-          </article>
-          {role === "company" && (
+        {isDashboardLoading ? (
+          <div className="profile-grid dashboard-metrics-grid">
+            {Array.from({ length: role === "company" ? 4 : 3 }).map(
+              (_, index) => (
+                <article
+                  key={`dashboard-metric-skeleton-${index}`}
+                  className="profile-card profile-card-skeleton"
+                >
+                  <SkeletonBlock width="42%" height="0.72rem" />
+                  <SkeletonBlock width="68%" height="1.9rem" />
+                </article>
+              ),
+            )}
+          </div>
+        ) : (
+          <div className="profile-grid dashboard-metrics-grid">
             <article className="profile-card">
-              <span>👷 Colaboradores</span>
-              <strong>{dashboardMetrics.totalCollaborators}</strong>
+              <span>👶 Crianças</span>
+              <strong>{dashboardMetrics.totalChildren}</strong>
             </article>
-          )}
-          <article className="profile-card">
-            <span>✅ No espaço agora</span>
-            <strong>{dashboardMetrics.totalActiveAttendances}</strong>
-          </article>
-        </div>
+            <article className="profile-card">
+              <span>👨‍👩‍👧 Responsáveis</span>
+              <strong>{dashboardMetrics.totalParents}</strong>
+            </article>
+            {role === "company" && (
+              <article className="profile-card">
+                <span>👷 Colaboradores</span>
+                <strong>{dashboardMetrics.totalCollaborators}</strong>
+              </article>
+            )}
+            <article className="profile-card">
+              <span>✅ No espaço agora</span>
+              <strong>{dashboardMetrics.totalActiveAttendances}</strong>
+            </article>
+          </div>
+        )}
       </section>
 
       <section className="crm-panel">
@@ -119,59 +132,96 @@ export function DashboardSection() {
           <span className="pill">Ultimos eventos da empresa</span>
         </div>
 
-        <div className="dashboard-movement-layout">
-          <div className="dashboard-movement-stack">
-            <article className="profile-card">
-              <span>Ultimo check-in</span>
-              <strong>{latestCheckinCard?.childDisplayName || "-"}</strong>
-              <p className="dashboard-card-meta">
-                {latestCheckinCard
-                  ? `${latestCheckinCard.checkInLabel || "Sem horario"} • ${latestCheckinCard.collaboratorDisplayName}`
-                  : "Nenhum check-in localizado."}
-              </p>
-            </article>
+        {isDashboardLoading ? (
+          <div className="dashboard-movement-layout">
+            <div className="dashboard-movement-stack">
+              {Array.from({ length: 2 }).map((_, index) => (
+                <article
+                  key={`dashboard-movement-skeleton-${index}`}
+                  className="profile-card profile-card-skeleton"
+                >
+                  <SkeletonBlock width="38%" height="0.72rem" />
+                  <SkeletonBlock width="72%" height="1.25rem" />
+                  <SkeletonBlock width="88%" height="0.8rem" />
+                </article>
+              ))}
+            </div>
 
-            <article className="profile-card">
-              <span>Ultimo check-out</span>
-              <strong>{latestCheckoutCard?.childDisplayName || "-"}</strong>
-              <p className="dashboard-card-meta">
-                {latestCheckoutCard
-                  ? `${latestCheckoutCard.checkOutLabel || "Sem horario"} • ${latestCheckoutCard.collaboratorDisplayName}`
-                  : "Nenhum check-out localizado."}
-              </p>
+            <article className="profile-card dashboard-recent-card profile-card-skeleton">
+              <SkeletonBlock width="48%" height="0.72rem" />
+              <SkeletonBlock width="22%" height="1.85rem" />
+              <ul className="dashboard-recent-list dashboard-recent-list-skeleton">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <li key={`dashboard-recent-skeleton-${index}`}>
+                    <span className="dashboard-recent-item-label">
+                      <SkeletonBlock
+                        className="workspace-skeleton-pill"
+                        width="1.05rem"
+                        height="1.05rem"
+                      />
+                      <SkeletonBlock width="9.5rem" height="0.78rem" />
+                    </span>
+                    <SkeletonBlock width="4.2rem" height="0.72rem" />
+                  </li>
+                ))}
+              </ul>
             </article>
           </div>
+        ) : (
+          <div className="dashboard-movement-layout">
+            <div className="dashboard-movement-stack">
+              <article className="profile-card">
+                <span>Ultimo check-in</span>
+                <strong>{latestCheckinCard?.childDisplayName || "-"}</strong>
+                <p className="dashboard-card-meta">
+                  {latestCheckinCard
+                    ? `${latestCheckinCard.checkInLabel || "Sem horario"} • ${latestCheckinCard.collaboratorDisplayName}`
+                    : "Nenhum check-in localizado."}
+                </p>
+              </article>
 
-          <article className="profile-card dashboard-recent-card">
-            <span>Ultimos 10 atendimentos</span>
-            <strong>{last10AttendanceCards.length}</strong>
-            <ul className="dashboard-recent-list">
-              {last10AttendanceCards.slice(0, 10).map((item) => {
-                const kind = getAttendanceKindIcon(item);
+              <article className="profile-card">
+                <span>Ultimo check-out</span>
+                <strong>{latestCheckoutCard?.childDisplayName || "-"}</strong>
+                <p className="dashboard-card-meta">
+                  {latestCheckoutCard
+                    ? `${latestCheckoutCard.checkOutLabel || "Sem horario"} • ${latestCheckoutCard.collaboratorDisplayName}`
+                    : "Nenhum check-out localizado."}
+                </p>
+              </article>
+            </div>
 
-                return (
-                  <li
-                    key={`${item.id || item.childDisplayName}-${item.sortEpoch}`}
-                  >
-                    <span className="dashboard-recent-item-label">
-                      <span
-                        className={`dashboard-recent-kind dashboard-recent-kind-${kind.label.toLowerCase()}`}
-                        title={kind.label}
-                        aria-label={kind.label}
-                      >
-                        {kind.icon}
+            <article className="profile-card dashboard-recent-card">
+              <span>Ultimos 10 atendimentos</span>
+              <strong>{last10AttendanceCards.length}</strong>
+              <ul className="dashboard-recent-list">
+                {last10AttendanceCards.slice(0, 10).map((item) => {
+                  const kind = getAttendanceKindIcon(item);
+
+                  return (
+                    <li
+                      key={`${item.id || item.childDisplayName}-${item.sortEpoch}`}
+                    >
+                      <span className="dashboard-recent-item-label">
+                        <span
+                          className={`dashboard-recent-kind dashboard-recent-kind-${kind.label.toLowerCase()}`}
+                          title={kind.label}
+                          aria-label={kind.label}
+                        >
+                          {kind.icon}
+                        </span>
+                        {item.childDisplayName}
                       </span>
-                      {item.childDisplayName}
-                    </span>
-                    <small>
-                      {item.checkInLabel || item.checkOutLabel || "-"}
-                    </small>
-                  </li>
-                );
-              })}
-            </ul>
-          </article>
-        </div>
+                      <small>
+                        {item.checkInLabel || item.checkOutLabel || "-"}
+                      </small>
+                    </li>
+                  );
+                })}
+              </ul>
+            </article>
+          </div>
+        )}
       </section>
 
       <section className="crm-panel">
@@ -189,32 +239,52 @@ export function DashboardSection() {
         </div>
 
         <div className="crm-table">
-          {dashboardAttendances.map((attendance) => (
-            <article
-              key={String(
-                attendance.id || attendance.childId || attendance.checkInEpoch,
-              )}
-              className="crm-row"
-            >
-              <div>
-                <strong>{attendance.childDisplayName}</strong>
-                <p>Check-in: {attendance.checkInLabel || "-"}</p>
-                <p>Colaborador: {attendance.collaboratorDisplayName}</p>
-              </div>
-              <div className="crm-row-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => openCheckoutModal(attendance)}
+          {isDashboardLoading && dashboardAttendances.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <article
+                key={`dashboard-attendance-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
+              >
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="42%" height="1rem" />
+                  <SkeletonBlock width="70%" height="0.8rem" />
+                  <SkeletonBlock width="55%" height="0.8rem" />
+                </div>
+                <div className="crm-row-actions">
+                  <SkeletonBlock width="8.5rem" height="2.4rem" />
+                </div>
+              </article>
+            ))
+          ) : (
+            <>
+              {dashboardAttendances.map((attendance) => (
+                <article
+                  key={String(
+                    attendance.id || attendance.childId || attendance.checkInEpoch,
+                  )}
+                  className="crm-row"
                 >
-                  Fazer Check-out
-                </button>
-              </div>
-            </article>
-          ))}
+                  <div>
+                    <strong>{attendance.childDisplayName}</strong>
+                    <p>Check-in: {attendance.checkInLabel || "-"}</p>
+                    <p>Colaborador: {attendance.collaboratorDisplayName}</p>
+                  </div>
+                  <div className="crm-row-actions">
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => openCheckoutModal(attendance)}
+                    >
+                      Fazer Check-out
+                    </button>
+                  </div>
+                </article>
+              ))}
 
-          {dashboardAttendances.length === 0 && (
-            <p>Nenhuma crianca está no espaco no momento.</p>
+              {dashboardAttendances.length === 0 && (
+                <p>Nenhuma crianca está no espaco no momento.</p>
+              )}
+            </>
           )}
         </div>
       </section>

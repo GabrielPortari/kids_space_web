@@ -658,6 +658,97 @@ input {
   color: var(--ink-strong);
 }
 
+.profile-card-skeleton {
+  gap: 0.55rem;
+}
+
+.workspace-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, #f3e8d6 0%, #f8f1e5 45%, #f3e8d6 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.workspace-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-100%);
+  animation: skeleton-sheen 1.35s ease-in-out infinite;
+}
+
+.workspace-skeleton-line {
+  display: block;
+}
+
+.workspace-skeleton-pill {
+  border-radius: 999px;
+}
+
+.workspace-skeleton-stack {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.crm-row-skeleton {
+  align-items: center;
+}
+
+.crm-row-skeleton .crm-row-actions {
+  align-items: center;
+}
+
+.workspace-skeleton-dropdown {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.workspace-skeleton-dropdown-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.55rem;
+}
+
+.workspace-skeleton-dropdown-copy {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.dashboard-recent-list-skeleton li {
+  padding-top: 0.5rem;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeleton-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .dashboard-card-meta {
   margin: 0;
   font-size: 0.8rem;

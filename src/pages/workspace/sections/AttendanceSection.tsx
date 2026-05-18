@@ -1,6 +1,7 @@
 import { useAttendance } from "../hooks/useAttendance";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { Pagination } from "../components/Pagination";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { extractId, formatTimestamp } from "../formatter";
 
 function getAttendanceType(item: Record<string, unknown>): string {
@@ -25,12 +26,14 @@ export function AttendanceSection() {
 
   const {
     pagedCollection,
+    attendancesQuery,
     onDeleteAttendance,
     isAttendanceViewModalOpen,
     setIsAttendanceViewModalOpen,
     viewingAttendance,
     openAttendanceViewModal,
   } = useAttendance();
+  const isLoading = attendancesQuery.isLoading;
 
   const PAGE_SIZE = 8;
   const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
@@ -52,80 +55,100 @@ export function AttendanceSection() {
         </div>
 
         <div className="crm-table">
-          {pagedCollection.map((item) => {
-            const typed = item as any;
-            const id = extractId(typed);
-            const attendanceType = getAttendanceType(typed);
-            const typeLabel = getAttendanceTypeLabel(typed);
-
-            return (
+          {isLoading && pagedCollection.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
               <article
-                key={id || JSON.stringify(item)}
-                className="crm-row"
-                onClick={() => openAttendanceViewModal(typed)}
-                style={{ cursor: "pointer" }}
+                key={`attendance-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
               >
-                <div>
-                  <strong>
-                    {(typed as any).childSnapshot?.name ||
-                      typed.childName ||
-                      "Crianca sem nome"}
-                  </strong>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginTop: "4px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "4px 12px",
-                        borderRadius: "4px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        backgroundColor:
-                          attendanceType === "checkin" ? "#4caf50" : "#ff9800",
-                        color: "white",
-                      }}
-                    >
-                      {typeLabel}
-                    </span>
-                    {typed.checkInTime && (
-                      <p style={{ margin: 0, fontSize: "14px" }}>
-                        Entrada: {formatTimestamp(typed.checkInTime)}
-                      </p>
-                    )}
-                    {typed.checkOutTime && (
-                      <p style={{ margin: 0, fontSize: "14px" }}>
-                        Saída: {formatTimestamp(typed.checkOutTime)}
-                      </p>
-                    )}
-                  </div>
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="43%" height="1rem" />
+                  <SkeletonBlock width="34%" height="0.85rem" />
+                  <SkeletonBlock width="62%" height="0.85rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      onDeleteAttendance(id);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedCollection.map((item) => {
+                const typed = item as any;
+                const id = extractId(typed);
+                const attendanceType = getAttendanceType(typed);
+                const typeLabel = getAttendanceTypeLabel(typed);
 
-          {pagedCollection.length === 0 && (
-            <p>
-              Nenhum registro de presenca encontrado para a busca informada.
-            </p>
+                return (
+                  <article
+                    key={id || JSON.stringify(item)}
+                    className="crm-row"
+                    onClick={() => openAttendanceViewModal(typed)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div>
+                      <strong>
+                        {(typed as any).childSnapshot?.name ||
+                          typed.childName ||
+                          "Crianca sem nome"}
+                      </strong>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          marginTop: "4px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 12px",
+                            borderRadius: "4px",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            backgroundColor:
+                              attendanceType === "checkin" ? "#4caf50" : "#ff9800",
+                            color: "white",
+                          }}
+                        >
+                          {typeLabel}
+                        </span>
+                        {typed.checkInTime && (
+                          <p style={{ margin: 0, fontSize: "14px" }}>
+                            Entrada: {formatTimestamp(typed.checkInTime)}
+                          </p>
+                        )}
+                        {typed.checkOutTime && (
+                          <p style={{ margin: 0, fontSize: "14px" }}>
+                            Saída: {formatTimestamp(typed.checkOutTime)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          onDeleteAttendance(id);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedCollection.length === 0 && (
+                <p>
+                  Nenhum registro de presenca encontrado para a busca informada.
+                </p>
+              )}
+            </>
           )}
         </div>
 

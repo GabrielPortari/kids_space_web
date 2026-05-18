@@ -3,6 +3,7 @@ import { useWorkspaceContext } from "../WorkspaceContext";
 import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { extractId } from "../formatter";
 import type { ListItem } from "../types";
 
@@ -10,6 +11,7 @@ export function CompaniesSection() {
   const {
     pagedCollection,
     totalPages,
+    companiesQuery,
     companyForm,
     setCompanyForm,
     isCompanyCreateModalOpen,
@@ -28,6 +30,7 @@ export function CompaniesSection() {
     pendingDeleteCompanyId,
   } = useCompanies();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
+  const isLoading = companiesQuery.isLoading;
 
   return (
     <>
@@ -57,42 +60,62 @@ export function CompaniesSection() {
         </div>
 
         <div className="crm-table">
-          {pagedCollection.map((item) => {
-            const typed = item as ListItem;
-            const id = extractId(typed);
-
-            return (
-              <article key={id || JSON.stringify(item)} className="crm-row">
-                <div>
-                  <strong>{typed.name || "Empresa sem nome"}</strong>
-                  <p>{id || "ID nao informado"}</p>
+          {isLoading && pagedCollection.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <article
+                key={`company-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
+              >
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="40%" height="1rem" />
+                  <SkeletonBlock width="58%" height="0.8rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Editar"
-                    onClick={() => openCompanyEditModal(typed)}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={() => {
-                      if (!id) return;
-                      setIsCompanyDeleteModalOpen(true);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedCollection.map((item) => {
+                const typed = item as ListItem;
+                const id = extractId(typed);
 
-          {pagedCollection.length === 0 && (
-            <p>Nenhuma empresa encontrada para a busca informada.</p>
+                return (
+                  <article key={id || JSON.stringify(item)} className="crm-row">
+                    <div>
+                      <strong>{typed.name || "Empresa sem nome"}</strong>
+                      <p>{id || "ID nao informado"}</p>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="btn outline"
+                        title="Editar"
+                        onClick={() => openCompanyEditModal(typed)}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={() => {
+                          if (!id) return;
+                          setIsCompanyDeleteModalOpen(true);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedCollection.length === 0 && (
+                <p>Nenhuma empresa encontrada para a busca informada.</p>
+              )}
+            </>
           )}
         </div>
 

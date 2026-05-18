@@ -3,6 +3,7 @@ import { useWorkspaceContext } from "../WorkspaceContext";
 import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import {
   extractId,
   maskByFieldKey,
@@ -15,6 +16,7 @@ export function CollaboratorsSection() {
   const {
     pagedCollection,
     totalPages,
+    collaboratorsQuery,
     isCollaboratorCreateModalOpen,
     setIsCollaboratorCreateModalOpen,
     isCollaboratorViewModalOpen,
@@ -37,6 +39,7 @@ export function CollaboratorsSection() {
     updateCollaboratorMut,
   } = useCollaborators();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
+  const isLoading = collaboratorsQuery.isLoading;
 
   return (
     <>
@@ -66,53 +69,73 @@ export function CollaboratorsSection() {
         </div>
 
         <div className="crm-table">
-          {pagedCollection.map((item) => {
-            const typed = item as ListItem;
-            const id = extractId(typed);
-
-            return (
+          {isLoading && pagedCollection.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
               <article
-                key={id || JSON.stringify(item)}
-                className="crm-row"
-                onClick={() => openCollaboratorViewModal(typed)}
-                style={{ cursor: "pointer" }}
+                key={`collaborator-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
               >
-                <div>
-                  <strong>{typed.name || "Colaborador sem nome"}</strong>
-                  <p>{typed.email || "Email nao informado"}</p>
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="44%" height="1rem" />
+                  <SkeletonBlock width="66%" height="0.8rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Editar"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openCollaboratorEditModal(typed);
-                    }}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) {
-                        return;
-                      }
-                      setIsCollaboratorDeleteModalOpen(true);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedCollection.map((item) => {
+                const typed = item as ListItem;
+                const id = extractId(typed);
 
-          {pagedCollection.length === 0 && (
-            <p>Nenhum colaborador encontrado para a busca informada.</p>
+                return (
+                  <article
+                    key={id || JSON.stringify(item)}
+                    className="crm-row"
+                    onClick={() => openCollaboratorViewModal(typed)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div>
+                      <strong>{typed.name || "Colaborador sem nome"}</strong>
+                      <p>{typed.email || "Email nao informado"}</p>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="btn outline"
+                        title="Editar"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openCollaboratorEditModal(typed);
+                        }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) {
+                            return;
+                          }
+                          setIsCollaboratorDeleteModalOpen(true);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedCollection.length === 0 && (
+                <p>Nenhum colaborador encontrado para a busca informada.</p>
+              )}
+            </>
           )}
         </div>
 

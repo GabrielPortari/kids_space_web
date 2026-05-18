@@ -1,4 +1,5 @@
 import { useProfile } from "../hooks/useProfile";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 
 export function ProfileSection() {
   const {
@@ -34,7 +35,53 @@ export function ProfileSection() {
         </div>
 
         {isLoading ? (
-          <p>Carregando dados do perfil...</p>
+          <>
+            <div className="profile-section">
+              <h3>Dados pessoais</h3>
+              <div className="profile-grid">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <article
+                    key={`personal-skeleton-${index}`}
+                    className="profile-card profile-card-skeleton"
+                  >
+                    <SkeletonBlock
+                      className="workspace-skeleton-line"
+                      width="40%"
+                      height="0.7rem"
+                    />
+                    <SkeletonBlock
+                      className="workspace-skeleton-line"
+                      width="85%"
+                      height="1.1rem"
+                    />
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="profile-section">
+              <h3>Endereco</h3>
+              <div className="profile-grid">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <article
+                    key={`address-skeleton-${index}`}
+                    className="profile-card profile-card-skeleton"
+                  >
+                    <SkeletonBlock
+                      className="workspace-skeleton-line"
+                      width="35%"
+                      height="0.7rem"
+                    />
+                    <SkeletonBlock
+                      className="workspace-skeleton-line"
+                      width="78%"
+                      height="1.1rem"
+                    />
+                  </article>
+                ))}
+              </div>
+            </div>
+          </>
         ) : (
           <>
             {personalProfileFields.length > 0 && (

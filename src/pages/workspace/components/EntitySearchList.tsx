@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { SkeletonBlock } from "./WorkspaceSkeleton";
 
 type EntitySearchListProps = {
   label: string;
@@ -182,39 +183,59 @@ export function EntitySearchList({
             role="listbox"
             onMouseDown={(event) => event.preventDefault()}
           >
-            {isLoading && <p className="operation-hint">Carregando...</p>}
-
-            {!isLoading &&
-              options.map((option) => {
-                const isChecked = selectedIdsArray.includes(option.id);
-
-                return (
-                  <label
-                    key={option.id}
-                    className="operation-option"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      handleOptionClick(option.id);
-                    }}
+            {isLoading ? (
+              <div className="workspace-skeleton-dropdown">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    key={`entity-skeleton-${index}`}
+                    className="operation-option workspace-skeleton-dropdown-item"
                   >
-                    <input
-                      type={mode === "radio" ? "radio" : "checkbox"}
-                      checked={isChecked}
-                      readOnly
-                      tabIndex={-1}
+                    <SkeletonBlock
+                      className="workspace-skeleton-pill"
+                      width="1rem"
+                      height="1rem"
                     />
-                    <span>
-                      <strong>{option.name}</strong>
-                      <small>{option.id}</small>
-                    </span>
-                  </label>
-                );
-              })}
+                    <div className="workspace-skeleton-dropdown-copy">
+                      <SkeletonBlock width="58%" height="0.9rem" />
+                      <SkeletonBlock width="36%" height="0.7rem" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                {options.map((option) => {
+                  const isChecked = selectedIdsArray.includes(option.id);
 
-            {!isLoading && options.length === 0 && (
-              <p className="operation-hint">
-                Nenhum item encontrado para a busca.
-              </p>
+                  return (
+                    <label
+                      key={option.id}
+                      className="operation-option"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleOptionClick(option.id);
+                      }}
+                    >
+                      <input
+                        type={mode === "radio" ? "radio" : "checkbox"}
+                        checked={isChecked}
+                        readOnly
+                        tabIndex={-1}
+                      />
+                      <span>
+                        <strong>{option.name}</strong>
+                        <small>{option.id}</small>
+                      </span>
+                    </label>
+                  );
+                })}
+
+                {options.length === 0 && (
+                  <p className="operation-hint">
+                    Nenhum item encontrado para a busca.
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}
