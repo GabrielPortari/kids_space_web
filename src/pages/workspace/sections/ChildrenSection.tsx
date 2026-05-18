@@ -7,6 +7,7 @@ import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { extractId, parseIdList } from "../formatter";
 import type { ListItem } from "../types";
+import { useQueryClient } from "@tanstack/react-query";
 
 function formatLinkedNames(idsValue: string, items: ListItem[]): string {
   const ids = parseIdList(idsValue);
@@ -25,6 +26,7 @@ function formatLinkedNames(idsValue: string, items: ListItem[]): string {
 }
 
 export function ChildrenSection() {
+  const queryClient = useQueryClient();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
 
   const childrenHook = useChildren();
@@ -32,6 +34,10 @@ export function ChildrenSection() {
     childrenHook.childrenQuery.isLoading ||
     childrenHook.parentsQuery.isLoading ||
     childrenHook.activeAttendancesQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["children"] });
+    void queryClient.resetQueries({ queryKey: ["parents"] });
+  };
 
   const {
     pagedCollection,
@@ -74,13 +80,23 @@ export function ChildrenSection() {
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Criancas</h2>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => setIsChildCreateModalOpen(true)}
-          >
-            Nova criança
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              Atualizar
+            </button>
+            <button
+              type="button"
+              className="btn solid"
+              onClick={() => setIsChildCreateModalOpen(true)}
+            >
+              Nova criança
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">

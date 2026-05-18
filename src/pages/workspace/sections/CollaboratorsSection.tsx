@@ -4,6 +4,7 @@ import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   extractId,
   maskByFieldKey,
@@ -13,6 +14,7 @@ import {
 import type { ListItem } from "../types";
 
 export function CollaboratorsSection() {
+  const queryClient = useQueryClient();
   const {
     pagedCollection,
     totalPages,
@@ -40,21 +42,34 @@ export function CollaboratorsSection() {
   } = useCollaborators();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
   const isLoading = collaboratorsQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["collaborators"] });
+  };
 
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Colaboradores</h2>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => {
-              setIsCollaboratorCreateModalOpen(true);
-            }}
-          >
-            Novo colaborador
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              Atualizar
+            </button>
+            <button
+              type="button"
+              className="btn solid"
+              onClick={() => {
+                setIsCollaboratorCreateModalOpen(true);
+              }}
+            >
+              Novo colaborador
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">

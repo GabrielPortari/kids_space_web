@@ -1,7 +1,9 @@
 import { useProfile } from "../hooks/useProfile";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ProfileSection() {
+  const queryClient = useQueryClient();
   const {
     personalProfileFields,
     addressProfileFields,
@@ -16,22 +18,36 @@ export function ProfileSection() {
   } = useProfile();
 
   const isLoading = myCompanyQuery.isLoading || myCollaboratorQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["my-company"] });
+    void queryClient.resetQueries({ queryKey: ["my-collaborator"] });
+  };
 
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Meu perfil</h2>
-          {(personalProfileFields.length > 0 ||
-            addressProfileFields.length > 0) && (
+          <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn solid"
-              onClick={openProfileEditModal}
+              className="btn outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
             >
-              Alterar dados
+              Atualizar
             </button>
-          )}
+            {(personalProfileFields.length > 0 ||
+              addressProfileFields.length > 0) && (
+              <button
+                type="button"
+                className="btn solid"
+                onClick={openProfileEditModal}
+              >
+                Alterar dados
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (

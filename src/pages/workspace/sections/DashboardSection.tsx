@@ -3,6 +3,7 @@ import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { useDashboard } from "../hooks/useDashboard";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { maskCpf, normalizeDigits } from "../formatter";
+import { useQueryClient } from "@tanstack/react-query";
 
 function getAttendanceKindIcon(item: {
   checkOutLabel?: string;
@@ -20,6 +21,7 @@ function getAttendanceKindIcon(item: {
 }
 
 export function DashboardSection() {
+  const queryClient = useQueryClient();
   const { role } = useWorkspaceContext();
   const {
     childrenQuery,
@@ -76,12 +78,26 @@ export function DashboardSection() {
       ? dashboardError.error.message
       : "";
 
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["dashboard"] });
+  };
+
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Dashboard</h2>
-          <span className="pill">Visao geral</span>
+          <div className="crm-panel-head-actions">
+            <span className="pill">Visao geral</span>
+            <button
+              type="button"
+              className="btn outline"
+              onClick={handleRefresh}
+              disabled={isDashboardLoading}
+            >
+              Atualizar
+            </button>
+          </div>
         </div>
 
         {dashboardErrorMessage && !isDashboardLoading && (

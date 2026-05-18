@@ -542,6 +542,13 @@ input {
   margin-bottom: 0.75rem;
 }
 
+.crm-panel-head-actions {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .crm-form-inline {
   display: flex;
   gap: 0.55rem;

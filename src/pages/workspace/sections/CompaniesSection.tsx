@@ -6,8 +6,10 @@ import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { extractId } from "../formatter";
 import type { ListItem } from "../types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function CompaniesSection() {
+  const queryClient = useQueryClient();
   const {
     pagedCollection,
     totalPages,
@@ -31,21 +33,34 @@ export function CompaniesSection() {
   } = useCompanies();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
   const isLoading = companiesQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["companies"] });
+  };
 
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Empresas</h2>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => {
-              setIsCompanyCreateModalOpen(true);
-            }}
-          >
-            Adicionar
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              Atualizar
+            </button>
+            <button
+              type="button"
+              className="btn solid"
+              onClick={() => {
+                setIsCompanyCreateModalOpen(true);
+              }}
+            >
+              Adicionar
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">

@@ -80,7 +80,7 @@ export function WorkspaceProvider({
     }
 
     base.push({ id: "children", label: "Criancas" });
-    base.push({ id: "attendance", label: "Attendances" });
+    base.push({ id: "attendance", label: "Atendimentos" });
 
     if (!isAdminOrMaster) {
       base.splice(3, 0, { id: "parents", label: "Responsaveis" });

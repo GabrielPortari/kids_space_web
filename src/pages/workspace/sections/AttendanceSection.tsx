@@ -3,6 +3,7 @@ import { useWorkspaceContext } from "../WorkspaceContext";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import { extractId, formatTimestamp } from "../formatter";
+import { useQueryClient } from "@tanstack/react-query";
 
 function getAttendanceType(item: Record<string, unknown>): string {
   if ((item as any).checkInTime && !(item as any).checkOutTime) {
@@ -22,6 +23,7 @@ function getAttendanceTypeLabel(item: Record<string, unknown>): string {
 }
 
 export function AttendanceSection() {
+  const queryClient = useQueryClient();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
 
   const {
@@ -34,6 +36,9 @@ export function AttendanceSection() {
     openAttendanceViewModal,
   } = useAttendance();
   const isLoading = attendancesQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["attendances"] });
+  };
 
   const PAGE_SIZE = 8;
   const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
@@ -41,7 +46,17 @@ export function AttendanceSection() {
   return (
     <>
       <section className="crm-panel">
-        <h2>Presenca</h2>
+        <div className="crm-panel-head">
+          <h2>Atendimentos</h2>
+          <button
+            type="button"
+            className="btn outline"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            Atualizar
+          </button>
+        </div>
 
         <div className="crm-panel-head">
           <input
@@ -147,7 +162,7 @@ export function AttendanceSection() {
 
               {pagedCollection.length === 0 && (
                 <p>
-                  Nenhum registro de presenca encontrado para a busca informada.
+                  Nenhum registro de atendimento encontrado para a busca informada.
                 </p>
               )}
             </>
@@ -171,10 +186,10 @@ export function AttendanceSection() {
             className="crm-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Detalhes de presenca"
+            aria-label="Detalhes de atendimento"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Detalhes de Presenca</h2>
+            <h2>Detalhes de Atendimento</h2>
             <div className="collaborator-view-content">
               <section className="profile-section">
                 <h3>Informacoes gerais</h3>

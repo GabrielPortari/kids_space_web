@@ -15,6 +15,7 @@ import {
   parseIdList,
 } from "../formatter";
 import type { ListItem } from "../types";
+import { useQueryClient } from "@tanstack/react-query";
 
 function formatLinkedNames(idsValue: string, items: ListItem[]): string {
   const ids = parseIdList(idsValue);
@@ -33,6 +34,7 @@ function formatLinkedNames(idsValue: string, items: ListItem[]): string {
 }
 
 export function ParentsSection() {
+  const queryClient = useQueryClient();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
   const [pendingDeleteParentId, setPendingDeleteParentId] = useState<
     string | null
@@ -73,6 +75,10 @@ export function ParentsSection() {
   const allChildren = childrenHook.pagedCollection;
   const isLoading =
     parentsQuery.isLoading || childrenHook.childrenQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["parents"] });
+    void queryClient.resetQueries({ queryKey: ["children"] });
+  };
 
   const pagedParents = filteredParents.slice((page - 1) * 8, page * 8);
   const totalPages = Math.ceil(filteredParents.length / 8) || 1;
@@ -82,13 +88,23 @@ export function ParentsSection() {
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Responsaveis</h2>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => setIsParentModalOpen(true)}
-          >
-            Novo responsavel
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              Atualizar
+            </button>
+            <button
+              type="button"
+              className="btn solid"
+              onClick={() => setIsParentModalOpen(true)}
+            >
+              Novo responsavel
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">
