@@ -71,7 +71,8 @@ export function ParentsSection() {
 
   const childrenHook = useChildren();
   const allChildren = childrenHook.pagedCollection;
-  const isLoading = parentsQuery.isLoading || childrenHook.childrenQuery.isLoading;
+  const isLoading =
+    parentsQuery.isLoading || childrenHook.childrenQuery.isLoading;
 
   const pagedParents = filteredParents.slice((page - 1) * 8, page * 8);
   const totalPages = Math.ceil(filteredParents.length / 8) || 1;
@@ -134,7 +135,9 @@ export function ParentsSection() {
                   >
                     <div>
                       <strong>{typed.name || "Responsavel sem nome"}</strong>
-                      <p>{maskCpf(typed.document || "") || "CPF nao informado"}</p>
+                      <p>
+                        {maskCpf(typed.document || "") || "CPF nao informado"}
+                      </p>
                     </div>
                     <div className="crm-row-actions">
                       <button

@@ -260,7 +260,9 @@ export function DashboardSection() {
               {dashboardAttendances.map((attendance) => (
                 <article
                   key={String(
-                    attendance.id || attendance.childId || attendance.checkInEpoch,
+                    attendance.id ||
+                      attendance.childId ||
+                      attendance.checkInEpoch,
                   )}
                   className="crm-row"
                 >

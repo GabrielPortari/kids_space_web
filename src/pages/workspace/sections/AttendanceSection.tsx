@@ -108,7 +108,9 @@ export function AttendanceSection() {
                             fontSize: "12px",
                             fontWeight: "bold",
                             backgroundColor:
-                              attendanceType === "checkin" ? "#4caf50" : "#ff9800",
+                              attendanceType === "checkin"
+                                ? "#4caf50"
+                                : "#ff9800",
                             color: "white",
                           }}
                         >
