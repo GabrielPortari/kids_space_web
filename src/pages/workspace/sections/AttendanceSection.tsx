@@ -50,11 +50,13 @@ export function AttendanceSection() {
           <h2>Atendimentos</h2>
           <button
             type="button"
-            className="btn outline"
+            className="btn outline crm-icon-btn"
             onClick={handleRefresh}
             disabled={isLoading}
+            aria-label="Atualizar atendimentos"
+            title="Atualizar atendimentos"
           >
-            Atualizar
+            ↻
           </button>
         </div>
 
@@ -162,7 +164,8 @@ export function AttendanceSection() {
 
               {pagedCollection.length === 0 && (
                 <p>
-                  Nenhum registro de atendimento encontrado para a busca informada.
+                  Nenhum registro de atendimento encontrado para a busca
+                  informada.
                 </p>
               )}
             </>

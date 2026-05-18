@@ -542,11 +542,29 @@ input {
   margin-bottom: 0.75rem;
 }
 
+.crm-panel-title-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
 .crm-panel-head-actions {
   display: flex;
   gap: 0.55rem;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.crm-icon-btn {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
 .crm-form-inline {

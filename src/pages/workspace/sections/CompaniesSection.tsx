@@ -45,20 +45,22 @@ export function CompaniesSection() {
           <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              Atualizar
-            </button>
-            <button
-              type="button"
               className="btn solid"
               onClick={() => {
                 setIsCompanyCreateModalOpen(true);
               }}
             >
-              Adicionar
+              Adicionar novo
+            </button>
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar empresas"
+              title="Atualizar empresas"
+            >
+              ↻
             </button>
           </div>
         </div>

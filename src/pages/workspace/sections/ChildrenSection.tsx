@@ -83,18 +83,20 @@ export function ChildrenSection() {
           <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              Atualizar
-            </button>
-            <button
-              type="button"
               className="btn solid"
               onClick={() => setIsChildCreateModalOpen(true)}
             >
-              Nova criança
+              Adicionar novo
+            </button>
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar crianças"
+              title="Atualizar crianças"
+            >
+              ↻
             </button>
           </div>
         </div>

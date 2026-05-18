@@ -29,14 +29,6 @@ export function ProfileSection() {
         <div className="crm-panel-head">
           <h2>Meu perfil</h2>
           <div className="crm-panel-head-actions">
-            <button
-              type="button"
-              className="btn outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              Atualizar
-            </button>
             {(personalProfileFields.length > 0 ||
               addressProfileFields.length > 0) && (
               <button
@@ -47,6 +39,16 @@ export function ProfileSection() {
                 Alterar dados
               </button>
             )}
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar perfil"
+              title="Atualizar perfil"
+            >
+              ↻
+            </button>
           </div>
         </div>
 

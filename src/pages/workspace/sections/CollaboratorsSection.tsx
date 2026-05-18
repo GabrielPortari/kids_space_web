@@ -54,20 +54,22 @@ export function CollaboratorsSection() {
           <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              Atualizar
-            </button>
-            <button
-              type="button"
               className="btn solid"
               onClick={() => {
                 setIsCollaboratorCreateModalOpen(true);
               }}
             >
-              Novo colaborador
+              Adicionar novo
+            </button>
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar colaboradores"
+              title="Atualizar colaboradores"
+            >
+              ↻
             </button>
           </div>
         </div>

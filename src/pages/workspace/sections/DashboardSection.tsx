@@ -86,16 +86,20 @@ export function DashboardSection() {
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
-          <h2>Dashboard</h2>
-          <div className="crm-panel-head-actions">
+          <div className="crm-panel-title-group">
+            <h2>Dashboard</h2>
             <span className="pill">Visao geral</span>
+          </div>
+          <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn outline"
+              className="btn outline crm-icon-btn"
               onClick={handleRefresh}
               disabled={isDashboardLoading}
+              aria-label="Atualizar dashboard"
+              title="Atualizar dashboard"
             >
-              Atualizar
+              ↻
             </button>
           </div>
         </div>
