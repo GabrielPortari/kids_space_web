@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { authRolePaths } from "../auth/authRoles";
 import { useAuth } from "../auth/useAuth";
-import kidsSpaceIcon from "../assets/kids_space_icon.png";
+import kidsSpaceIcon from "../assets/kids_space_icon.jpg";
 
 const works = [
   {
