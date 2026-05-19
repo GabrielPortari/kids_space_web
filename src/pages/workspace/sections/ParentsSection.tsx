@@ -59,6 +59,7 @@ export function ParentsSection() {
     assigningParentChildOptions,
     openParentViewModal,
     onCreateParent,
+    openParentCreateModal,
     onUpdateParent,
     openParentEditModal,
     onDeleteParent,
@@ -92,7 +93,7 @@ export function ParentsSection() {
             <button
               type="button"
               className="btn solid"
-              onClick={() => setIsParentModalOpen(true)}
+              onClick={openParentCreateModal}
             >
               Adicionar novo
             </button>

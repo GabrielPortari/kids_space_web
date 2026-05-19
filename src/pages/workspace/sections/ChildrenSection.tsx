@@ -71,6 +71,7 @@ export function ChildrenSection() {
     pagedCollection,
     totalPages,
     onCreateChildModal,
+    openChildCreateModal,
     onUpdateChildModal,
     openChildViewModal,
     openChildEditModal,
@@ -112,7 +113,7 @@ export function ChildrenSection() {
             <button
               type="button"
               className="btn solid"
-              onClick={() => setIsChildCreateModalOpen(true)}
+              onClick={openChildCreateModal}
             >
               Adicionar novo
             </button>

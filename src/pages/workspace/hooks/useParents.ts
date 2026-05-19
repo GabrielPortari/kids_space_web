@@ -138,6 +138,14 @@ export function useParents() {
     setIsParentModalOpen(false);
   }
 
+  function openParentCreateModal() {
+    setEditingParentId(null);
+    setViewingParentId(null);
+    setParentChildrenSearch("");
+    setParentForm(INITIAL_PARENT_FORM);
+    setIsParentModalOpen(true);
+  }
+
   async function onUpdateParent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -297,6 +305,7 @@ export function useParents() {
 
     // handlers
     onCreateParent,
+    openParentCreateModal,
     onUpdateParent,
     openParentViewModal,
     openParentEditModal,

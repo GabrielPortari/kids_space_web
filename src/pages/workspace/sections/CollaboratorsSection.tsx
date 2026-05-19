@@ -39,6 +39,7 @@ export function CollaboratorsSection() {
     deleteCollaboratorMut,
     createCollaboratorMut,
     updateCollaboratorMut,
+    openCollaboratorCreateModal,
   } = useCollaborators();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
   const isLoading = collaboratorsQuery.isLoading;
@@ -55,9 +56,7 @@ export function CollaboratorsSection() {
             <button
               type="button"
               className="btn solid"
-              onClick={() => {
-                setIsCollaboratorCreateModalOpen(true);
-              }}
+              onClick={openCollaboratorCreateModal}
             >
               Adicionar novo
             </button>

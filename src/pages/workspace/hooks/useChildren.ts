@@ -253,6 +253,14 @@ export function useChildren() {
     setIsChildCreateModalOpen(false);
   }
 
+  function openChildCreateModal() {
+    setEditingChildId(null);
+    setViewingChildId(null);
+    setChildParentsSearch("");
+    setChildForm(INITIAL_CHILD_FORM);
+    setIsChildCreateModalOpen(true);
+  }
+
   async function onUpdateChildModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -422,6 +430,7 @@ export function useChildren() {
 
     // handlers
     onCreateChildModal,
+    openChildCreateModal,
     onUpdateChildModal,
     openChildViewModal,
     openChildEditModal,

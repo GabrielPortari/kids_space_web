@@ -157,6 +157,13 @@ export function useCollaborators() {
     setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
   }
 
+  function openCollaboratorCreateModal() {
+    setEditingCollaboratorId(null);
+    setViewingCollaboratorId(null);
+    setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+    setIsCollaboratorCreateModalOpen(true);
+  }
+
   async function onUpdateCollaboratorModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -261,6 +268,7 @@ export function useCollaborators() {
 
     // handlers
     onCreateCollaboratorModal,
+    openCollaboratorCreateModal,
     onUpdateCollaboratorModal,
     openCollaboratorViewModal,
     openCollaboratorEditModal,
