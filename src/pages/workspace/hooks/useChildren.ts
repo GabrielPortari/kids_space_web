@@ -8,6 +8,7 @@ import {
   listChildren,
   updateChild,
   type CreateChildPayload,
+  type ChildHealthInfoPayload,
 } from "../../../api/modules/childApi";
 import { listActiveCheckins } from "../../../api/modules/attendanceApi";
 import { buildBackendAddressPayload } from "../../../api/address";
@@ -19,11 +20,40 @@ import {
   extractId,
   normalizeDigits,
   parseIdList,
+  splitTextList,
   matchesSearch,
   toChildFormState,
   paginate,
 } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
+
+function buildHealthInfoPayload(
+  healthInfo: ChildFormState["healthInfo"],
+): ChildHealthInfoPayload {
+  const medications = healthInfo.medications
+    .map((medication) => ({
+      name: medication.name.trim(),
+      dosage: medication.dosage.trim(),
+      schedule: medication.schedule.trim(),
+    }))
+    .filter(
+      (medication) =>
+        medication.name || medication.dosage || medication.schedule,
+    )
+    .map((medication) => ({
+      name: medication.name,
+      dosage: medication.dosage || undefined,
+      schedule: medication.schedule || undefined,
+    }));
+
+  return {
+    dietaryRestrictions: splitTextList(healthInfo.dietaryRestrictions),
+    allergies: splitTextList(healthInfo.allergies),
+    medications,
+    medicalConditions: splitTextList(healthInfo.medicalConditions),
+    fearsOrSensitivities: splitTextList(healthInfo.fearsOrSensitivities),
+  };
+}
 
 export function useChildren() {
   const queryClient = useQueryClient();
@@ -201,6 +231,7 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
+      healthInfo: buildHealthInfoPayload(childForm.healthInfo),
       address: addressPayload,
       companyId: currentCompanyScope,
     });
@@ -237,6 +268,7 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
+      healthInfo: buildHealthInfoPayload(childForm.healthInfo),
       address: addressPayload,
     };
 

@@ -48,6 +48,13 @@ export const INITIAL_CHILD_FORM: ChildFormState = {
   birthDate: "",
   parents: "",
   inheritParentAddress: false,
+  healthInfo: {
+    dietaryRestrictions: "",
+    allergies: "",
+    medications: [{ name: "", dosage: "", schedule: "" }],
+    medicalConditions: "",
+    fearsOrSensitivities: "",
+  },
   addressStreet: "",
   addressNumber: "",
   addressDistrict: "",

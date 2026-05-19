@@ -1,11 +1,12 @@
 import { useChildren } from "../hooks/useChildren";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { AddressFormFields } from "../components/AddressFormFields";
+import { ChildHealthInfoFields } from "../components/ChildHealthInfoFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { EntitySearchList } from "../components/EntitySearchList";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
-import { extractId, parseIdList } from "../formatter";
+import { extractId, parseIdList, splitTextList } from "../formatter";
 import type { ListItem } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -23,6 +24,33 @@ function formatLinkedNames(idsValue: string, items: ListItem[]): string {
     .map((id) => nameById.get(id) || id)
     .filter(Boolean)
     .join(", ");
+}
+
+function formatListSummary(value: string): string {
+  const items = splitTextList(value);
+  return items.length > 0 ? items.join(", ") : "-";
+}
+
+function formatMedicationSummary(medications: unknown): string {
+  if (!Array.isArray(medications)) {
+    return "-";
+  }
+
+  const items = medications
+    .map((medication) => {
+      if (!medication || typeof medication !== "object") {
+        return "";
+      }
+
+      const current = medication as Record<string, unknown>;
+      return [current.name, current.dosage, current.schedule]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .join(" - ");
+    })
+    .filter(Boolean);
+
+  return items.length > 0 ? items.join("; ") : "-";
 }
 
 export function ChildrenSection() {
@@ -298,6 +326,50 @@ export function ChildrenSection() {
                   </article>
                 </div>
               </section>
+
+              <section className="profile-section">
+                <h3>Saude</h3>
+                <div className="profile-grid">
+                  <article className="profile-card">
+                    <span>Restricoes alimentares</span>
+                    <strong>
+                      {formatListSummary(
+                        childForm.healthInfo.dietaryRestrictions,
+                      )}
+                    </strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Alergias</span>
+                    <strong>
+                      {formatListSummary(childForm.healthInfo.allergies)}
+                    </strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Condicoes medicas</span>
+                    <strong>
+                      {formatListSummary(
+                        childForm.healthInfo.medicalConditions,
+                      )}
+                    </strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Medos ou sensibilidades</span>
+                    <strong>
+                      {formatListSummary(
+                        childForm.healthInfo.fearsOrSensitivities,
+                      )}
+                    </strong>
+                  </article>
+                  <article className="profile-card field-span-2">
+                    <span>Medicamentos</span>
+                    <strong>
+                      {formatMedicationSummary(
+                        childForm.healthInfo.medications,
+                      )}
+                    </strong>
+                  </article>
+                </div>
+              </section>
             </div>
 
             <div className="crm-modal-actions">
@@ -404,6 +476,60 @@ export function ChildrenSection() {
                   }
                 />
               </section>
+
+              <ChildHealthInfoFields
+                value={childForm.healthInfo}
+                onChange={(key, value) =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      [key]: value,
+                    },
+                  }))
+                }
+                onMedicationChange={(index, key, value) =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      medications: current.healthInfo.medications.map(
+                        (medication, medicationIndex) =>
+                          medicationIndex === index
+                            ? { ...medication, [key]: value }
+                            : medication,
+                      ),
+                    },
+                  }))
+                }
+                onAddMedication={() =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      medications: [
+                        ...current.healthInfo.medications,
+                        { name: "", dosage: "", schedule: "" },
+                      ],
+                    },
+                  }))
+                }
+                onRemoveMedication={(index) =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      medications:
+                        current.healthInfo.medications.length > 1
+                          ? current.healthInfo.medications.filter(
+                              (_medication, medicationIndex) =>
+                                medicationIndex !== index,
+                            )
+                          : current.healthInfo.medications,
+                    },
+                  }))
+                }
+              />
 
               <div className="crm-modal-actions">
                 <button
@@ -517,6 +643,60 @@ export function ChildrenSection() {
                   }
                 />
               </section>
+
+              <ChildHealthInfoFields
+                value={childForm.healthInfo}
+                onChange={(key, value) =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      [key]: value,
+                    },
+                  }))
+                }
+                onMedicationChange={(index, key, value) =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      medications: current.healthInfo.medications.map(
+                        (medication, medicationIndex) =>
+                          medicationIndex === index
+                            ? { ...medication, [key]: value }
+                            : medication,
+                      ),
+                    },
+                  }))
+                }
+                onAddMedication={() =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      medications: [
+                        ...current.healthInfo.medications,
+                        { name: "", dosage: "", schedule: "" },
+                      ],
+                    },
+                  }))
+                }
+                onRemoveMedication={(index) =>
+                  setChildForm((current) => ({
+                    ...current,
+                    healthInfo: {
+                      ...current.healthInfo,
+                      medications:
+                        current.healthInfo.medications.length > 1
+                          ? current.healthInfo.medications.filter(
+                              (_medication, medicationIndex) =>
+                                medicationIndex !== index,
+                            )
+                          : current.healthInfo.medications,
+                    },
+                  }))
+                }
+              />
 
               <div className="crm-modal-actions">
                 <button

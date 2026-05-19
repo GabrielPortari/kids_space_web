@@ -65,6 +65,7 @@ export type ChildFormState = {
   birthDate: string;
   parents: string;
   inheritParentAddress: boolean;
+  healthInfo: ChildHealthInfoFormState;
   addressStreet: string;
   addressNumber: string;
   addressDistrict: string;
@@ -73,6 +74,20 @@ export type ChildFormState = {
   addressZipCode: string;
   addressComplement: string;
   addressCountry: string;
+};
+
+export type ChildMedicationFormState = {
+  name: string;
+  dosage: string;
+  schedule: string;
+};
+
+export type ChildHealthInfoFormState = {
+  dietaryRestrictions: string;
+  allergies: string;
+  medications: ChildMedicationFormState[];
+  medicalConditions: string;
+  fearsOrSensitivities: string;
 };
 
 export type CompanyFormState = {

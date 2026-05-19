@@ -3,6 +3,8 @@ import type {
   ParentFormState,
   ChildFormState,
   CompanyFormState,
+  ChildHealthInfoFormState,
+  ChildMedicationFormState,
 } from "./types";
 
 export function extractId(item: ListItem): string {
@@ -41,6 +43,68 @@ export function parseIdList(value: string | string[] | unknown): string[] {
   }
 
   return [];
+}
+
+export function splitTextList(value: string): string[] {
+  return value
+    .split(/[\r\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function formatTextList(value: unknown): string {
+  if (!Array.isArray(value)) {
+    return "";
+  }
+
+  return value
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+function toMedicationFormState(value: unknown): ChildMedicationFormState {
+  const medication =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+
+  return {
+    name: String(medication.name || ""),
+    dosage: String(medication.dosage || ""),
+    schedule: String(medication.schedule || ""),
+  };
+}
+
+export function toChildHealthInfoFormState(
+  item: ListItem,
+): ChildHealthInfoFormState {
+  const healthInfo =
+    item.healthInfo &&
+    typeof item.healthInfo === "object" &&
+    !Array.isArray(item.healthInfo)
+      ? (item.healthInfo as Record<string, unknown>)
+      : {};
+
+  const medications = Array.isArray(healthInfo.medications)
+    ? healthInfo.medications
+        .map((value) => toMedicationFormState(value))
+        .filter(
+          (medication) =>
+            medication.name || medication.dosage || medication.schedule,
+        )
+    : [];
+
+  return {
+    dietaryRestrictions: formatTextList(healthInfo.dietaryRestrictions),
+    allergies: formatTextList(healthInfo.allergies),
+    medications:
+      medications.length > 0
+        ? medications
+        : [{ name: "", dosage: "", schedule: "" }],
+    medicalConditions: formatTextList(healthInfo.medicalConditions),
+    fearsOrSensitivities: formatTextList(healthInfo.fearsOrSensitivities),
+  };
 }
 
 export function getParentDocument(item: ListItem): string {
@@ -116,6 +180,7 @@ export function toChildFormState(item: ListItem): ChildFormState {
     birthDate: normalizeDateInput(String(item.birthDate || "")),
     parents,
     inheritParentAddress: false,
+    healthInfo: toChildHealthInfoFormState(item),
     addressStreet: String(address.address || address.street || ""),
     addressNumber: String(address.number || ""),
     addressDistrict: String(address.neighborhood || address.district || ""),
