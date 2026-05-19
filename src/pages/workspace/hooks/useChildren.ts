@@ -162,14 +162,37 @@ export function useChildren() {
   const children = childrenQuery.data || [];
   const parents = parentsQuery.data || [];
   const activeAttendances = activeAttendancesQuery.data || [];
+  const activeChildIds = useMemo(
+    () =>
+      new Set(
+        activeAttendances
+          .map((attendance) => String(attendance.childId || ""))
+          .filter(Boolean),
+      ),
+    [activeAttendances],
+  );
   const filteredCollection = children.filter((item: ListItem) =>
     matchesSearch(item as ListItem, search),
   );
+  const orderedCollection = filteredCollection
+    .map((item, index) => ({
+      item,
+      index,
+      isActive: activeChildIds.has(extractId(item)),
+    }))
+    .sort((left, right) => {
+      if (left.isActive !== right.isActive) {
+        return left.isActive ? -1 : 1;
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ item }) => item);
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredCollection.length / PAGE_SIZE),
+    Math.ceil(orderedCollection.length / PAGE_SIZE),
   );
-  const pagedCollection = paginate(filteredCollection, page, PAGE_SIZE);
+  const pagedCollection = paginate(orderedCollection, page, PAGE_SIZE);
 
   const assigningChildParentOptions = useMemo(() => {
     const term = childParentsSearch.trim().toLowerCase();
@@ -197,16 +220,6 @@ export function useChildren() {
         );
       });
   }, [parents, childParentsSearch]);
-
-  const activeChildIds = useMemo(
-    () =>
-      new Set(
-        activeAttendances
-          .map((attendance) => String(attendance.childId || ""))
-          .filter(Boolean),
-      ),
-    [activeAttendances],
-  );
 
   // Handlers
   async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
