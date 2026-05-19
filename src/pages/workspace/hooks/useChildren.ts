@@ -23,6 +23,7 @@ import {
   splitTextList,
   matchesSearch,
   toChildFormState,
+  toParentFormState,
   paginate,
 } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
@@ -67,7 +68,6 @@ export function useChildren() {
     currentCompanyScope,
   } = useWorkspaceContext();
 
-  // State
   const [isChildCreateModalOpen, setIsChildCreateModalOpen] = useState(false);
   const [isChildViewModalOpen, setIsChildViewModalOpen] = useState(false);
   const [isChildEditModalOpen, setIsChildEditModalOpen] = useState(false);
@@ -84,12 +84,12 @@ export function useChildren() {
   >(null);
   const [childForm, setChildForm] =
     useState<ChildFormState>(INITIAL_CHILD_FORM);
+  const [childCreateParentSearch, setChildCreateParentSearch] = useState("");
   const [childParentsSearch, setChildParentsSearch] = useState("");
   const [assigningChildParentIds, setAssigningChildParentIds] = useState<
     string[]
   >([]);
 
-  // Queries
   const childrenQuery = useQuery({
     queryKey: ["children", currentCompanyScope, role],
     queryFn: () =>
@@ -115,7 +115,6 @@ export function useChildren() {
     refetchIntervalInBackground: true,
   });
 
-  // Mutations
   const createChildMut = useMutation<unknown, Error, CreateChildPayload>({
     mutationFn: createChild,
     onSuccess: async () => {
@@ -158,10 +157,10 @@ export function useChildren() {
       setStatusMessage("Vinculo de crianca para responsaveis atualizado."),
   });
 
-  // Derived
   const children = childrenQuery.data || [];
   const parents = parentsQuery.data || [];
   const activeAttendances = activeAttendancesQuery.data || [];
+
   const activeChildIds = useMemo(
     () =>
       new Set(
@@ -171,9 +170,11 @@ export function useChildren() {
       ),
     [activeAttendances],
   );
+
   const filteredCollection = children.filter((item: ListItem) =>
     matchesSearch(item as ListItem, search),
   );
+
   const orderedCollection = filteredCollection
     .map((item, index) => ({
       item,
@@ -188,6 +189,7 @@ export function useChildren() {
       return left.index - right.index;
     })
     .map(({ item }) => item);
+
   const totalPages = Math.max(
     1,
     Math.ceil(orderedCollection.length / PAGE_SIZE),
@@ -221,22 +223,65 @@ export function useChildren() {
       });
   }, [parents, childParentsSearch]);
 
-  // Handlers
+  const childCreateParentOptions = useMemo(() => {
+    const term = childCreateParentSearch.trim().toLowerCase();
+
+    return (parents as ListItem[])
+      .map((item) => {
+        const id = extractId(item);
+        return {
+          id,
+          name: String(item.name || "Responsavel sem nome"),
+        };
+      })
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [parents, childCreateParentSearch]);
+
   async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const name = childForm.name.trim();
     const document = normalizeDigits(childForm.document).slice(0, 11);
     const email = childForm.email.trim();
     const contact = normalizeDigits(childForm.contact).slice(0, 11);
     const birthDate = childForm.birthDate.trim();
-
-    let addressPayload: Record<string, unknown> | undefined =
-      buildBackendAddressPayload(childForm);
+    const selectedParentIds = parseIdList(childForm.parents);
+    const selectedParentId = selectedParentIds[0];
+    const selectedParent = selectedParentId
+      ? (parents as ListItem[]).find(
+          (item) => extractId(item) === selectedParentId,
+        )
+      : undefined;
 
     if (!name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
       return;
     }
+
+    if (childForm.inheritParentAddress && !selectedParent) {
+      setStatusMessage(
+        "Selecione um responsavel para herdar o endereco antes de salvar.",
+      );
+      return;
+    }
+
+    const addressPayload =
+      childForm.inheritParentAddress && selectedParent
+        ? buildBackendAddressPayload(toParentFormState(selectedParent))
+        : buildBackendAddressPayload(childForm);
 
     await createChildMut.mutateAsync({
       name,
@@ -244,6 +289,7 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
+      parents: selectedParentId ? [selectedParentId] : undefined,
       healthInfo: buildHealthInfoPayload(childForm.healthInfo),
       address: addressPayload,
       companyId: currentCompanyScope,
@@ -256,6 +302,7 @@ export function useChildren() {
   function openChildCreateModal() {
     setEditingChildId(null);
     setViewingChildId(null);
+    setChildCreateParentSearch("");
     setChildParentsSearch("");
     setChildForm(INITIAL_CHILD_FORM);
     setIsChildCreateModalOpen(true);
@@ -275,8 +322,7 @@ export function useChildren() {
     const contact = normalizeDigits(childForm.contact).slice(0, 11);
     const birthDate = childForm.birthDate.trim();
 
-    let addressPayload: Record<string, unknown> | undefined =
-      buildBackendAddressPayload(childForm);
+    const addressPayload = buildBackendAddressPayload(childForm);
 
     if (!name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
@@ -384,7 +430,6 @@ export function useChildren() {
   }
 
   return {
-    // state
     isChildCreateModalOpen,
     setIsChildCreateModalOpen,
     isChildViewModalOpen,
@@ -405,12 +450,12 @@ export function useChildren() {
     setAssigningChildParentsId,
     childForm,
     setChildForm,
+    childCreateParentSearch,
+    setChildCreateParentSearch,
     childParentsSearch,
     setChildParentsSearch,
     assigningChildParentIds,
     setAssigningChildParentIds,
-
-    // queries/mutations
     childrenQuery,
     parentsQuery,
     activeAttendancesQuery,
@@ -418,8 +463,6 @@ export function useChildren() {
     updateChildMut,
     deleteChildMut,
     assignParentsMut,
-
-    // derived
     children,
     parents,
     activeChildIds,
@@ -427,8 +470,7 @@ export function useChildren() {
     totalPages,
     pagedCollection,
     assigningChildParentOptions,
-
-    // handlers
+    childCreateParentOptions,
     onCreateChildModal,
     openChildCreateModal,
     onUpdateChildModal,

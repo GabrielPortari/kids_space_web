@@ -85,6 +85,9 @@ export function ChildrenSection() {
     assignParentsMut,
     childForm,
     setChildForm,
+    childCreateParentSearch,
+    setChildCreateParentSearch,
+    childCreateParentOptions,
     isChildCreateModalOpen,
     setIsChildCreateModalOpen,
     isChildViewModalOpen,
@@ -457,26 +460,72 @@ export function ChildrenSection() {
               </section>
 
               <section className="profile-section">
-                <h3>Endereco</h3>
-                <AddressFormFields
-                  values={{
-                    addressStreet: childForm.addressStreet,
-                    addressNumber: childForm.addressNumber,
-                    addressDistrict: childForm.addressDistrict,
-                    addressCity: childForm.addressCity,
-                    addressState: childForm.addressState,
-                    addressZipCode: childForm.addressZipCode,
-                    addressComplement: childForm.addressComplement,
-                    addressCountry: childForm.addressCountry,
-                  }}
-                  onChange={(key, value) =>
-                    setChildForm((current) => ({
-                      ...current,
-                      [key]: value,
-                    }))
-                  }
-                />
+                <h3>Responsavel</h3>
+                <div className="child-section-grid">
+                  <EntitySearchList
+                    label="Responsavel para vinculo direto"
+                    searchValue={childCreateParentSearch}
+                    onSearchChange={setChildCreateParentSearch}
+                    options={childCreateParentOptions}
+                    selectedIds={childForm.parents}
+                    onToggle={(parentId) =>
+                      setChildForm((current) => ({
+                        ...current,
+                        parents: current.parents === parentId ? "" : parentId,
+                      }))
+                    }
+                    isLoading={childrenHook.parentsQuery.isLoading}
+                    placeholder="Buscar por nome ou ID"
+                    mode="radio"
+                  />
+
+                  <div className="field child-inherit-address-field">
+                    <label className="child-inherit-address-toggle">
+                      <input
+                        type="checkbox"
+                        checked={childForm.inheritParentAddress}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            inheritParentAddress: event.target.checked,
+                          }))
+                        }
+                      />
+                      <span>Herdar endereço deste responsavel</span>
+                    </label>
+                  </div>
+
+                  {childForm.inheritParentAddress && (
+                    <p className="parent-children-hint field-full">
+                      O endereco sera copiado do responsavel selecionado.
+                    </p>
+                  )}
+                </div>
               </section>
+
+              {!childForm.inheritParentAddress && (
+                <section className="profile-section">
+                  <h3>Endereco</h3>
+                  <AddressFormFields
+                    values={{
+                      addressStreet: childForm.addressStreet,
+                      addressNumber: childForm.addressNumber,
+                      addressDistrict: childForm.addressDistrict,
+                      addressCity: childForm.addressCity,
+                      addressState: childForm.addressState,
+                      addressZipCode: childForm.addressZipCode,
+                      addressComplement: childForm.addressComplement,
+                      addressCountry: childForm.addressCountry,
+                    }}
+                    onChange={(key, value) =>
+                      setChildForm((current) => ({
+                        ...current,
+                        [key]: value,
+                      }))
+                    }
+                  />
+                </section>
+              )}
 
               <ChildHealthInfoFields
                 value={childForm.healthInfo}
