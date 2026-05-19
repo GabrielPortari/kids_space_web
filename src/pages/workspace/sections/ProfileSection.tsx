@@ -140,14 +140,17 @@ export function ProfileSection() {
           onClick={() => setIsProfileModalOpen(false)}
         >
           <section
-            className="crm-modal"
+            className="crm-modal crm-modal-wide profile-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Editar perfil"
             onClick={(event) => event.stopPropagation()}
           >
             <h2>Alterar dados</h2>
-            <form className="crm-form-grid" onSubmit={onSaveProfileModal}>
+            <form
+              className="crm-form-grid profile-form"
+              onSubmit={onSaveProfileModal}
+            >
               {personalProfileFields.length > 0 && (
                 <div className="profile-section">
                   <h3>Dados pessoais</h3>

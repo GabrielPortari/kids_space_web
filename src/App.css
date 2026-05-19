@@ -876,10 +876,10 @@ input {
   background: rgba(28, 19, 13, 0.35);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   z-index: 120;
   padding: 1rem;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .crm-modal {
@@ -889,15 +889,16 @@ input {
   background: rgba(255, 255, 255, 0.98);
   box-shadow: var(--shadow-soft);
   padding: 1rem;
-  margin-block: auto;
   max-height: calc(100dvh - 2rem);
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .crm-modal-wide {
   width: min(1180px, 100%);
-  max-height: none;
-  overflow-y: visible;
+  max-height: calc(100dvh - 2rem);
 }
 
 .collaborator-modal {
@@ -933,6 +934,36 @@ input {
 .crm-modal h2 {
   margin: 0 0 0.8rem;
   font-family: var(--font-title);
+}
+
+.crm-modal .crm-form-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  padding-bottom: 0.35rem;
+}
+
+.profile-form {
+  width: 100%;
+  max-width: none;
+  gap: 0.9rem;
+}
+
+.profile-modal .profile-section {
+  max-width: none;
+}
+
+.profile-form .crm-form-grid {
+  width: 100%;
+  max-width: none;
+}
+
+.crm-modal .collaborator-view-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
 .crm-modal .profile-section {
@@ -1049,10 +1080,19 @@ input {
 }
 
 .crm-modal-actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
   justify-content: flex-end;
   gap: 0.55rem;
-  margin-top: 0.3rem;
+  margin-top: auto;
+  padding-top: 0.8rem;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.98) 22%
+  );
+  z-index: 1;
 }
 
 .parent-form {
