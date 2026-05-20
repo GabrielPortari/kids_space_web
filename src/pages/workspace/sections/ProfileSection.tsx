@@ -255,7 +255,9 @@ export function ProfileSection() {
                                 </label>
                                 <input
                                   id={`profile-${field.key}`}
-                                  type={field.key === "email" ? "email" : "text"}
+                                  type={
+                                    field.key === "email" ? "email" : "text"
+                                  }
                                   value={profileDraft[field.key] || ""}
                                   onChange={(event) =>
                                     setProfileDraft((current) => ({
@@ -286,13 +288,18 @@ export function ProfileSection() {
                             const readOnly = !field.editable;
 
                             return (
-                              <div key={field.key} className="field field-span-4">
+                              <div
+                                key={field.key}
+                                className="field field-span-4"
+                              >
                                 <label htmlFor={`profile-${field.key}`}>
                                   {field.label}
                                 </label>
                                 <input
                                   id={`profile-${field.key}`}
-                                  type={field.key === "email" ? "email" : "text"}
+                                  type={
+                                    field.key === "email" ? "email" : "text"
+                                  }
                                   value={profileDraft[field.key] || ""}
                                   onChange={(event) =>
                                     setProfileDraft((current) => ({
@@ -321,16 +328,24 @@ export function ProfileSection() {
                             if (!field) return null;
 
                             const readOnly = !field.editable;
-                            const spanClass = field.key === "logoUrl" ? "field-span-8" : "field-span-4";
+                            const spanClass =
+                              field.key === "logoUrl"
+                                ? "field-span-8"
+                                : "field-span-4";
 
                             return (
-                              <div key={field.key} className={`field ${spanClass}`}>
+                              <div
+                                key={field.key}
+                                className={`field ${spanClass}`}
+                              >
                                 <label htmlFor={`profile-${field.key}`}>
                                   {field.label}
                                 </label>
                                 <input
                                   id={`profile-${field.key}`}
-                                  type={field.key === "email" ? "email" : "text"}
+                                  type={
+                                    field.key === "email" ? "email" : "text"
+                                  }
                                   value={profileDraft[field.key] || ""}
                                   onChange={(event) =>
                                     setProfileDraft((current) => ({

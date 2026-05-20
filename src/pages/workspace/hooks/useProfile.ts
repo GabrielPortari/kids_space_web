@@ -24,7 +24,7 @@ function formatProfileFieldLabel(key: string): string {
 
   const addressKey = key.slice("address.".length);
   const labelMap: Record<string, string> = {
-     street: "Address",
+    street: "Address",
     number: "Number",
     complement: "Complement",
     neighborhood: "Neighborhood",
