@@ -335,6 +335,7 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
+      parents: selectedParentId ? [selectedParentId] : undefined,
       healthInfo: buildHealthInfoPayload(childForm.healthInfo),
       address: addressPayload,
     };
@@ -354,6 +355,7 @@ export function useChildren() {
 
     setEditingChildId(id);
     setChildForm(toChildFormState(item));
+    setChildCreateParentSearch("");
     setChildParentsSearch("");
     setIsChildEditModalOpen(true);
   }

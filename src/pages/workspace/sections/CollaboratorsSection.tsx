@@ -1,6 +1,5 @@
 import { useCollaborators } from "../hooks/useCollaborators";
 import { useWorkspaceContext } from "../WorkspaceContext";
-import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
@@ -9,6 +8,7 @@ import {
   extractId,
   maskByFieldKey,
   maskPhone,
+  maskZipCode,
   normalizeDigits,
 } from "../formatter";
 import type { ListItem } from "../types";
@@ -169,128 +169,272 @@ export function CollaboratorsSection() {
           onClick={() => setIsCollaboratorCreateModalOpen(false)}
         >
           <section
-            className="crm-modal crm-modal-wide collaborator-modal"
+            className="crm-modal crm-modal-wide profile-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Adicionar colaborador"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Novo Colaborador</h2>
-            <form
-              className="crm-form-grid collaborator-form"
-              onSubmit={onCreateCollaboratorModal}
-            >
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="collaborator-section-grid">
-                  <div className="field">
-                    <label htmlFor="col-name">Nome</label>
-                    <input
-                      id="col-name"
-                      value={collaboratorForm.name}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          name: event.target.value,
-                        }))
-                      }
-                      placeholder="Nome completo"
-                      required
-                    />
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <div className="profile-modal-avatar">
+                  <span>🤝</span>
+                </div>
+                <div>
+                  <p className="profile-modal-title">Novo Colaborador</p>
+                  <p className="profile-modal-subtitle">
+                    Crie um novo colaborador
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="profile-modal-close"
+                aria-label="Fechar"
+                onClick={() => setIsCollaboratorCreateModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form className="profile-form" onSubmit={onCreateCollaboratorModal}>
+              <div className="profile-form-body">
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">
+                      Dados pessoais
+                    </span>
+                    <div className="profile-form-section-line" />
                   </div>
 
-                  <div className="field">
-                    <label htmlFor="col-email">Email</label>
-                    <input
-                      id="col-email"
-                      type="email"
-                      value={collaboratorForm.email}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="email@exemplo.com"
-                      required
-                    />
-                  </div>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="col-name">Nome</label>
+                      <input
+                        id="col-name"
+                        value={collaboratorForm.name}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="col-document">CPF/CNPJ</label>
-                    <input
-                      id="col-document"
-                      value={maskByFieldKey(
-                        "document",
-                        collaboratorForm.document,
-                      )}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          document: normalizeDigits(event.target.value).slice(
-                            0,
-                            14,
-                          ),
-                        }))
-                      }
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
+                    <div className="field field-span-4">
+                      <label htmlFor="col-email">Email</label>
+                      <input
+                        id="col-email"
+                        type="email"
+                        value={collaboratorForm.email}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="col-contact">Contato</label>
-                    <input
-                      id="col-contact"
-                      value={maskPhone(collaboratorForm.contact)}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          contact: normalizeDigits(event.target.value).slice(
-                            0,
-                            11,
-                          ),
-                        }))
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
+                    <div className="field field-span-4">
+                      <label htmlFor="col-document">CPF/CNPJ</label>
+                      <input
+                        id="col-document"
+                        value={maskByFieldKey(
+                          "document",
+                          collaboratorForm.document,
+                        )}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              14,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="field field-span-4">
+                      <label htmlFor="col-contact">Contato</label>
+                      <input
+                        id="col-contact"
+                        value={maskPhone(collaboratorForm.contact)}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
                   </div>
                 </div>
-              </section>
 
-              <AddressFormFields
-                values={{
-                  addressStreet: collaboratorForm.addressStreet,
-                  addressNumber: collaboratorForm.addressNumber,
-                  addressDistrict: collaboratorForm.addressDistrict,
-                  addressCity: collaboratorForm.addressCity,
-                  addressState: collaboratorForm.addressState,
-                  addressZipCode: collaboratorForm.addressZipCode,
-                  addressComplement: collaboratorForm.addressComplement,
-                  addressCountry: collaboratorForm.addressCountry,
-                }}
-                onChange={(key, value) =>
-                  setCollaboratorForm((current) => ({
-                    ...current,
-                    [key]: value,
-                  }))
-                }
-              />
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">Endereço</span>
+                    <div className="profile-form-section-line" />
+                  </div>
 
-              <div className="crm-modal-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => setIsCollaboratorCreateModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={createCollaboratorMut.isPending}
-                >
-                  {createCollaboratorMut.isPending ? "Salvando..." : "Salvar"}
-                </button>
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="col-address-street">Rua</label>
+                        <input
+                          id="col-address-street"
+                          value={collaboratorForm.addressStreet}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressStreet: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="col-address-number">Número</label>
+                        <input
+                          id="col-address-number"
+                          value={collaboratorForm.addressNumber}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressNumber: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="col-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="col-address-complement"
+                          value={collaboratorForm.addressComplement}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressComplement: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="col-address-district">Bairro</label>
+                        <input
+                          id="col-address-district"
+                          value={collaboratorForm.addressDistrict}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressDistrict: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="col-address-city">Cidade</label>
+                        <input
+                          id="col-address-city"
+                          value={collaboratorForm.addressCity}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressCity: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="col-address-state">Estado</label>
+                        <input
+                          id="col-address-state"
+                          value={collaboratorForm.addressState}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressState: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="col-address-zipcode">CEP</label>
+                        <input
+                          id="col-address-zipcode"
+                          value={maskZipCode(
+                            collaboratorForm.addressZipCode || "",
+                          )}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressZipCode: normalizeDigits(
+                                event.target.value,
+                              ).slice(0, 8),
+                            }))
+                          }
+                          placeholder="00000-000"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="col-address-country">País</label>
+                        <input
+                          id="col-address-country"
+                          value={collaboratorForm.addressCountry}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressCountry: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="profile-modal-footer">
+                <p className="profile-modal-hint">
+                  🔒 Campos acinzentados são somente leitura
+                </p>
+                <div className="profile-modal-footer-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setIsCollaboratorCreateModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn solid"
+                    disabled={createCollaboratorMut.isPending}
+                  >
+                    {createCollaboratorMut.isPending ? "Salvando..." : "Salvar"}
+                  </button>
+                </div>
               </div>
             </form>
           </section>
@@ -304,130 +448,277 @@ export function CollaboratorsSection() {
           onClick={() => setIsCollaboratorEditModalOpen(false)}
         >
           <section
-            className="crm-modal crm-modal-wide collaborator-modal"
+            className="crm-modal crm-modal-wide profile-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Editar colaborador"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Editar Colaborador</h2>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <div className="profile-modal-avatar">
+                  <span>🤝</span>
+                </div>
+                <div>
+                  <p className="profile-modal-title">Editar Colaborador</p>
+                  <p className="profile-modal-subtitle">
+                    Atualize o cadastro do colaborador
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="profile-modal-close"
+                aria-label="Fechar"
+                onClick={() => setIsCollaboratorEditModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
             <form
-              className="crm-form-grid collaborator-form"
+              className="profile-form"
               onSubmit={onUpdateCollaboratorModal}
             >
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="collaborator-section-grid">
-                  <div className="field">
-                    <label htmlFor="col-edit-name">Nome</label>
-                    <input
-                      id="col-edit-name"
-                      value={collaboratorForm.name}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          name: event.target.value,
-                        }))
-                      }
-                      placeholder="Nome completo"
-                      required
-                    />
+              <div className="profile-form-body">
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">
+                      Dados pessoais
+                    </span>
+                    <div className="profile-form-section-line" />
                   </div>
 
-                  <div className="field">
-                    <label htmlFor="col-edit-email">Email</label>
-                    <input
-                      id="col-edit-email"
-                      type="email"
-                      value={collaboratorForm.email}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="email@exemplo.com"
-                      required
-                    />
-                  </div>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="col-edit-name">Nome</label>
+                      <input
+                        id="col-edit-name"
+                        value={collaboratorForm.name}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="col-edit-document">CPF/CNPJ</label>
-                    <input
-                      id="col-edit-document"
-                      value={maskByFieldKey(
-                        "document",
-                        collaboratorForm.document,
-                      )}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          document: normalizeDigits(event.target.value).slice(
-                            0,
-                            14,
-                          ),
-                        }))
-                      }
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
+                    <div className="field field-span-4">
+                      <label htmlFor="col-edit-email">Email</label>
+                      <input
+                        id="col-edit-email"
+                        type="email"
+                        value={collaboratorForm.email}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="col-edit-contact">Contato</label>
-                    <input
-                      id="col-edit-contact"
-                      value={maskPhone(collaboratorForm.contact)}
-                      onChange={(event) =>
-                        setCollaboratorForm((current) => ({
-                          ...current,
-                          contact: normalizeDigits(event.target.value).slice(
-                            0,
-                            11,
-                          ),
-                        }))
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
+                    <div className="field field-span-4">
+                      <label htmlFor="col-edit-document">CPF/CNPJ</label>
+                      <input
+                        id="col-edit-document"
+                        value={maskByFieldKey(
+                          "document",
+                          collaboratorForm.document,
+                        )}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            document: normalizeDigits(event.target.value).slice(
+                              0,
+                              14,
+                            ),
+                          }))
+                        }
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="field field-span-4">
+                      <label htmlFor="col-edit-contact">Contato</label>
+                      <input
+                        id="col-edit-contact"
+                        value={maskPhone(collaboratorForm.contact)}
+                        onChange={(event) =>
+                          setCollaboratorForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
                   </div>
                 </div>
-              </section>
 
-              <AddressFormFields
-                values={{
-                  addressStreet: collaboratorForm.addressStreet,
-                  addressNumber: collaboratorForm.addressNumber,
-                  addressDistrict: collaboratorForm.addressDistrict,
-                  addressCity: collaboratorForm.addressCity,
-                  addressState: collaboratorForm.addressState,
-                  addressZipCode: collaboratorForm.addressZipCode,
-                  addressComplement: collaboratorForm.addressComplement,
-                  addressCountry: collaboratorForm.addressCountry,
-                }}
-                onChange={(key, value) =>
-                  setCollaboratorForm((current) => ({
-                    ...current,
-                    [key]: value,
-                  }))
-                }
-              />
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">Endereço</span>
+                    <div className="profile-form-section-line" />
+                  </div>
 
-              <div className="crm-modal-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => setIsCollaboratorEditModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={updateCollaboratorMut.isPending}
-                >
-                  {updateCollaboratorMut.isPending
-                    ? "Salvando..."
-                    : "Salvar alteracoes"}
-                </button>
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="col-edit-address-street">Rua</label>
+                        <input
+                          id="col-edit-address-street"
+                          value={collaboratorForm.addressStreet}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressStreet: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="col-edit-address-number">Número</label>
+                        <input
+                          id="col-edit-address-number"
+                          value={collaboratorForm.addressNumber}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressNumber: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="col-edit-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="col-edit-address-complement"
+                          value={collaboratorForm.addressComplement}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressComplement: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="col-edit-address-district">Bairro</label>
+                        <input
+                          id="col-edit-address-district"
+                          value={collaboratorForm.addressDistrict}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressDistrict: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="col-edit-address-city">Cidade</label>
+                        <input
+                          id="col-edit-address-city"
+                          value={collaboratorForm.addressCity}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressCity: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="col-edit-address-state">Estado</label>
+                        <input
+                          id="col-edit-address-state"
+                          value={collaboratorForm.addressState}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressState: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="col-edit-address-zipcode">CEP</label>
+                        <input
+                          id="col-edit-address-zipcode"
+                          value={maskZipCode(
+                            collaboratorForm.addressZipCode || "",
+                          )}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressZipCode: normalizeDigits(
+                                event.target.value,
+                              ).slice(0, 8),
+                            }))
+                          }
+                          placeholder="00000-000"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="col-edit-address-country">País</label>
+                        <input
+                          id="col-edit-address-country"
+                          value={collaboratorForm.addressCountry}
+                          onChange={(event) =>
+                            setCollaboratorForm((current) => ({
+                              ...current,
+                              addressCountry: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="profile-modal-footer">
+                <p className="profile-modal-hint">
+                  🔒 Campos acinzentados são somente leitura
+                </p>
+                <div className="profile-modal-footer-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setIsCollaboratorEditModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn solid"
+                    disabled={updateCollaboratorMut.isPending}
+                  >
+                    {updateCollaboratorMut.isPending
+                      ? "Salvando..."
+                      : "Salvar alteracoes"}
+                  </button>
+                </div>
               </div>
             </form>
           </section>

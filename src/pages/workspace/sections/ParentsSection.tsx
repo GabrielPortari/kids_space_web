@@ -795,30 +795,6 @@ export function ParentsSection() {
                       />
                     </div>
 
-                    <EntitySearchList
-                      label="Crianças para vínculo direto"
-                      searchValue={parentChildrenSearch}
-                      onSearchChange={setParentChildrenSearch}
-                      options={linkedChildOptions}
-                      selectedIds={parseIdList(parentForm.children)}
-                      onToggle={(childId) =>
-                        setParentForm((current) => {
-                          const ids = new Set(parseIdList(current.children));
-                          if (ids.has(childId)) {
-                            ids.delete(childId);
-                          } else {
-                            ids.add(childId);
-                          }
-                          return {
-                            ...current,
-                            children: Array.from(ids).join(","),
-                          };
-                        })
-                      }
-                      isLoading={childrenHook.childrenQuery.isLoading}
-                      placeholder="Buscar por nome ou ID"
-                      mode="checkbox"
-                    />
                   </div>
                 </div>
 
