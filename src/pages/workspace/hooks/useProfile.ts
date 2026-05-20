@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyCompany, updateMyCompany } from "../../../api/modules/companyApi";
+import { buildBackendAddressPayload } from "../../../api/address";
 import {
   getMyCollaborator,
   updateMyCollaborator,
@@ -9,11 +10,31 @@ import { companyUpdateSchema } from "../validators";
 import {
   flattenRecord,
   maskByFieldKey,
+  normalizeDigits,
   sortByPriority,
   toFieldLabel,
 } from "../formatter";
 import type { ProfileFieldConfig } from "../types";
 import { useWorkspaceContext } from "../WorkspaceContext";
+
+function formatProfileFieldLabel(key: string): string {
+  if (!key.startsWith("address.")) {
+    return toFieldLabel(key);
+  }
+
+  const addressKey = key.slice("address.".length);
+  const labelMap: Record<string, string> = {
+     street: "Address",
+    number: "Number",
+    complement: "Complement",
+    neighborhood: "Neighborhood",
+    city: "City",
+    state: "State",
+    zipcode: "Zipcode",
+  };
+
+  return labelMap[addressKey] || toFieldLabel(addressKey);
+}
 
 export function useProfile() {
   const queryClient = useQueryClient();
@@ -56,9 +77,9 @@ export function useProfile() {
   const updateMyCollaboratorMut = useMutation<
     unknown,
     Error,
-    { name?: string; contact?: string }
+    Record<string, unknown>
   >({
-    mutationFn: ({ name, contact }) => updateMyCollaborator({ name, contact }),
+    mutationFn: (payload) => updateMyCollaborator(payload),
     onSuccess: async () => {
       setStatusMessage("Seu perfil foi atualizado.");
       await queryClient.invalidateQueries({ queryKey: ["my-collaborator"] });
@@ -78,11 +99,55 @@ export function useProfile() {
 
   const flattenedProfile = flattenRecord(profileData);
 
+  const hiddenProfileKeys = new Set([
+    "createdAt",
+    "created_at",
+    "updatedAt",
+    "updated_at",
+    "id",
+    "_id",
+    "active",
+    "userType",
+    "user_type",
+    "verified",
+    "companyId",
+    "company_id",
+    "userId",
+    "user_id",
+    "role",
+  ]);
+
   const editableKeys = new Set(
     isCompany
-      ? ["name", "legalName", "email", "contact"]
+      ? [
+          "name",
+          "legalName",
+          "email",
+          "contact",
+          "logoUrl",
+          "website",
+          "address.street",
+          "address.number",
+          "address.complement",
+          "address.neighborhood",
+          "address.city",
+          "address.state",
+          "address.zipCode",
+          "address.country",
+        ]
       : isCollaborator
-        ? ["name", "contact"]
+        ? [
+            "name",
+            "contact",
+            "address.street",
+            "address.number",
+            "address.complement",
+            "address.neighborhood",
+            "address.city",
+            "address.state",
+            "address.zipCode",
+            "address.country",
+          ]
         : [],
   );
 
@@ -91,33 +156,31 @@ export function useProfile() {
     "legalName",
     "email",
     "contact",
+    "logoUrl",
+    "website",
     "document",
     "cnpj",
     "birthDate",
-    "createdAt",
-    "updatedAt",
-    "companyId",
-    "id",
-    "userId",
-    "role",
   ];
 
   const addressPriorityOrder = [
     "address.street",
     "address.number",
-    "address.district",
+    "address.complement",
+    "address.neighborhood",
     "address.city",
     "address.state",
     "address.zipCode",
-    "address.complement",
     "address.country",
   ];
 
-  const allKeys = Object.keys(flattenedProfile);
+  const allKeys = Object.keys(flattenedProfile).filter(
+    (key) => !hiddenProfileKeys.has(key),
+  );
 
   const profileFields: ProfileFieldConfig[] = allKeys.map((key) => ({
     key,
-    label: toFieldLabel(key),
+    label: formatProfileFieldLabel(key),
     editable: editableKeys.has(key),
     value: maskByFieldKey(key, flattenedProfile[key] || ""),
   }));
@@ -169,11 +232,12 @@ export function useProfile() {
     event.preventDefault();
 
     if (isCompany) {
+      const email = (profileDraft.email || "").trim();
       const parseResult = companyUpdateSchema.safeParse({
         name: profileDraft.name || "",
         legalName: profileDraft.legalName || "",
         contact: profileDraft.contact || "",
-        email: profileDraft.email || "",
+        email,
       });
 
       if (!parseResult.success) {
@@ -181,11 +245,27 @@ export function useProfile() {
         return;
       }
 
-      const { email, ...rest } = parseResult.data;
+      const address = buildBackendAddressPayload({
+        addressStreet: profileDraft["address.street"] || "",
+        addressNumber: profileDraft["address.number"] || "",
+        addressDistrict: profileDraft["address.neighborhood"] || "",
+        addressCity: profileDraft["address.city"] || "",
+        addressState: profileDraft["address.state"] || "",
+        addressZipCode: profileDraft["address.zipCode"] || "",
+        addressComplement: profileDraft["address.complement"] || "",
+        addressCountry: profileDraft["address.country"] || "",
+      });
 
       await updateMyCompanyMut.mutateAsync({
-        ...rest,
-        email: email || undefined,
+        name: parseResult.data.name,
+        legalName: parseResult.data.legalName || undefined,
+        contact:
+          normalizeDigits(parseResult.data.contact || "").slice(0, 11) ||
+          undefined,
+        email: parseResult.data.email || undefined,
+        logoUrl: (profileDraft.logoUrl || "").trim() || undefined,
+        website: (profileDraft.website || "").trim() || undefined,
+        address,
       });
 
       setIsProfileModalOpen(false);
@@ -195,7 +275,18 @@ export function useProfile() {
     if (isCollaborator) {
       await updateMyCollaboratorMut.mutateAsync({
         name: (profileDraft.name || "").trim() || undefined,
-        contact: (profileDraft.contact || "").trim() || undefined,
+        contact:
+          normalizeDigits(profileDraft.contact || "").slice(0, 11) || undefined,
+        address: buildBackendAddressPayload({
+          addressStreet: profileDraft["address.street"] || "",
+          addressNumber: profileDraft["address.number"] || "",
+          addressDistrict: profileDraft["address.neighborhood"] || "",
+          addressCity: profileDraft["address.city"] || "",
+          addressState: profileDraft["address.state"] || "",
+          addressZipCode: profileDraft["address.zipCode"] || "",
+          addressComplement: profileDraft["address.complement"] || "",
+          addressCountry: profileDraft["address.country"] || "",
+        }),
       });
       setIsProfileModalOpen(false);
       return;

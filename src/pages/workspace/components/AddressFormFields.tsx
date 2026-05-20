@@ -30,10 +30,10 @@ export function AddressFormFields({
 
   return (
     <div className="profile-section address-section">
-      <h3>Endereco</h3>
+      <h3>Endereço</h3>
       <div className="address-grid">
         <div className="field">
-          <label htmlFor="address-street">Rua</label>
+          <label htmlFor="address-street">Address</label>
           <input
             id="address-street"
             value={values.addressStreet}
@@ -45,7 +45,7 @@ export function AddressFormFields({
         </div>
 
         <div className="field">
-          <label htmlFor="address-number">Numero</label>
+          <label htmlFor="address-number">Number</label>
           <input
             id="address-number"
             value={values.addressNumber}
@@ -57,7 +57,19 @@ export function AddressFormFields({
         </div>
 
         <div className="field">
-          <label htmlFor="address-district">Bairro</label>
+          <label htmlFor="address-complement">Complement</label>
+          <input
+            id="address-complement"
+            value={values.addressComplement}
+            onChange={(event) =>
+              handleAddressChange("addressComplement", event.target.value)
+            }
+            disabled={disabled}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="address-district">Neighborhood</label>
           <input
             id="address-district"
             value={values.addressDistrict}
@@ -69,7 +81,7 @@ export function AddressFormFields({
         </div>
 
         <div className="field">
-          <label htmlFor="address-city">Cidade</label>
+          <label htmlFor="address-city">City</label>
           <input
             id="address-city"
             value={values.addressCity}
@@ -81,7 +93,7 @@ export function AddressFormFields({
         </div>
 
         <div className="field">
-          <label htmlFor="address-state">Estado</label>
+          <label htmlFor="address-state">State</label>
           <input
             id="address-state"
             value={values.addressState}
@@ -93,7 +105,7 @@ export function AddressFormFields({
         </div>
 
         <div className="field">
-          <label htmlFor="address-zipcode">CEP</label>
+          <label htmlFor="address-zipcode">Zipcode</label>
           <input
             id="address-zipcode"
             value={maskZipCode(values.addressZipCode)}
@@ -106,19 +118,7 @@ export function AddressFormFields({
         </div>
 
         <div className="field">
-          <label htmlFor="address-complement">Complemento</label>
-          <input
-            id="address-complement"
-            value={values.addressComplement}
-            onChange={(event) =>
-              handleAddressChange("addressComplement", event.target.value)
-            }
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="address-country">Pais</label>
+          <label htmlFor="address-country">Country</label>
           <input
             id="address-country"
             value={values.addressCountry}

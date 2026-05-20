@@ -944,21 +944,6 @@ input {
   padding-bottom: 0.35rem;
 }
 
-.profile-form {
-  width: 100%;
-  max-width: none;
-  gap: 0.9rem;
-}
-
-.profile-modal .profile-section {
-  max-width: none;
-}
-
-.profile-form .crm-form-grid {
-  width: 100%;
-  max-width: none;
-}
-
 .crm-modal .collaborator-view-content {
   flex: 1;
   min-height: 0;
@@ -1044,6 +1029,257 @@ input {
 
 .crm-modal .profile-section .profile-card {
   min-height: 5.4rem;
+}
+
+.profile-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+
+.profile-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-modal-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(48, 175, 224, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.profile-modal-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+
+.profile-modal-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.profile-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+  flex-shrink: 0;
+}
+
+.profile-modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink-strong);
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.profile-form-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  display: grid;
+  gap: 1.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.profile-form-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.profile-form-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.profile-form-section-line {
+  flex: 1;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+.profile-form-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.profile-form-personal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.profile-form-company-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.profile-form-address-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.profile-form-personal-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-form-address-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-form-personal-grid .field,
+.profile-form-address-grid .field {
+  min-width: 0;
+}
+
+.profile-form-personal-grid .field input,
+.profile-form-address-grid .field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.profile-form-personal-grid .field label,
+.profile-form-address-grid .field label {
+  min-width: 0;
+}
+
+.field-span-12 {
+  grid-column: span 12;
+}
+
+.field-span-6 {
+  grid-column: span 6;
+}
+
+.field-span-4 {
+  grid-column: span 4;
+}
+
+.field-span-8 {
+  grid-column: span 8;
+}
+
+.field-span-3 {
+  grid-column: span 3;
+}
+
+.field-span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .profile-form-personal-grid,
+  .profile-form-company-grid,
+  .profile-form-address-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .field-span-12 {
+    grid-column: span 6;
+  }
+
+  .field-span-6 {
+    grid-column: span 6;
+  }
+
+  .field-span-4 {
+    grid-column: span 3;
+  }
+
+  .field-span-8 {
+    grid-column: span 6;
+  }
+
+  .field-span-3 {
+    grid-column: span 3;
+  }
+
+  .field-span-2 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-form-personal-grid,
+  .profile-form-company-grid,
+  .profile-form-address-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-span-12,
+  .field-span-6,
+  .field-span-4,
+  .field-span-8,
+  .field-span-3,
+  .field-span-2 {
+    grid-column: auto;
+  }
+}
+
+.profile-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.85rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--line-soft);
+  background: rgba(255, 253, 248, 0.9);
+  flex-shrink: 0;
+}
+
+.profile-modal-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.profile-modal-footer-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-shrink: 0;
 }
 
 .checkin-notes-field {
