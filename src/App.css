@@ -1607,16 +1607,23 @@ input {
 .operation-picker-field {
   display: grid;
   gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
 }
 
 .operation-picker {
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
 .operation-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .operation-input-wrapper input {
@@ -1684,6 +1691,9 @@ input {
   top: calc(100% + 0.35rem);
   left: 0;
   right: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   z-index: 8;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
@@ -1706,6 +1716,7 @@ input {
   padding: 0.35rem 0.4rem;
   border-radius: 0.45rem;
   cursor: pointer;
+  width: 100%;
 }
 
 .operation-option:hover {
@@ -1715,11 +1726,15 @@ input {
 .operation-option input {
   margin: 0;
   pointer-events: none;
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .operation-option span {
   display: grid;
   gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .operation-option small {
