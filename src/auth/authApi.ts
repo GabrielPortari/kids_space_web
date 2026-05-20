@@ -1,4 +1,4 @@
-import type { AuthRole } from "./jwt";
+import { parseRole, type AuthRole } from "./jwt";
 
 const API_BASE_URL = String(
   import.meta.env.VITE_API_BASE_URL || "/api",
@@ -41,7 +41,14 @@ export type MeResponse = {
   [key: string]: unknown;
 };
 
-class ApiError extends Error {
+/**
+ * Callback invoked when a request receives a 401 response.
+ * Should attempt a token refresh and return the new idToken,
+ * or null if refresh is not possible.
+ */
+export type UnauthorizedHandler = () => Promise<string | null>;
+
+export class ApiError extends Error {
   status: number;
 
   constructor(message: string, status: number) {
@@ -64,12 +71,12 @@ function normalizeTokens(payload: BackendLoginResponse): AuthTokens {
   };
 }
 
-async function request<T>(
-  path: string,
+async function executeRequest<T>(
+  url: string,
   init: RequestInit,
   fallbackMessage: string,
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(url, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -88,6 +95,50 @@ async function request<T>(
 
   return (await response.json()) as T;
 }
+
+/**
+ * Core request function with optional 401 interception and retry.
+ *
+ * When `onUnauthorized` is provided and the server returns 401, the handler
+ * is called once to obtain a refreshed token. If a new token is returned,
+ * the request is retried a single time with the updated Authorization header.
+ * If the retry also fails, the error is propagated normally.
+ */
+async function request<T>(
+  path: string,
+  init: RequestInit,
+  fallbackMessage: string,
+  onUnauthorized?: UnauthorizedHandler,
+): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+
+  try {
+    return await executeRequest<T>(url, init, fallbackMessage);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401 && onUnauthorized) {
+      const newToken = await onUnauthorized();
+
+      if (newToken) {
+        const retryInit: RequestInit = {
+          ...init,
+          headers: {
+            "Content-Type": "application/json",
+            ...(init.headers || {}),
+            Authorization: `Bearer ${newToken}`,
+          },
+        };
+
+        return executeRequest<T>(url, retryInit, fallbackMessage);
+      }
+    }
+
+    throw error;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Auth endpoints
+// ---------------------------------------------------------------------------
 
 export async function loginWithEmailAndPassword(
   email: string,
@@ -144,7 +195,10 @@ export async function refreshAuth(refreshToken: string): Promise<AuthTokens> {
   return normalizeTokens(payload);
 }
 
-export async function getMe(idToken: string): Promise<MeResponse> {
+export async function getMe(
+  idToken: string,
+  onUnauthorized?: UnauthorizedHandler,
+): Promise<MeResponse> {
   return request<MeResponse>(
     "/auth/me",
     {
@@ -154,6 +208,7 @@ export async function getMe(idToken: string): Promise<MeResponse> {
       },
     },
     "Nao foi possivel carregar dados da sessao.",
+    onUnauthorized,
   );
 }
 
@@ -168,26 +223,15 @@ export async function logoutSession(idToken: string): Promise<void> {
       body: JSON.stringify({}),
     },
     "Falha ao encerrar sessao.",
+    // No retry on logout — if the token is expired, the session is already
+    // invalid on the server; local cleanup is all that matters.
   );
 }
 
+/**
+ * Maps a raw role string from the backend to a typed AuthRole.
+ * Delegates to `parseRole` in jwt.ts — single source of truth.
+ */
 export function mapBackendRoleToAuthRole(role: unknown): AuthRole | null {
-  if (typeof role !== "string") {
-    return null;
-  }
-
-  switch (role.toLowerCase()) {
-    case "master":
-      return "master";
-    case "admin":
-      return "admin";
-    case "company":
-      return "company";
-    case "collaborator":
-      return "collaborator";
-    case "master-admin":
-      return "master";
-    default:
-      return null;
-  }
+  return parseRole(role);
 }
