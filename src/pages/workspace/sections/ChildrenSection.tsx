@@ -31,9 +31,20 @@ function formatLinkedNames(idsValue: string, items: ListItem[]): string {
     .join(", ");
 }
 
-function formatListSummary(value: string): string {
-  const items = splitTextList(value);
-  return items.length > 0 ? items.join(", ") : "-";
+function formatListSummary(value: unknown): string {
+  if (!value) return "-";
+
+  if (Array.isArray(value)) {
+    const items = value.map((v) => String(v || "").trim()).filter(Boolean);
+    return items.length > 0 ? items.join(", ") : "-";
+  }
+
+  if (typeof value === "string") {
+    const items = splitTextList(value);
+    return items.length > 0 ? items.join(", ") : "-";
+  }
+
+  return "-";
 }
 
 function formatMedicationSummary(medications: unknown): string {
@@ -879,7 +890,9 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-1">
-                        <label htmlFor="child-edit-address-number">Número</label>
+                        <label htmlFor="child-edit-address-number">
+                          Número
+                        </label>
                         <input
                           id="child-edit-address-number"
                           value={childForm.addressNumber}
@@ -909,7 +922,9 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-3">
-                        <label htmlFor="child-edit-address-district">Bairro</label>
+                        <label htmlFor="child-edit-address-district">
+                          Bairro
+                        </label>
                         <input
                           id="child-edit-address-district"
                           value={childForm.addressDistrict}

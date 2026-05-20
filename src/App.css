@@ -847,6 +847,77 @@ input {
   align-items: center;
   gap: 0.45rem;
 }
+/* Child health list inputs and items */
+.list-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.list-input-row input {
+  flex: 1 1 auto;
+}
+
+.list-items {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Make health list items visually match operation chips */
+.list-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(244, 238, 227, 0.6);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  border: 1px solid var(--line-soft);
+}
+
+.list-item span {
+  flex: 1 1 auto;
+  line-height: 1.2;
+}
+
+.remove-item-btn {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+  display: inline-grid;
+  place-items: center;
+}
+
+.remove-item-btn:hover {
+  color: var(--ink-base);
+}
+}
+
+.list-item span {
+  color: var(--ink-strong);
+}
+
+.remove-item-btn {
+  min-width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.95rem;
+}
+
+.child-medication-actions .remove-item-btn {
+  min-width: 2.6rem;
+}
 
 .child-status-dot {
   width: 0.65rem;

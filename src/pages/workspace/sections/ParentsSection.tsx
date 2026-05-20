@@ -794,7 +794,6 @@ export function ParentsSection() {
                         }
                       />
                     </div>
-
                   </div>
                 </div>
 

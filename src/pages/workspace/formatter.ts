@@ -52,16 +52,7 @@ export function splitTextList(value: string): string[] {
     .filter(Boolean);
 }
 
-function formatTextList(value: unknown): string {
-  if (!Array.isArray(value)) {
-    return "";
-  }
-
-  return value
-    .map((item) => String(item || "").trim())
-    .filter(Boolean)
-    .join("\n");
-}
+// helper removed: formatting to newline string is no longer needed for health arrays
 
 function toMedicationFormState(value: unknown): ChildMedicationFormState {
   const medication =
@@ -95,15 +86,27 @@ export function toChildHealthInfoFormState(
         )
     : [];
 
+  const toArray = (value: unknown): string[] => {
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v || "").trim()).filter(Boolean);
+    }
+
+    if (typeof value === "string") {
+      return splitTextList(value);
+    }
+
+    return [];
+  };
+
   return {
-    dietaryRestrictions: formatTextList(healthInfo.dietaryRestrictions),
-    allergies: formatTextList(healthInfo.allergies),
+    dietaryRestrictions: toArray(healthInfo.dietaryRestrictions),
+    allergies: toArray(healthInfo.allergies),
     medications:
       medications.length > 0
         ? medications
         : [{ name: "", dosage: "", schedule: "" }],
-    medicalConditions: formatTextList(healthInfo.medicalConditions),
-    fearsOrSensitivities: formatTextList(healthInfo.fearsOrSensitivities),
+    medicalConditions: toArray(healthInfo.medicalConditions),
+    fearsOrSensitivities: toArray(healthInfo.fearsOrSensitivities),
   };
 }
 

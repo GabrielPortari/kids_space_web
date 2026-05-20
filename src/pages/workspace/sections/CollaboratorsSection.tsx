@@ -476,10 +476,7 @@ export function CollaboratorsSection() {
               </button>
             </div>
 
-            <form
-              className="profile-form"
-              onSubmit={onUpdateCollaboratorModal}
-            >
+            <form className="profile-form" onSubmit={onUpdateCollaboratorModal}>
               <div className="profile-form-body">
                 <div className="profile-form-section">
                   <div className="profile-form-section-header">
@@ -617,7 +614,9 @@ export function CollaboratorsSection() {
                       </div>
 
                       <div className="field field-span-3">
-                        <label htmlFor="col-edit-address-district">Bairro</label>
+                        <label htmlFor="col-edit-address-district">
+                          Bairro
+                        </label>
                         <input
                           id="col-edit-address-district"
                           value={collaboratorForm.addressDistrict}

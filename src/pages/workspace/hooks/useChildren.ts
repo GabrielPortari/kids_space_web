@@ -48,11 +48,25 @@ function buildHealthInfoPayload(
     }));
 
   return {
-    dietaryRestrictions: splitTextList(healthInfo.dietaryRestrictions),
-    allergies: splitTextList(healthInfo.allergies),
+    dietaryRestrictions: Array.isArray(healthInfo.dietaryRestrictions)
+      ? healthInfo.dietaryRestrictions
+          .map((s) => String(s || "").trim())
+          .filter(Boolean)
+      : [],
+    allergies: Array.isArray(healthInfo.allergies)
+      ? healthInfo.allergies.map((s) => String(s || "").trim()).filter(Boolean)
+      : [],
     medications,
-    medicalConditions: splitTextList(healthInfo.medicalConditions),
-    fearsOrSensitivities: splitTextList(healthInfo.fearsOrSensitivities),
+    medicalConditions: Array.isArray(healthInfo.medicalConditions)
+      ? healthInfo.medicalConditions
+          .map((s) => String(s || "").trim())
+          .filter(Boolean)
+      : [],
+    fearsOrSensitivities: Array.isArray(healthInfo.fearsOrSensitivities)
+      ? healthInfo.fearsOrSensitivities
+          .map((s) => String(s || "").trim())
+          .filter(Boolean)
+      : [],
   };
 }
 

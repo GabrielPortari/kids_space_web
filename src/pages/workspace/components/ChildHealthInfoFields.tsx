@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type {
   ChildHealthInfoFormState,
   ChildMedicationFormState,
@@ -7,7 +8,7 @@ type ChildHealthInfoFieldsProps = {
   value: ChildHealthInfoFormState;
   onChange: (
     key: keyof Omit<ChildHealthInfoFormState, "medications">,
-    value: string,
+    value: string[],
   ) => void;
   onMedicationChange: (
     index: number,
@@ -56,73 +57,208 @@ export function ChildHealthInfoFields({
   onRemoveMedication,
   disabled = false,
 }: ChildHealthInfoFieldsProps) {
-  return (
-    <section className="profile-section child-health-section">
-      <h3>Saude</h3>
+  const [dietInput, setDietInput] = useState("");
+  const [allergyInput, setAllergyInput] = useState("");
+  const [conditionInput, setConditionInput] = useState("");
+  const [fearInput, setFearInput] = useState("");
 
+  const addListItem = (
+    key: keyof Omit<ChildHealthInfoFormState, "medications">,
+    item: string,
+  ) => {
+    const next = String(item || "").trim();
+    if (!next) return;
+
+    const current = (value[key] as string[]) || [];
+    onChange(key, [...current, next]);
+  };
+
+  const removeListItem = (
+    key: keyof Omit<ChildHealthInfoFormState, "medications">,
+    index: number,
+  ) => {
+    const current = (value[key] as string[]) || [];
+    onChange(
+      key,
+      current.filter((_, i) => i !== index),
+    );
+  };
+
+  return (
+    <div className="child-health-section">
       <div className="child-health-grid">
         <div className="field field-full">
           <label htmlFor="child-health-dietaryRestrictions">
             Restricoes alimentares
           </label>
-          <textarea
-            id="child-health-dietaryRestrictions"
-            className="checkin-notes-field child-health-textarea"
-            value={value.dietaryRestrictions}
-            onChange={(event) =>
-              onChange("dietaryRestrictions", event.target.value)
-            }
-            disabled={disabled}
-            placeholder="Uma restricao por linha"
-            rows={3}
-          />
+          <div className="list-input-row">
+            <input
+              id="child-health-dietaryRestrictions"
+              value={dietInput}
+              onChange={(e) => setDietInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar restricao"
+            />
+            <button
+              type="button"
+              className="btn outline"
+              onClick={() => {
+                addListItem("dietaryRestrictions", dietInput);
+                setDietInput("");
+              }}
+              disabled={disabled}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="list-items">
+            {(value.dietaryRestrictions || []).map((item, index) => (
+              <div key={`diet-${index}`} className="list-item">
+                <span>{item}</span>
+                <button
+                  type="button"
+                  className="btn ghost remove-item-btn"
+                  onClick={() => removeListItem("dietaryRestrictions", index)}
+                  disabled={disabled}
+                  title="Remover"
+                  aria-label="Remover"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="field field-full">
           <label htmlFor="child-health-allergies">Alergias</label>
-          <textarea
-            id="child-health-allergies"
-            className="checkin-notes-field child-health-textarea"
-            value={value.allergies}
-            onChange={(event) => onChange("allergies", event.target.value)}
-            disabled={disabled}
-            placeholder="Uma alergia por linha"
-            rows={3}
-          />
+          <div className="list-input-row">
+            <input
+              id="child-health-allergies"
+              value={allergyInput}
+              onChange={(e) => setAllergyInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar alergia"
+            />
+            <button
+              type="button"
+              className="btn outline"
+              onClick={() => {
+                addListItem("allergies", allergyInput);
+                setAllergyInput("");
+              }}
+              disabled={disabled}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="list-items">
+            {(value.allergies || []).map((item, index) => (
+              <div key={`allergy-${index}`} className="list-item">
+                <span>{item}</span>
+                <button
+                  type="button"
+                  className="btn ghost remove-item-btn"
+                  onClick={() => removeListItem("allergies", index)}
+                  disabled={disabled}
+                  title="Remover"
+                  aria-label="Remover"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="field field-full">
           <label htmlFor="child-health-medicalConditions">
             Condicoes medicas
           </label>
-          <textarea
-            id="child-health-medicalConditions"
-            className="checkin-notes-field child-health-textarea"
-            value={value.medicalConditions}
-            onChange={(event) =>
-              onChange("medicalConditions", event.target.value)
-            }
-            disabled={disabled}
-            placeholder="Uma condicao por linha"
-            rows={3}
-          />
+          <div className="list-input-row">
+            <input
+              id="child-health-medicalConditions"
+              value={conditionInput}
+              onChange={(e) => setConditionInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar condicao"
+            />
+            <button
+              type="button"
+              className="btn outline"
+              onClick={() => {
+                addListItem("medicalConditions", conditionInput);
+                setConditionInput("");
+              }}
+              disabled={disabled}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="list-items">
+            {(value.medicalConditions || []).map((item, index) => (
+              <div key={`cond-${index}`} className="list-item">
+                <span>{item}</span>
+                <button
+                  type="button"
+                  className="btn ghost remove-item-btn"
+                  onClick={() => removeListItem("medicalConditions", index)}
+                  disabled={disabled}
+                  title="Remover"
+                  aria-label="Remover"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="field field-full">
           <label htmlFor="child-health-fearsOrSensitivities">
             Medos ou sensibilidades
           </label>
-          <textarea
-            id="child-health-fearsOrSensitivities"
-            className="checkin-notes-field child-health-textarea"
-            value={value.fearsOrSensitivities}
-            onChange={(event) =>
-              onChange("fearsOrSensitivities", event.target.value)
-            }
-            disabled={disabled}
-            placeholder="Um item por linha"
-            rows={3}
-          />
+          <div className="list-input-row">
+            <input
+              id="child-health-fearsOrSensitivities"
+              value={fearInput}
+              onChange={(e) => setFearInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar medo ou sensibilidade"
+            />
+            <button
+              type="button"
+              className="btn outline"
+              onClick={() => {
+                addListItem("fearsOrSensitivities", fearInput);
+                setFearInput("");
+              }}
+              disabled={disabled}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="list-items">
+            {(value.fearsOrSensitivities || []).map((item, index) => (
+              <div key={`fear-${index}`} className="list-item">
+                <span>{item}</span>
+                <button
+                  type="button"
+                  className="btn ghost remove-item-btn"
+                  onClick={() => removeListItem("fearsOrSensitivities", index)}
+                  disabled={disabled}
+                  title="Remover"
+                  aria-label="Remover"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -181,17 +317,19 @@ export function ChildHealthInfoFields({
               <div className="child-medication-actions">
                 <button
                   type="button"
-                  className="btn ghost"
+                  className="btn ghost remove-item-btn"
                   onClick={() => onRemoveMedication(index)}
                   disabled={disabled || value.medications.length === 1}
+                  title="Remover medicamento"
+                  aria-label="Remover medicamento"
                 >
-                  Remover
+                  ✕
                 </button>
               </div>
             </article>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

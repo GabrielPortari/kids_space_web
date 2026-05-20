@@ -83,11 +83,11 @@ export type ChildMedicationFormState = {
 };
 
 export type ChildHealthInfoFormState = {
-  dietaryRestrictions: string;
-  allergies: string;
+  dietaryRestrictions: string[];
+  allergies: string[];
   medications: ChildMedicationFormState[];
-  medicalConditions: string;
-  fearsOrSensitivities: string;
+  medicalConditions: string[];
+  fearsOrSensitivities: string[];
 };
 
 export type CompanyFormState = {
