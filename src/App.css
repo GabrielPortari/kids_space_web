@@ -848,14 +848,21 @@ input {
   gap: 0.45rem;
 }
 /* Child health list inputs and items */
+.health-field-half {
+  width: min(50%, 100%);
+  justify-self: start;
+}
+
 .list-input-row {
   display: flex;
+  flex-direction: row-reverse;
   gap: 0.5rem;
   align-items: center;
 }
 
 .list-input-row input {
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .list-items {
@@ -881,6 +888,7 @@ input {
 .list-item span {
   flex: 1 1 auto;
   line-height: 1.2;
+  color: var(--ink-strong);
 }
 
 .remove-item-btn {
@@ -894,25 +902,13 @@ input {
   transition: color 0.2s ease;
   display: inline-grid;
   place-items: center;
+  min-width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
 }
 
 .remove-item-btn:hover {
   color: var(--ink-base);
-}
-}
-
-.list-item span {
-  color: var(--ink-strong);
-}
-
-.remove-item-btn {
-  min-width: 2.2rem;
-  height: 2.2rem;
-  padding: 0;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 999px;
-  font-size: 0.95rem;
 }
 
 .child-medication-actions .remove-item-btn {
@@ -1565,8 +1561,25 @@ input {
 }
 
 .child-medications-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.7rem;
+}
+
+.child-medications-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.medication-chip {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.medication-chip-text {
+  min-width: 0;
 }
 
 .child-medication-row {
@@ -1574,6 +1587,10 @@ input {
   grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 0.6rem;
   align-items: end;
+}
+
+.child-medication-row-draft {
+  width: 100%;
 }
 
 .child-medication-row .field {

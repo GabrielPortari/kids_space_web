@@ -101,10 +101,7 @@ export function toChildHealthInfoFormState(
   return {
     dietaryRestrictions: toArray(healthInfo.dietaryRestrictions),
     allergies: toArray(healthInfo.allergies),
-    medications:
-      medications.length > 0
-        ? medications
-        : [{ name: "", dosage: "", schedule: "" }],
+    medications,
     medicalConditions: toArray(healthInfo.medicalConditions),
     fearsOrSensitivities: toArray(healthInfo.fearsOrSensitivities),
   };

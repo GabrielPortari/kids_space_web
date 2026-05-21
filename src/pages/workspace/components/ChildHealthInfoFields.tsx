@@ -10,12 +10,7 @@ type ChildHealthInfoFieldsProps = {
     key: keyof Omit<ChildHealthInfoFormState, "medications">,
     value: string[],
   ) => void;
-  onMedicationChange: (
-    index: number,
-    key: keyof ChildMedicationFormState,
-    value: string,
-  ) => void;
-  onAddMedication: () => void;
+  onAddMedication: (medication: ChildMedicationFormState) => void;
   onRemoveMedication: (index: number) => void;
   disabled?: boolean;
 };
@@ -52,7 +47,6 @@ function MedicationField({
 export function ChildHealthInfoFields({
   value,
   onChange,
-  onMedicationChange,
   onAddMedication,
   onRemoveMedication,
   disabled = false,
@@ -61,6 +55,11 @@ export function ChildHealthInfoFields({
   const [allergyInput, setAllergyInput] = useState("");
   const [conditionInput, setConditionInput] = useState("");
   const [fearInput, setFearInput] = useState("");
+  const [medicationDraft, setMedicationDraft] = useState({
+    name: "",
+    dosage: "",
+    schedule: "",
+  });
 
   const addListItem = (
     key: keyof Omit<ChildHealthInfoFormState, "medications">,
@@ -84,21 +83,21 @@ export function ChildHealthInfoFields({
     );
   };
 
+  const medicationItems = value.medications.filter(
+    (medication) =>
+      medication.name.trim() ||
+      medication.dosage.trim() ||
+      medication.schedule.trim(),
+  );
+
   return (
     <div className="child-health-section">
       <div className="child-health-grid">
-        <div className="field field-full">
+        <div className="field field-full health-field-half">
           <label htmlFor="child-health-dietaryRestrictions">
             Restricoes alimentares
           </label>
           <div className="list-input-row">
-            <input
-              id="child-health-dietaryRestrictions"
-              value={dietInput}
-              onChange={(e) => setDietInput(e.target.value)}
-              disabled={disabled}
-              placeholder="Adicionar restricao"
-            />
             <button
               type="button"
               className="btn outline"
@@ -110,6 +109,13 @@ export function ChildHealthInfoFields({
             >
               +
             </button>
+            <input
+              id="child-health-dietaryRestrictions"
+              value={dietInput}
+              onChange={(e) => setDietInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar restricao"
+            />
           </div>
 
           <div className="list-items">
@@ -131,16 +137,9 @@ export function ChildHealthInfoFields({
           </div>
         </div>
 
-        <div className="field field-full">
+        <div className="field field-full health-field-half">
           <label htmlFor="child-health-allergies">Alergias</label>
           <div className="list-input-row">
-            <input
-              id="child-health-allergies"
-              value={allergyInput}
-              onChange={(e) => setAllergyInput(e.target.value)}
-              disabled={disabled}
-              placeholder="Adicionar alergia"
-            />
             <button
               type="button"
               className="btn outline"
@@ -152,6 +151,13 @@ export function ChildHealthInfoFields({
             >
               +
             </button>
+            <input
+              id="child-health-allergies"
+              value={allergyInput}
+              onChange={(e) => setAllergyInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar alergia"
+            />
           </div>
 
           <div className="list-items">
@@ -173,18 +179,11 @@ export function ChildHealthInfoFields({
           </div>
         </div>
 
-        <div className="field field-full">
+        <div className="field field-full health-field-half">
           <label htmlFor="child-health-medicalConditions">
             Condicoes medicas
           </label>
           <div className="list-input-row">
-            <input
-              id="child-health-medicalConditions"
-              value={conditionInput}
-              onChange={(e) => setConditionInput(e.target.value)}
-              disabled={disabled}
-              placeholder="Adicionar condicao"
-            />
             <button
               type="button"
               className="btn outline"
@@ -196,6 +195,13 @@ export function ChildHealthInfoFields({
             >
               +
             </button>
+            <input
+              id="child-health-medicalConditions"
+              value={conditionInput}
+              onChange={(e) => setConditionInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar condicao"
+            />
           </div>
 
           <div className="list-items">
@@ -217,18 +223,11 @@ export function ChildHealthInfoFields({
           </div>
         </div>
 
-        <div className="field field-full">
+        <div className="field field-full health-field-half">
           <label htmlFor="child-health-fearsOrSensitivities">
             Medos ou sensibilidades
           </label>
           <div className="list-input-row">
-            <input
-              id="child-health-fearsOrSensitivities"
-              value={fearInput}
-              onChange={(e) => setFearInput(e.target.value)}
-              disabled={disabled}
-              placeholder="Adicionar medo ou sensibilidade"
-            />
             <button
               type="button"
               className="btn outline"
@@ -240,6 +239,13 @@ export function ChildHealthInfoFields({
             >
               +
             </button>
+            <input
+              id="child-health-fearsOrSensitivities"
+              value={fearInput}
+              onChange={(e) => setFearInput(e.target.value)}
+              disabled={disabled}
+              placeholder="Adicionar medo ou sensibilidade"
+            />
           </div>
 
           <div className="list-items">
@@ -265,69 +271,112 @@ export function ChildHealthInfoFields({
       <div className="child-medications-panel">
         <div className="child-medications-head">
           <h4>Medicamentos</h4>
-          <button
-            type="button"
-            className="btn outline"
-            onClick={onAddMedication}
-            disabled={disabled}
-          >
-            Adicionar medicamento
-          </button>
         </div>
 
         <div className="child-medications-list">
-          {value.medications.map((medication, index) => (
-            <article
-              key={`child-medication-${index}`}
-              className="child-medication-row"
-            >
-              <MedicationField
-                label="Nome"
-                id={`child-medication-name-${index}`}
-                value={medication.name}
-                onChange={(nextValue) =>
-                  onMedicationChange(index, "name", nextValue)
-                }
-                disabled={disabled}
-                placeholder="Ritalina"
-              />
+          <article className="child-medication-row child-medication-row-draft">
+            <MedicationField
+              label="Nome"
+              id="child-medication-draft-name"
+              value={medicationDraft.name}
+              onChange={(nextValue) =>
+                setMedicationDraft((current) => ({
+                  ...current,
+                  name: nextValue,
+                }))
+              }
+              disabled={disabled}
+              placeholder="Ritalina"
+            />
 
-              <MedicationField
-                label="Dosagem"
-                id={`child-medication-dosage-${index}`}
-                value={medication.dosage}
-                onChange={(nextValue) =>
-                  onMedicationChange(index, "dosage", nextValue)
-                }
-                disabled={disabled}
-                placeholder="10mg"
-              />
+            <MedicationField
+              label="Dosagem"
+              id="child-medication-draft-dosage"
+              value={medicationDraft.dosage}
+              onChange={(nextValue) =>
+                setMedicationDraft((current) => ({
+                  ...current,
+                  dosage: nextValue,
+                }))
+              }
+              disabled={disabled}
+              placeholder="10mg"
+            />
 
-              <MedicationField
-                label="Horario"
-                id={`child-medication-schedule-${index}`}
-                value={medication.schedule}
-                onChange={(nextValue) =>
-                  onMedicationChange(index, "schedule", nextValue)
-                }
-                disabled={disabled}
-                placeholder="08:00"
-              />
+            <MedicationField
+              label="Horario"
+              id="child-medication-draft-schedule"
+              value={medicationDraft.schedule}
+              onChange={(nextValue) =>
+                setMedicationDraft((current) => ({
+                  ...current,
+                  schedule: nextValue,
+                }))
+              }
+              disabled={disabled}
+              placeholder="08:00"
+            />
 
-              <div className="child-medication-actions">
-                <button
-                  type="button"
-                  className="btn ghost remove-item-btn"
-                  onClick={() => onRemoveMedication(index)}
-                  disabled={disabled || value.medications.length === 1}
-                  title="Remover medicamento"
-                  aria-label="Remover medicamento"
+            <div className="child-medication-actions">
+              <button
+                type="button"
+                className="btn outline add-item-btn"
+                onClick={() => {
+                  const nextMedication = {
+                    name: medicationDraft.name.trim(),
+                    dosage: medicationDraft.dosage.trim(),
+                    schedule: medicationDraft.schedule.trim(),
+                  };
+
+                  if (
+                    !nextMedication.name &&
+                    !nextMedication.dosage &&
+                    !nextMedication.schedule
+                  ) {
+                    return;
+                  }
+
+                  onAddMedication(nextMedication);
+                  setMedicationDraft({ name: "", dosage: "", schedule: "" });
+                }}
+                disabled={disabled}
+                title="Adicionar medicamento"
+                aria-label="Adicionar medicamento"
+              >
+                +
+              </button>
+            </div>
+          </article>
+
+          <div className="child-medications-chips">
+            {medicationItems.map((medication) => {
+              const originalIndex = value.medications.indexOf(medication);
+
+              return (
+                <div
+                  key={`child-medication-${originalIndex}`}
+                  className="list-item medication-chip"
                 >
-                  ✕
-                </button>
-              </div>
-            </article>
-          ))}
+                  <span className="medication-chip-text">
+                    {[medication.name, medication.dosage, medication.schedule]
+                      .map((item) => item.trim())
+                      .filter(Boolean)
+                      .join(" ")}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn ghost remove-item-btn"
+                    onClick={() => onRemoveMedication(originalIndex)}
+                    disabled={disabled}
+                    title="Remover medicamento"
+                    aria-label="Remover medicamento"
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

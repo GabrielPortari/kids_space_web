@@ -51,7 +51,7 @@ export const INITIAL_CHILD_FORM: ChildFormState = {
   healthInfo: {
     dietaryRestrictions: [],
     allergies: [],
-    medications: [{ name: "", dosage: "", schedule: "" }],
+    medications: [],
     medicalConditions: [],
     fearsOrSensitivities: [],
   },

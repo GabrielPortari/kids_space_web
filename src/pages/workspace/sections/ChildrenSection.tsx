@@ -674,28 +674,14 @@ export function ChildrenSection() {
                         },
                       }))
                     }
-                    onMedicationChange={(index, key, value) =>
-                      setChildForm((current) => ({
-                        ...current,
-                        healthInfo: {
-                          ...current.healthInfo,
-                          medications: current.healthInfo.medications.map(
-                            (medication, medicationIndex) =>
-                              medicationIndex === index
-                                ? { ...medication, [key]: value }
-                                : medication,
-                          ),
-                        },
-                      }))
-                    }
-                    onAddMedication={() =>
+                    onAddMedication={(medication) =>
                       setChildForm((current) => ({
                         ...current,
                         healthInfo: {
                           ...current.healthInfo,
                           medications: [
                             ...current.healthInfo.medications,
-                            { name: "", dosage: "", schedule: "" },
+                            medication,
                           ],
                         },
                       }))
@@ -705,13 +691,10 @@ export function ChildrenSection() {
                         ...current,
                         healthInfo: {
                           ...current.healthInfo,
-                          medications:
-                            current.healthInfo.medications.length > 1
-                              ? current.healthInfo.medications.filter(
-                                  (_medication, medicationIndex) =>
-                                    medicationIndex !== index,
-                                )
-                              : current.healthInfo.medications,
+                          medications: current.healthInfo.medications.filter(
+                            (_medication, medicationIndex) =>
+                              medicationIndex !== index,
+                          ),
                         },
                       }))
                     }
@@ -1012,28 +995,14 @@ export function ChildrenSection() {
                       },
                     }))
                   }
-                  onMedicationChange={(index, key, value) =>
-                    setChildForm((current) => ({
-                      ...current,
-                      healthInfo: {
-                        ...current.healthInfo,
-                        medications: current.healthInfo.medications.map(
-                          (medication, medicationIndex) =>
-                            medicationIndex === index
-                              ? { ...medication, [key]: value }
-                              : medication,
-                        ),
-                      },
-                    }))
-                  }
-                  onAddMedication={() =>
+                  onAddMedication={(medication) =>
                     setChildForm((current) => ({
                       ...current,
                       healthInfo: {
                         ...current.healthInfo,
                         medications: [
                           ...current.healthInfo.medications,
-                          { name: "", dosage: "", schedule: "" },
+                          medication,
                         ],
                       },
                     }))
@@ -1043,13 +1012,10 @@ export function ChildrenSection() {
                       ...current,
                       healthInfo: {
                         ...current.healthInfo,
-                        medications:
-                          current.healthInfo.medications.length > 1
-                            ? current.healthInfo.medications.filter(
-                                (_medication, medicationIndex) =>
-                                  medicationIndex !== index,
-                              )
-                            : current.healthInfo.medications,
+                        medications: current.healthInfo.medications.filter(
+                          (_medication, medicationIndex) =>
+                            medicationIndex !== index,
+                        ),
                       },
                     }))
                   }
