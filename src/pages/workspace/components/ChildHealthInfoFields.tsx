@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatMedicationSchedule } from "../formatter";
 import type {
   ChildHealthInfoFormState,
   ChildMedicationFormState,
@@ -22,6 +23,7 @@ function MedicationField({
   onChange,
   disabled,
   placeholder,
+  onBlur,
 }: {
   label: string;
   id: string;
@@ -29,6 +31,7 @@ function MedicationField({
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  onBlur?: () => void;
 }) {
   return (
     <div className="field">
@@ -37,11 +40,38 @@ function MedicationField({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={() => onBlur && onBlur()}
         disabled={disabled}
         placeholder={placeholder}
       />
     </div>
   );
+}
+
+const HOURS = Array.from({ length: 24 }, (_, index) =>
+  String(index).padStart(2, "0"),
+);
+
+const MINUTES = Array.from({ length: 12 }, (_, index) =>
+  String(index * 5).padStart(2, "0"),
+);
+
+function splitSchedule(value: string): { hour: string; minute: string } {
+  const formatted = formatMedicationSchedule(value);
+  if (!formatted) {
+    return { hour: "", minute: "" };
+  }
+
+  const [hour = "", minute = ""] = formatted.split(":");
+  return { hour, minute };
+}
+
+function combineSchedule(hour: string, minute: string): string {
+  if (!hour || !minute) {
+    return "";
+  }
+
+  return formatMedicationSchedule(`${hour}:${minute}`);
 }
 
 export function ChildHealthInfoFields({
@@ -303,19 +333,62 @@ export function ChildHealthInfoFields({
               placeholder="10mg"
             />
 
-            <MedicationField
-              label="Horario"
-              id="child-medication-draft-schedule"
-              value={medicationDraft.schedule}
-              onChange={(nextValue) =>
-                setMedicationDraft((current) => ({
-                  ...current,
-                  schedule: nextValue,
-                }))
-              }
-              disabled={disabled}
-              placeholder="08:00"
-            />
+            <div className="field">
+              <label htmlFor="child-medication-draft-schedule">Horario</label>
+              <div className="time-picker-grid">
+                <select
+                  id="child-medication-draft-schedule-hour"
+                  value={splitSchedule(medicationDraft.schedule).hour}
+                  onChange={(event) => {
+                    const current = splitSchedule(medicationDraft.schedule);
+                    const nextSchedule = combineSchedule(
+                      event.target.value,
+                      current.minute || "00",
+                    );
+
+                    setMedicationDraft((draft) => ({
+                      ...draft,
+                      schedule: nextSchedule,
+                    }));
+                  }}
+                  disabled={disabled}
+                >
+                  <option value="">--</option>
+                  {HOURS.map((hour) => (
+                    <option key={hour} value={hour}>
+                      {hour}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="time-picker-separator">:</span>
+
+                <select
+                  id="child-medication-draft-schedule-minute"
+                  value={splitSchedule(medicationDraft.schedule).minute}
+                  onChange={(event) => {
+                    const current = splitSchedule(medicationDraft.schedule);
+                    const nextSchedule = combineSchedule(
+                      current.hour || "00",
+                      event.target.value,
+                    );
+
+                    setMedicationDraft((draft) => ({
+                      ...draft,
+                      schedule: nextSchedule,
+                    }));
+                  }}
+                  disabled={disabled}
+                >
+                  <option value="">--</option>
+                  {MINUTES.map((minute) => (
+                    <option key={minute} value={minute}>
+                      {minute}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div className="child-medication-actions">
               <button
@@ -325,7 +398,9 @@ export function ChildHealthInfoFields({
                   const nextMedication = {
                     name: medicationDraft.name.trim(),
                     dosage: medicationDraft.dosage.trim(),
-                    schedule: medicationDraft.schedule.trim(),
+                    schedule: formatMedicationSchedule(
+                      medicationDraft.schedule.trim(),
+                    ),
                   };
 
                   if (

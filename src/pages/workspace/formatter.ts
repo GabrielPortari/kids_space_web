@@ -67,6 +67,51 @@ function toMedicationFormState(value: unknown): ChildMedicationFormState {
   };
 }
 
+export function formatMedicationSchedule(input: string): string {
+  const value = String(input || "").trim();
+  if (!value) return "";
+
+  let s = value.toLowerCase();
+  s = s.replace(/h/g, ":").replace(/\./g, ":").replace(/\s+/g, "");
+
+  const ampmMatch = s.match(/(am|pm)$/);
+  const isPM = ampmMatch ? ampmMatch[1] === "pm" : false;
+  if (ampmMatch) s = s.replace(/(am|pm)$/, "");
+
+  const onlyDigits = s.replace(/\D/g, "");
+
+  if (s.includes(":")) {
+    const [hRaw, mRaw] = s.split(":");
+    let h = parseInt(hRaw.replace(/\D/g, ""), 10);
+    let m = parseInt((mRaw || "").replace(/\D/g, ""), 10);
+    if (Number.isNaN(h)) h = 0;
+    if (Number.isNaN(m)) m = 0;
+
+    if (ampmMatch) {
+      if (isPM && h < 12) h += 12;
+      if (!isPM && h === 12) h = 0;
+    }
+
+    h = Math.max(0, Math.min(23, h));
+    m = Math.max(0, Math.min(59, m));
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+
+  if (onlyDigits.length === 3 || onlyDigits.length === 4) {
+    const h = parseInt(onlyDigits.slice(0, onlyDigits.length - 2), 10);
+    const m = parseInt(onlyDigits.slice(-2), 10);
+    if (Number.isNaN(h) || Number.isNaN(m)) return "";
+    const hh = Math.max(0, Math.min(23, h));
+    const mm = Math.max(0, Math.min(59, m));
+    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  }
+
+  const h = parseInt(onlyDigits.slice(0, 2) || "0", 10);
+  if (Number.isNaN(h)) return "";
+  const hh = Math.max(0, Math.min(23, h));
+  return `${String(hh).padStart(2, "0")}:00`;
+}
+
 export function toChildHealthInfoFormState(
   item: ListItem,
 ): ChildHealthInfoFormState {

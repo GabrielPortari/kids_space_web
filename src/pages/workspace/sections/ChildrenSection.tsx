@@ -10,6 +10,7 @@ import {
   maskZipCode,
   normalizeDigits,
   parseIdList,
+  toParentFormState,
   splitTextList,
 } from "../formatter";
 import type { ListItem } from "../types";
@@ -122,6 +123,30 @@ export function ChildrenSection() {
     parents: childParents,
     activeChildIds,
   } = childrenHook;
+
+  function applyInheritedParentAddress(parentId: string) {
+    const selectedParent = childParents.find(
+      (item: ListItem) => extractId(item) === parentId,
+    );
+
+    if (!selectedParent) {
+      return;
+    }
+
+    const parentFormState = toParentFormState(selectedParent);
+
+    setChildForm((current) => ({
+      ...current,
+      addressStreet: parentFormState.addressStreet,
+      addressNumber: parentFormState.addressNumber,
+      addressDistrict: parentFormState.addressDistrict,
+      addressCity: parentFormState.addressCity,
+      addressState: parentFormState.addressState,
+      addressZipCode: parentFormState.addressZipCode,
+      addressComplement: parentFormState.addressComplement,
+      addressCountry: parentFormState.addressCountry,
+    }));
+  }
 
   return (
     <>
@@ -515,15 +540,78 @@ export function ChildrenSection() {
                       options={childCreateParentOptions}
                       selectedIds={childForm.parents}
                       onToggle={(parentId) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          parents: current.parents === parentId ? "" : parentId,
-                        }))
+                        setChildForm((current) => {
+                          const nextParentId =
+                            current.parents === parentId ? "" : parentId;
+
+                          if (
+                            current.inheritParentAddress &&
+                            nextParentId &&
+                            nextParentId !== current.parents
+                          ) {
+                            applyInheritedParentAddress(nextParentId);
+                          }
+
+                          return {
+                            ...current,
+                            parents: nextParentId,
+                          };
+                        })
                       }
                       isLoading={childrenHook.parentsQuery.isLoading}
                       placeholder="Buscar por nome ou ID"
                       mode="radio"
                     />
+
+                    <div className="field child-inherit-address-field">
+                      <label className="child-inherit-address-toggle">
+                        <input
+                          type="checkbox"
+                          checked={childForm.inheritParentAddress}
+                          onChange={(event) =>
+                            setChildForm((current) => {
+                              const nextState = {
+                                ...current,
+                                inheritParentAddress: event.target.checked,
+                              };
+
+                              if (event.target.checked && current.parents) {
+                                const selectedParent = childParents.find(
+                                  (item: ListItem) =>
+                                    extractId(item) === current.parents,
+                                );
+
+                                if (selectedParent) {
+                                  const parentFormState =
+                                    toParentFormState(selectedParent);
+
+                                  return {
+                                    ...nextState,
+                                    addressStreet:
+                                      parentFormState.addressStreet,
+                                    addressNumber:
+                                      parentFormState.addressNumber,
+                                    addressDistrict:
+                                      parentFormState.addressDistrict,
+                                    addressCity: parentFormState.addressCity,
+                                    addressState: parentFormState.addressState,
+                                    addressZipCode:
+                                      parentFormState.addressZipCode,
+                                    addressComplement:
+                                      parentFormState.addressComplement,
+                                    addressCountry:
+                                      parentFormState.addressCountry,
+                                  };
+                                }
+                              }
+
+                              return nextState;
+                            })
+                          }
+                        />
+                        <span>Herdar endereco do responsavel selecionado</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -546,6 +634,12 @@ export function ChildrenSection() {
                               addressStreet: event.target.value,
                             }))
                           }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
                         />
                       </div>
 
@@ -559,6 +653,12 @@ export function ChildrenSection() {
                               ...current,
                               addressNumber: event.target.value,
                             }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
                           }
                         />
                       </div>
@@ -576,6 +676,12 @@ export function ChildrenSection() {
                               addressComplement: event.target.value,
                             }))
                           }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
                         />
                       </div>
 
@@ -589,6 +695,12 @@ export function ChildrenSection() {
                               ...current,
                               addressDistrict: event.target.value,
                             }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
                           }
                         />
                       </div>
@@ -606,6 +718,12 @@ export function ChildrenSection() {
                               addressCity: event.target.value,
                             }))
                           }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
                         />
                       </div>
 
@@ -619,6 +737,12 @@ export function ChildrenSection() {
                               ...current,
                               addressState: event.target.value,
                             }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
                           }
                         />
                       </div>
@@ -637,6 +761,12 @@ export function ChildrenSection() {
                             }))
                           }
                           placeholder="00000-000"
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
                         />
                       </div>
 
@@ -650,6 +780,12 @@ export function ChildrenSection() {
                               ...current,
                               addressCountry: event.target.value,
                             }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
                           }
                         />
                       </div>
@@ -820,33 +956,6 @@ export function ChildrenSection() {
                         placeholder="ID ou CPF"
                       />
                     </div>
-                  </div>
-                </div>
-
-                <div className="profile-form-section">
-                  <div className="profile-form-section-header">
-                    <span className="profile-form-section-label">
-                      Responsável
-                    </span>
-                    <div className="profile-form-section-line" />
-                  </div>
-                  <div className="child-section-grid">
-                    <EntitySearchList
-                      label="Responsável para vínculo direto"
-                      searchValue={childCreateParentSearch}
-                      onSearchChange={setChildCreateParentSearch}
-                      options={childCreateParentOptions}
-                      selectedIds={childForm.parents}
-                      onToggle={(parentId) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          parents: current.parents === parentId ? "" : parentId,
-                        }))
-                      }
-                      isLoading={childrenHook.parentsQuery.isLoading}
-                      placeholder="Buscar por nome ou ID"
-                      mode="radio"
-                    />
                   </div>
                 </div>
 
