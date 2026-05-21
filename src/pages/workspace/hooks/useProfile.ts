@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyCompany, updateMyCompany } from "../../../api/modules/companyApi";
-import { buildBackendAddressPayload } from "../../../api/address";
 import {
   getMyCollaborator,
   updateMyCollaborator,
 } from "../../../api/modules/profileApi";
 import { companyUpdateSchema } from "../validators";
 import {
+  buildCollaboratorProfilePayload,
+  buildCompanyProfilePayload,
+} from "../formPayloads";
+import {
   flattenRecord,
   maskByFieldKey,
-  normalizeDigits,
   sortByPriority,
   toFieldLabel,
 } from "../formatter";
@@ -232,12 +234,12 @@ export function useProfile() {
     event.preventDefault();
 
     if (isCompany) {
-      const email = (profileDraft.email || "").trim();
+      const payload = buildCompanyProfilePayload(profileDraft);
       const parseResult = companyUpdateSchema.safeParse({
-        name: profileDraft.name || "",
-        legalName: profileDraft.legalName || "",
-        contact: profileDraft.contact || "",
-        email,
+        name: payload.name || "",
+        legalName: payload.legalName || "",
+        contact: payload.contact || "",
+        email: payload.email || "",
       });
 
       if (!parseResult.success) {
@@ -245,49 +247,16 @@ export function useProfile() {
         return;
       }
 
-      const address = buildBackendAddressPayload({
-        addressStreet: profileDraft["address.street"] || "",
-        addressNumber: profileDraft["address.number"] || "",
-        addressDistrict: profileDraft["address.neighborhood"] || "",
-        addressCity: profileDraft["address.city"] || "",
-        addressState: profileDraft["address.state"] || "",
-        addressZipCode: profileDraft["address.zipCode"] || "",
-        addressComplement: profileDraft["address.complement"] || "",
-        addressCountry: profileDraft["address.country"] || "",
-      });
-
-      await updateMyCompanyMut.mutateAsync({
-        name: parseResult.data.name,
-        legalName: parseResult.data.legalName || undefined,
-        contact:
-          normalizeDigits(parseResult.data.contact || "").slice(0, 11) ||
-          undefined,
-        email: parseResult.data.email || undefined,
-        logoUrl: (profileDraft.logoUrl || "").trim() || undefined,
-        website: (profileDraft.website || "").trim() || undefined,
-        address,
-      });
+      await updateMyCompanyMut.mutateAsync(payload);
 
       setIsProfileModalOpen(false);
       return;
     }
 
     if (isCollaborator) {
-      await updateMyCollaboratorMut.mutateAsync({
-        name: (profileDraft.name || "").trim() || undefined,
-        contact:
-          normalizeDigits(profileDraft.contact || "").slice(0, 11) || undefined,
-        address: buildBackendAddressPayload({
-          addressStreet: profileDraft["address.street"] || "",
-          addressNumber: profileDraft["address.number"] || "",
-          addressDistrict: profileDraft["address.neighborhood"] || "",
-          addressCity: profileDraft["address.city"] || "",
-          addressState: profileDraft["address.state"] || "",
-          addressZipCode: profileDraft["address.zipCode"] || "",
-          addressComplement: profileDraft["address.complement"] || "",
-          addressCountry: profileDraft["address.country"] || "",
-        }),
-      });
+      await updateMyCollaboratorMut.mutateAsync(
+        buildCollaboratorProfilePayload(profileDraft),
+      );
       setIsProfileModalOpen(false);
       return;
     }

@@ -4,7 +4,7 @@ import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
-import { extractId } from "../formatter";
+import { extractId, maskPhone, normalizeDigits } from "../formatter";
 import type { ListItem } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -200,13 +200,17 @@ export function CompaniesSection() {
                     <label htmlFor="company-contact">Contato</label>
                     <input
                       id="company-contact"
-                      value={companyForm.contact}
+                      value={maskPhone(companyForm.contact)}
                       onChange={(event) =>
                         setCompanyForm((current) => ({
                           ...current,
-                          contact: event.target.value,
+                          contact: normalizeDigits(event.target.value).slice(
+                            0,
+                            11,
+                          ),
                         }))
                       }
+                      inputMode="tel"
                       placeholder="Telefone ou contato"
                     />
                   </div>
@@ -310,13 +314,17 @@ export function CompaniesSection() {
                     <label htmlFor="company-edit-contact">Contato</label>
                     <input
                       id="company-edit-contact"
-                      value={companyForm.contact}
+                      value={maskPhone(companyForm.contact)}
                       onChange={(event) =>
                         setCompanyForm((current) => ({
                           ...current,
-                          contact: event.target.value,
+                          contact: normalizeDigits(event.target.value).slice(
+                            0,
+                            11,
+                          ),
                         }))
                       }
+                      inputMode="tel"
                       placeholder="Telefone ou contato"
                     />
                   </div>

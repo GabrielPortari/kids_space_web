@@ -8,7 +8,6 @@ import {
   listChildren,
   updateChild,
   type CreateChildPayload,
-  type ChildHealthInfoPayload,
 } from "../../../api/modules/childApi";
 import { listActiveCheckins } from "../../../api/modules/attendanceApi";
 import { buildBackendAddressPayload } from "../../../api/address";
@@ -17,58 +16,18 @@ import { listParents } from "../../../api/modules/parentApi";
 import type { ChildFormState, ListItem } from "../types";
 import { INITIAL_CHILD_FORM, PAGE_SIZE } from "../constants";
 import {
+  buildCreateChildPayload,
+  sanitizeChildFormStateForPayload,
+} from "../childPayload";
+import {
   extractId,
-  normalizeDigits,
-  parseIdList,
-  splitTextList,
   matchesSearch,
   toChildFormState,
-  toParentFormState,
   paginate,
+  normalizeDigits,
+  parseIdList,
 } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
-
-function buildHealthInfoPayload(
-  healthInfo: ChildFormState["healthInfo"],
-): ChildHealthInfoPayload {
-  const medications = healthInfo.medications
-    .map((medication) => ({
-      name: medication.name.trim(),
-      dosage: medication.dosage.trim(),
-      schedule: medication.schedule.trim(),
-    }))
-    .filter(
-      (medication) =>
-        medication.name || medication.dosage || medication.schedule,
-    )
-    .map((medication) => ({
-      name: medication.name,
-      dosage: medication.dosage || undefined,
-      schedule: medication.schedule || undefined,
-    }));
-
-  return {
-    dietaryRestrictions: Array.isArray(healthInfo.dietaryRestrictions)
-      ? healthInfo.dietaryRestrictions
-          .map((s) => String(s || "").trim())
-          .filter(Boolean)
-      : [],
-    allergies: Array.isArray(healthInfo.allergies)
-      ? healthInfo.allergies.map((s) => String(s || "").trim()).filter(Boolean)
-      : [],
-    medications,
-    medicalConditions: Array.isArray(healthInfo.medicalConditions)
-      ? healthInfo.medicalConditions
-          .map((s) => String(s || "").trim())
-          .filter(Boolean)
-      : [],
-    fearsOrSensitivities: Array.isArray(healthInfo.fearsOrSensitivities)
-      ? healthInfo.fearsOrSensitivities
-          .map((s) => String(s || "").trim())
-          .filter(Boolean)
-      : [],
-  };
-}
 
 export function useChildren() {
   const queryClient = useQueryClient();
@@ -267,46 +226,26 @@ export function useChildren() {
   async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const name = childForm.name.trim();
-    const document = normalizeDigits(childForm.document).slice(0, 11);
-    const email = childForm.email.trim();
-    const contact = normalizeDigits(childForm.contact).slice(0, 11);
-    const birthDate = childForm.birthDate.trim();
-    const selectedParentIds = parseIdList(childForm.parents);
-    const selectedParentId = selectedParentIds[0];
-    const selectedParent = selectedParentId
-      ? (parents as ListItem[]).find(
-          (item) => extractId(item) === selectedParentId,
-        )
-      : undefined;
+    const payload = buildCreateChildPayload({
+      childForm,
+      parents: parents as ListItem[],
+      currentCompanyScope,
+    });
 
-    if (!name) {
+    if (!payload.name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
       return;
     }
 
-    if (childForm.inheritParentAddress && !selectedParent) {
+    if (childForm.inheritParentAddress && !payload.parents?.[0]) {
       setStatusMessage(
         "Selecione um responsavel para herdar o endereco antes de salvar.",
       );
       return;
     }
 
-    const addressPayload =
-      childForm.inheritParentAddress && selectedParent
-        ? buildBackendAddressPayload(toParentFormState(selectedParent))
-        : buildBackendAddressPayload(childForm);
-
     await createChildMut.mutateAsync({
-      name,
-      document: document || undefined,
-      email: email || undefined,
-      contact: contact || undefined,
-      birthDate: birthDate || undefined,
-      parents: selectedParentId ? [selectedParentId] : undefined,
-      healthInfo: buildHealthInfoPayload(childForm.healthInfo),
-      address: addressPayload,
-      companyId: currentCompanyScope,
+      ...payload,
     });
 
     setChildForm(INITIAL_CHILD_FORM);
@@ -349,8 +288,7 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
-      parents: selectedParentId ? [selectedParentId] : undefined,
-      healthInfo: buildHealthInfoPayload(childForm.healthInfo),
+      healthInfo: sanitizeChildFormStateForPayload(childForm).healthInfo,
       address: addressPayload,
     };
 

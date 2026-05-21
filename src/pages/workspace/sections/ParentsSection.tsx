@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParents } from "../hooks/useParents";
+import { useParents } from "../hooks/useParents.ts";
 import { useChildren } from "../hooks/useChildren";
 import { useWorkspaceContext } from "../WorkspaceContext";
 // Address form inlined into profile modal sections
@@ -109,7 +109,10 @@ export function ParentsSection() {
       });
   }, [allChildren, parentChildrenSearch]);
 
-  const pagedParents = filteredParents.slice((page - 1) * 8, page * 8);
+  const pagedParents: ListItem[] = filteredParents.slice(
+    (page - 1) * 8,
+    page * 8,
+  );
   const totalPages = Math.ceil(filteredParents.length / 8) || 1;
 
   return (

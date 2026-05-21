@@ -9,12 +9,11 @@ import {
   type UpdateCompanyPayload,
 } from "../../../api/modules/companyApi";
 import { bootstrapAdmin } from "../../../api/modules/adminApi";
-import { buildBackendAddressPayload } from "../../../api/address";
 import type { CompanyFormState, ListItem } from "../types";
 import { INITIAL_COMPANY_FORM, PAGE_SIZE } from "../constants";
+import { buildCompanyPayload } from "../formPayloads";
 import {
   extractId,
-  normalizeDigits,
   toCompanyFormState,
   matchesSearch,
   paginate,
@@ -123,14 +122,7 @@ export function useCompanies() {
       return;
     }
 
-    await createCompanyMut.mutateAsync({
-      name,
-      legalName: legalName || undefined,
-      cnpj: cnpj || undefined,
-      contact: contact || undefined,
-      email: email || undefined,
-      address: buildBackendAddressPayload(companyForm),
-    });
+    await createCompanyMut.mutateAsync(buildCompanyPayload(companyForm));
 
     setCompanyForm(INITIAL_COMPANY_FORM);
     setIsCompanyCreateModalOpen(false);
@@ -155,16 +147,10 @@ export function useCompanies() {
       return;
     }
 
-    const payload: Record<string, unknown> = {
-      name,
-      legalName: legalName || undefined,
-      cnpj: cnpj || undefined,
-      contact: contact || undefined,
-      email: email || undefined,
-      address: buildBackendAddressPayload(companyForm),
-    };
-
-    await updateCompanyMut.mutateAsync({ id: editingCompanyId, payload });
+    await updateCompanyMut.mutateAsync({
+      id: editingCompanyId,
+      payload: buildCompanyPayload(companyForm),
+    });
     setIsCompanyEditModalOpen(false);
     setEditingCompanyId(null);
     setCompanyForm(INITIAL_COMPANY_FORM);
