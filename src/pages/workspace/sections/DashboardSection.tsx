@@ -338,7 +338,7 @@ export function DashboardSection() {
                 selectedIds={selectedCheckinChildId}
                 onToggle={toggleCheckinChildSelection}
                 isLoading={childrenQuery.isLoading}
-                placeholder="Buscar por nome ou ID"
+                placeholder="Buscar por nome"
                 mode="radio"
               />
 
@@ -351,7 +351,7 @@ export function DashboardSection() {
                   selectedIds={selectedCheckinResponsibleId}
                   onToggle={toggleCheckinResponsibleSelection}
                   isLoading={parentsQuery.isLoading}
-                  placeholder="Buscar por nome ou ID"
+                  placeholder="Buscar por nome"
                   mode="radio"
                 />
               )}

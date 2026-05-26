@@ -3,7 +3,16 @@ import { useWorkspaceContext } from "../WorkspaceContext";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import {
+  EditIcon,
+  GroupIcon,
+  ModalIconWrap,
+  PlusIcon,
+  RecordAvatar,
+  RefreshIcon,
+} from "../components/WorkspaceVisuals";
 import { useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import {
   extractId,
   maskByFieldKey,
@@ -55,9 +64,10 @@ export function CollaboratorsSection() {
           <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn solid"
+              className="btn solid crm-add-button"
               onClick={openCollaboratorCreateModal}
             >
+              <PlusIcon />
               Adicionar novo
             </button>
             <button
@@ -68,7 +78,7 @@ export function CollaboratorsSection() {
               aria-label="Atualizar colaboradores"
               title="Atualizar colaboradores"
             >
-              ↻
+              <RefreshIcon />
             </button>
           </div>
         </div>
@@ -114,25 +124,28 @@ export function CollaboratorsSection() {
                     onClick={() => openCollaboratorViewModal(typed)}
                     style={{ cursor: "pointer" }}
                   >
-                    <div>
-                      <strong>{typed.name || "Colaborador sem nome"}</strong>
-                      <p>{typed.email || "Email nao informado"}</p>
+                    <div className="record-row-main">
+                      <RecordAvatar name={typed.name || "Colaborador"} />
+                      <div className="record-row-copy">
+                        <strong>{typed.name || "Colaborador sem nome"}</strong>
+                        <p>{typed.email || "Email nao informado"}</p>
+                      </div>
                     </div>
                     <div className="crm-row-actions">
                       <button
                         type="button"
-                        className="btn outline"
+                        className="crm-icon-action"
                         title="Editar"
                         onClick={(event) => {
                           event.stopPropagation();
                           openCollaboratorEditModal(typed);
                         }}
                       >
-                        ✏️
+                        <EditIcon />
                       </button>
                       <button
                         type="button"
-                        className="btn ghost"
+                        className="crm-remove-action"
                         onClick={(event) => {
                           event.stopPropagation();
                           if (!id) {
@@ -162,24 +175,25 @@ export function CollaboratorsSection() {
         />
       </section>
 
-      {isCollaboratorCreateModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsCollaboratorCreateModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide profile-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Adicionar colaborador"
-            onClick={(event) => event.stopPropagation()}
+      {isCollaboratorCreateModalOpen &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsCollaboratorCreateModalOpen(false)}
           >
+            <section
+              className="crm-modal crm-modal-wide profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Adicionar colaborador"
+              onClick={(event) => event.stopPropagation()}
+            >
             <div className="profile-modal-header">
               <div className="profile-modal-header-left">
-                <div className="profile-modal-avatar">
-                  <span>🤝</span>
-                </div>
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
                 <div>
                   <p className="profile-modal-title">Novo Colaborador</p>
                   <p className="profile-modal-subtitle">
@@ -438,27 +452,29 @@ export function CollaboratorsSection() {
               </div>
             </form>
           </section>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
-      {isCollaboratorEditModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsCollaboratorEditModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide profile-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Editar colaborador"
-            onClick={(event) => event.stopPropagation()}
+      {isCollaboratorEditModalOpen &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsCollaboratorEditModalOpen(false)}
           >
+            <section
+              className="crm-modal crm-modal-wide profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Editar colaborador"
+              onClick={(event) => event.stopPropagation()}
+            >
             <div className="profile-modal-header">
               <div className="profile-modal-header-left">
-                <div className="profile-modal-avatar">
-                  <span>🤝</span>
-                </div>
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
                 <div>
                   <p className="profile-modal-title">Editar Colaborador</p>
                   <p className="profile-modal-subtitle">
@@ -721,27 +737,29 @@ export function CollaboratorsSection() {
               </div>
             </form>
           </section>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
-      {isCollaboratorViewModalOpen && viewingCollaboratorId && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsCollaboratorViewModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide profile-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Visualizar colaborador"
-            onClick={(event) => event.stopPropagation()}
+      {isCollaboratorViewModalOpen && viewingCollaboratorId &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsCollaboratorViewModalOpen(false)}
           >
+            <section
+              className="crm-modal crm-modal-wide profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Visualizar colaborador"
+              onClick={(event) => event.stopPropagation()}
+            >
             <div className="profile-modal-header">
               <div className="profile-modal-header-left">
-                <div className="profile-modal-avatar">
-                  <span>👤</span>
-                </div>
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
                 <div>
                   <p className="profile-modal-title">Detalhes do Colaborador</p>
                   <p className="profile-modal-subtitle">
@@ -936,8 +954,9 @@ export function CollaboratorsSection() {
               </div>
             </div>
           </section>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
       <ConfirmDeleteModal
         isOpen={isCollaboratorDeleteModalOpen}

@@ -2,6 +2,7 @@ import { useAttendance } from "../hooks/useAttendance";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import { RecordAvatar, RefreshIcon } from "../components/WorkspaceVisuals";
 import { extractId, formatTimestamp } from "../formatter";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -56,7 +57,7 @@ export function AttendanceSection() {
             aria-label="Atualizar atendimentos"
             title="Atualizar atendimentos"
           >
-            ↻
+            <RefreshIcon />
           </button>
         </div>
 
@@ -67,7 +68,7 @@ export function AttendanceSection() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nome ou ID"
+            placeholder="Buscar por nome"
           />
         </div>
 
@@ -93,7 +94,6 @@ export function AttendanceSection() {
               {pagedCollection.map((item) => {
                 const typed = item as any;
                 const id = extractId(typed);
-                const attendanceType = getAttendanceType(typed);
                 const typeLabel = getAttendanceTypeLabel(typed);
 
                 return (
@@ -103,52 +103,39 @@ export function AttendanceSection() {
                     onClick={() => openAttendanceViewModal(typed)}
                     style={{ cursor: "pointer" }}
                   >
-                    <div>
-                      <strong>
-                        {(typed as any).childSnapshot?.name ||
+                    <div className="record-row-main">
+                      <RecordAvatar
+                        name={
+                          (typed as any).childSnapshot?.name ||
                           typed.childName ||
-                          "Crianca sem nome"}
-                      </strong>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          marginTop: "4px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: "inline-block",
-                            padding: "4px 12px",
-                            borderRadius: "4px",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                            backgroundColor:
-                              attendanceType === "checkin"
-                                ? "#4caf50"
-                                : "#ff9800",
-                            color: "white",
-                          }}
-                        >
-                          {typeLabel}
-                        </span>
-                        {typed.checkInTime && (
-                          <p style={{ margin: 0, fontSize: "14px" }}>
-                            Entrada: {formatTimestamp(typed.checkInTime)}
-                          </p>
-                        )}
-                        {typed.checkOutTime && (
-                          <p style={{ margin: 0, fontSize: "14px" }}>
-                            Saída: {formatTimestamp(typed.checkOutTime)}
-                          </p>
-                        )}
+                          "Crianca"
+                        }
+                      />
+                      <div className="record-row-copy">
+                        <strong>
+                          {(typed as any).childSnapshot?.name ||
+                            typed.childName ||
+                            "Crianca sem nome"}
+                        </strong>
+                        <div className="record-row-meta">
+                          <span className="pill">{typeLabel}</span>
+                          {typed.checkInTime && (
+                            <p style={{ margin: 0 }}>
+                              Entrada: {formatTimestamp(typed.checkInTime)}
+                            </p>
+                          )}
+                          {typed.checkOutTime && (
+                            <p style={{ margin: 0 }}>
+                              Saída: {formatTimestamp(typed.checkOutTime)}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="crm-row-actions">
                       <button
                         type="button"
-                        className="btn ghost"
+                        className="crm-remove-action"
                         onClick={(event) => {
                           event.stopPropagation();
                           if (!id) return;

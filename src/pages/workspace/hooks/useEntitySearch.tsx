@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { SkeletonBlock } from "./WorkspaceSkeleton";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 
 type EntitySearchListProps = {
   label: string;
@@ -22,7 +22,7 @@ export function EntitySearchList({
   selectedIds,
   onToggle,
   isLoading = false,
-  placeholder = "Buscar por nome ou ID",
+  placeholder = "Buscar por nome",
   mode = "checkbox",
   disabled = false,
 }: EntitySearchListProps) {
@@ -33,21 +33,17 @@ export function EntitySearchList({
     ? selectedIds
     : [selectedIds];
 
-  // Get all selected items (useful for checkbox mode)
   const selectedItems = selectedIdsArray
     .map((id) => options.find((opt) => opt.id === id))
     .filter(Boolean) as { id: string; name: string }[];
 
-  // Get the first selected item (useful for radio mode)
   const selectedItem = selectedItems.length > 0 ? selectedItems[0] : null;
 
-  // Determine what to display in the input field
   const displayValue =
     mode === "radio" && selectedItem && !searchValue
       ? selectedItem.name
       : searchValue;
 
-  // Handle remove chip
   const handleRemoveChip = (
     event: React.MouseEvent<HTMLButtonElement>,
     chipId: string,
@@ -61,7 +57,6 @@ export function EntitySearchList({
     onToggle(chipId);
   };
 
-  // Handle input change
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) {
       return;
@@ -74,7 +69,6 @@ export function EntitySearchList({
     }
   };
 
-  // Handle clear button click
   const handleClear = (event: React.MouseEvent) => {
     if (disabled) {
       return;
@@ -90,29 +84,26 @@ export function EntitySearchList({
     inputRef.current?.focus();
   };
 
-  // Handle input focus
   const handleInputFocus = () => {
     if (disabled) {
       return;
     }
 
     if (mode === "checkbox") {
-      return; // In checkbox mode, dropdown is always visible
+      return;
     }
     setIsDropdownOpen(true);
   };
 
-  // Handle input blur
   const handleInputBlur = (event: React.FocusEvent) => {
     if (disabled) {
       return;
     }
 
-    // In checkbox mode, keep dropdown visible on blur (original behavior)
     if (mode === "checkbox") {
       return;
     }
-    // In radio mode, close dropdown when blurring
+
     setTimeout(() => {
       if (event.relatedTarget === null) {
         setIsDropdownOpen(false);
@@ -120,7 +111,6 @@ export function EntitySearchList({
     }, 100);
   };
 
-  // Handle option selection
   const handleOptionClick = (optionId: string) => {
     if (disabled) {
       return;
@@ -134,14 +124,13 @@ export function EntitySearchList({
     }
   };
 
-  // Close dropdown when clicking outside (only in radio mode)
   useEffect(() => {
     if (disabled) {
       return;
     }
 
     if (mode === "checkbox") {
-      return; // In checkbox mode, dropdown stays open
+      return;
     }
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -157,7 +146,6 @@ export function EntitySearchList({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [disabled, mode]);
 
-  // Determine if dropdown should be visible
   const shouldShowDropdown = mode === "checkbox" ? true : isDropdownOpen;
 
   return (

@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+
 type ConfirmDeleteModalProps = {
   isOpen: boolean;
   title?: string;
@@ -23,7 +25,7 @@ export function ConfirmDeleteModal({
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="crm-modal-backdrop" role="presentation" onClick={onCancel}>
       <section
         className="crm-modal"
@@ -53,6 +55,7 @@ export function ConfirmDeleteModal({
           </button>
         </div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

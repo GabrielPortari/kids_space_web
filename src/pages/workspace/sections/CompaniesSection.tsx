@@ -4,6 +4,14 @@ import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import {
+  EditIcon,
+  GroupIcon,
+  ModalIconWrap,
+  PlusIcon,
+  RecordAvatar,
+  RefreshIcon,
+} from "../components/WorkspaceVisuals";
 import { extractId, maskPhone, normalizeDigits } from "../formatter";
 import type { ListItem } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,11 +53,12 @@ export function CompaniesSection() {
           <div className="crm-panel-head-actions">
             <button
               type="button"
-              className="btn solid"
+              className="btn solid crm-add-button"
               onClick={() => {
                 setIsCompanyCreateModalOpen(true);
               }}
             >
+              <PlusIcon />
               Adicionar novo
             </button>
             <button
@@ -60,7 +69,7 @@ export function CompaniesSection() {
               aria-label="Atualizar empresas"
               title="Atualizar empresas"
             >
-              ↻
+              <RefreshIcon />
             </button>
           </div>
         </div>
@@ -72,7 +81,7 @@ export function CompaniesSection() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nome ou ID"
+            placeholder="Buscar por nome"
           />
         </div>
 
@@ -101,22 +110,25 @@ export function CompaniesSection() {
 
                 return (
                   <article key={id || JSON.stringify(item)} className="crm-row">
-                    <div>
-                      <strong>{typed.name || "Empresa sem nome"}</strong>
-                      <p>{id || "ID nao informado"}</p>
+                    <div className="record-row-main">
+                      <RecordAvatar name={typed.name || "Empresa"} />
+                      <div className="record-row-copy">
+                        <strong>{typed.name || "Empresa sem nome"}</strong>
+                        <p>{id || "ID nao informado"}</p>
+                      </div>
                     </div>
                     <div className="crm-row-actions">
                       <button
                         type="button"
-                        className="btn outline"
+                        className="crm-icon-action"
                         title="Editar"
                         onClick={() => openCompanyEditModal(typed)}
                       >
-                        ✏️
+                        <EditIcon />
                       </button>
                       <button
                         type="button"
-                        className="btn ghost"
+                        className="crm-remove-action"
                         onClick={() => {
                           if (!id) return;
                           setIsCompanyDeleteModalOpen(true);
@@ -156,7 +168,19 @@ export function CompaniesSection() {
             aria-label="Adicionar empresa"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Nova Empresa</h2>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
+                <div>
+                  <p className="profile-modal-title">Nova Empresa</p>
+                  <p className="profile-modal-subtitle">
+                    Cadastre a empresa e seus dados de acesso
+                  </p>
+                </div>
+              </div>
+            </div>
             <form
               className="crm-form-grid company-form"
               onSubmit={onCreateCompanyModal}
@@ -270,7 +294,19 @@ export function CompaniesSection() {
             aria-label="Editar empresa"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Editar Empresa</h2>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
+                <div>
+                  <p className="profile-modal-title">Editar Empresa</p>
+                  <p className="profile-modal-subtitle">
+                    Atualize as informações da empresa
+                  </p>
+                </div>
+              </div>
+            </div>
             <form
               className="crm-form-grid company-form"
               onSubmit={onUpdateCompanyModal}

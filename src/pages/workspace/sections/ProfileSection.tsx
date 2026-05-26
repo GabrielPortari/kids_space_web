@@ -1,5 +1,10 @@
 import { useProfile } from "../hooks/useProfile";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import {
+  ModalIconWrap,
+  PersonIcon,
+  RefreshIcon,
+} from "../components/WorkspaceVisuals";
 import { useQueryClient } from "@tanstack/react-query";
 import { maskPhone } from "../formatter";
 
@@ -87,7 +92,7 @@ export function ProfileSection() {
               addressProfileFields.length > 0) && (
               <button
                 type="button"
-                className="btn solid"
+                className="btn solid crm-add-button"
                 onClick={openProfileEditModal}
               >
                 Alterar dados
@@ -101,7 +106,7 @@ export function ProfileSection() {
               aria-label="Atualizar perfil"
               title="Atualizar perfil"
             >
-              ↻
+              <RefreshIcon />
             </button>
           </div>
         </div>
@@ -202,9 +207,9 @@ export function ProfileSection() {
           >
             <div className="profile-modal-header">
               <div className="profile-modal-header-left">
-                <div className="profile-modal-avatar">
-                  <span>👤</span>
-                </div>
+                <ModalIconWrap>
+                  <PersonIcon />
+                </ModalIconWrap>
                 <div>
                   <p className="profile-modal-title">Alterar dados</p>
                   <p className="profile-modal-subtitle">

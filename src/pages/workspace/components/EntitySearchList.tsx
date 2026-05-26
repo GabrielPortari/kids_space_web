@@ -1,6 +1,76 @@
 import { useState, useRef, useEffect } from "react";
 import { SkeletonBlock } from "./WorkspaceSkeleton";
 
+function getFirstNameInitial(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return "?";
+  }
+
+  return trimmed.split(/\s+/)[0]?.[0]?.toUpperCase() || "?";
+}
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <circle
+        cx="9"
+        cy="9"
+        r="5.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M13.2 13.2L17 17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 12 10" aria-hidden="true" focusable="false">
+      <path
+        d="M1 5.2L4.2 8.4L11 1.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function EmptyStateIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <circle
+        cx="10"
+        cy="10"
+        r="6.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        opacity="0.9"
+      />
+      <path
+        d="M10 7.2V10.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <circle cx="10" cy="13.4" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
 type EntitySearchListProps = {
   label: string;
   searchValue: string;
@@ -22,12 +92,13 @@ export function EntitySearchList({
   selectedIds,
   onToggle,
   isLoading = false,
-  placeholder = "Buscar por nome ou ID",
+  placeholder = "Buscar por nome",
   mode = "checkbox",
   disabled = false,
 }: EntitySearchListProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suppressNextBlurCloseRef = useRef(false);
 
   const selectedIdsArray = Array.isArray(selectedIds)
     ? selectedIds
@@ -96,9 +167,6 @@ export function EntitySearchList({
       return;
     }
 
-    if (mode === "checkbox") {
-      return; // In checkbox mode, dropdown is always visible
-    }
     setIsDropdownOpen(true);
   };
 
@@ -108,11 +176,11 @@ export function EntitySearchList({
       return;
     }
 
-    // In checkbox mode, keep dropdown visible on blur (original behavior)
-    if (mode === "checkbox") {
+    if (mode === "checkbox" && suppressNextBlurCloseRef.current) {
+      suppressNextBlurCloseRef.current = false;
       return;
     }
-    // In radio mode, close dropdown when blurring
+
     setTimeout(() => {
       if (event.relatedTarget === null) {
         setIsDropdownOpen(false);
@@ -127,6 +195,14 @@ export function EntitySearchList({
     }
 
     onToggle(optionId);
+    if (mode === "checkbox") {
+      suppressNextBlurCloseRef.current = true;
+      setIsDropdownOpen(true);
+      inputRef.current?.focus();
+      window.setTimeout(() => {
+        suppressNextBlurCloseRef.current = false;
+      }, 0);
+    }
     if (mode === "radio") {
       onSearchChange("");
       setIsDropdownOpen(false);
@@ -134,14 +210,14 @@ export function EntitySearchList({
     }
   };
 
-  // Close dropdown when clicking outside (only in radio mode)
+  // Close dropdown when clicking outside in radio mode.
   useEffect(() => {
     if (disabled) {
       return;
     }
 
     if (mode === "checkbox") {
-      return; // In checkbox mode, dropdown stays open
+      return;
     }
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -158,7 +234,7 @@ export function EntitySearchList({
   }, [disabled, mode]);
 
   // Determine if dropdown should be visible
-  const shouldShowDropdown = mode === "checkbox" ? true : isDropdownOpen;
+  const shouldShowDropdown = isDropdownOpen;
 
   return (
     <div className="field operation-picker-field">
@@ -185,6 +261,9 @@ export function EntitySearchList({
 
       <div className="operation-picker">
         <div className="operation-input-wrapper">
+          <span className="operation-input-icon" aria-hidden="true">
+            <SearchIcon />
+          </span>
           <input
             ref={inputRef}
             id={`search-${label}`}
@@ -238,34 +317,43 @@ export function EntitySearchList({
               <>
                 {options.map((option) => {
                   const isChecked = selectedIdsArray.includes(option.id);
+                  const optionInitial = getFirstNameInitial(option.name);
 
                   return (
                     <label
                       key={option.id}
-                      className="operation-option"
+                      className={`operation-option${isChecked ? " is-selected" : ""}`}
+                      data-id={option.id}
+                      data-selected={isChecked ? "true" : "false"}
                       onMouseDown={(event) => {
                         event.preventDefault();
                         handleOptionClick(option.id);
                       }}
                     >
-                      <input
-                        type={mode === "radio" ? "radio" : "checkbox"}
-                        checked={isChecked}
-                        readOnly
-                        tabIndex={-1}
-                      />
-                      <span>
+                      <span
+                        className="operation-option-check"
+                        aria-hidden="true"
+                      >
+                        {isChecked && <CheckIcon />}
+                      </span>
+                      <span
+                        className="operation-option-avatar"
+                        aria-hidden="true"
+                      >
+                        {optionInitial}
+                      </span>
+                      <span className="operation-option-copy">
                         <strong>{option.name}</strong>
-                        <small>{option.id}</small>
                       </span>
                     </label>
                   );
                 })}
 
                 {options.length === 0 && (
-                  <p className="operation-hint">
-                    Nenhum item encontrado para a busca.
-                  </p>
+                  <div className="operation-empty-state" aria-live="polite">
+                    <EmptyStateIcon />
+                    <p>Nenhuma criança encontrada</p>
+                  </div>
                 )}
               </>
             )}

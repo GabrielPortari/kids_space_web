@@ -45,7 +45,7 @@ export function HomePage() {
   const dashboardPath = session ? authRolePaths[session.role] : "/app";
 
   return (
-    <div className="page-wrap">
+    <div className="page-wrap" id="home">
       <header className="topbar">
         <a href="#home" className="brand">
           <img src={kidsSpaceIcon} alt="KidsSpace" className="brand-icon" />
@@ -89,46 +89,79 @@ export function HomePage() {
       </header>
 
       <main>
-        <section id="home" className="hero-section">
-          <p className="kicker">
-            Sistema de check-in e checkout para espaco kids
-          </p>
-          <h1>Operacao segura, rapida e preparada para evento lotado.</h1>
-          <p className="lead">
-            Uma plataforma criada para equipes que precisam controlar entrada e
-            saida de criancas com confianca, rastreabilidade e fluxo leve no
-            atendimento.
-          </p>
-          <div className="hero-actions">
-            {session ? (
-              <Link to={dashboardPath} className="btn solid">
-                Ir para painel
-              </Link>
-            ) : (
-              <>
-                <Link to="/signup/company" className="btn solid">
-                  Quero cadastrar minha company
+        <section className="hero-section">
+          <div className="hero-copy">
+            <p className="kicker">
+              Sistema de check-in e checkout para espaco kids
+            </p>
+            <h1>Operacao segura, rapida e preparada para evento lotado.</h1>
+            <p className="lead">
+              Uma plataforma criada para equipes que precisam controlar entrada
+              e saida de criancas com confianca, rastreabilidade e fluxo leve no
+              atendimento.
+            </p>
+            <div className="hero-actions">
+              {session ? (
+                <Link to={dashboardPath} className="btn solid">
+                  Ir para painel
                 </Link>
-                <Link to="/login" className="btn outline">
-                  Acessar login
-                </Link>
-              </>
-            )}
+              ) : (
+                <>
+                  <Link to="/signup/company" className="btn solid">
+                    Quero cadastrar minha company
+                  </Link>
+                  <Link to="/login" className="btn outline">
+                    Acessar login
+                  </Link>
+                </>
+              )}
+            </div>
+            <div className="hero-metrics">
+              <article>
+                <strong>99.9%</strong>
+                <span>confianca no fluxo de checkout</span>
+              </article>
+              <article>
+                <strong>4 roles</strong>
+                <span>master, admin, company e collaborator</span>
+              </article>
+              <article>
+                <strong>Tempo real</strong>
+                <span>visao de check-ins ativos por empresa</span>
+              </article>
+            </div>
           </div>
-          <div className="hero-metrics">
-            <article>
-              <strong>99.9%</strong>
-              <span>confianca no fluxo de checkout</span>
-            </article>
-            <article>
-              <strong>4 roles</strong>
-              <span>master, admin, company e collaborator</span>
-            </article>
-            <article>
-              <strong>Tempo real</strong>
-              <span>visao de check-ins ativos por empresa</span>
-            </article>
-          </div>
+
+          <aside className="hero-rail" aria-label="Resumo da plataforma">
+            <div className="hero-note">
+              <p className="kicker">Operacao em foco</p>
+              <strong>Controle rapido sem perder criterio.</strong>
+              <p>
+                Check-in, checkout, perfis e historico em um sistema unico,
+                pensado para picos de atendimento com fluxo limpo.
+              </p>
+              <small>
+                Retirada segura com CPF, escopo por role e leitura imediata da
+                operacao.
+              </small>
+            </div>
+
+            <div className="hero-rail-card">
+              <span className="pill">Hoje na plataforma</span>
+              <div className="hero-stat">
+                <strong>Entrada</strong>
+                <span>registro rapido para criancas e responsaveis.</span>
+              </div>
+              <div className="hero-stat">
+                <strong>Seguranca</strong>
+                <span>checkout validado por documento do responsavel.</span>
+              </div>
+              <div className="hero-stat">
+                <strong>Gestao</strong>
+                <span>views separadas por role com foco operacional.</span>
+              </div>
+            </div>
+          </aside>
         </section>
 
         <section id="about" className="panel">
