@@ -112,10 +112,6 @@ export function useCompanies() {
   async function onCreateCompanyModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = companyForm.name.trim();
-    const legalName = companyForm.legalName.trim();
-    const cnpj = normalizeDigits(companyForm.cnpj).slice(0, 14);
-    const contact = normalizeDigits(companyForm.contact).slice(0, 11);
-    const email = companyForm.email.trim();
 
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");
@@ -137,10 +133,6 @@ export function useCompanies() {
     }
 
     const name = companyForm.name.trim();
-    const legalName = companyForm.legalName.trim();
-    const cnpj = normalizeDigits(companyForm.cnpj).slice(0, 14);
-    const contact = normalizeDigits(companyForm.contact).slice(0, 11);
-    const email = companyForm.email.trim();
 
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");

@@ -14,7 +14,6 @@ import { INITIAL_COLLABORATOR_FORM } from "../constants";
 import { buildCollaboratorPayload } from "../formPayloads";
 import {
   extractId,
-  normalizeDigits,
   matchesSearch,
   toCollaboratorFormState,
 } from "../formatter";

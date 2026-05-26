@@ -731,88 +731,209 @@ export function CollaboratorsSection() {
           onClick={() => setIsCollaboratorViewModalOpen(false)}
         >
           <section
-            className="crm-modal collaborator-view-modal"
+            className="crm-modal crm-modal-wide profile-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Visualizar colaborador"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Detalhes do Colaborador</h2>
-            <div className="collaborator-view-content">
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Nome</span>
-                    <strong>{collaboratorForm.name || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Email</span>
-                    <strong>{collaboratorForm.email || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CPF/CNPJ</span>
-                    <strong>
-                      {maskByFieldKey("document", collaboratorForm.document) ||
-                        "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Contato</span>
-                    <strong>
-                      {maskPhone(collaboratorForm.contact) || "-"}
-                    </strong>
-                  </article>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <div className="profile-modal-avatar">
+                  <span>👤</span>
                 </div>
-              </section>
-
-              <section className="profile-section">
-                <h3>Endereco</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Rua</span>
-                    <strong>{collaboratorForm.addressStreet || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Numero</span>
-                    <strong>{collaboratorForm.addressNumber || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Bairro</span>
-                    <strong>{collaboratorForm.addressDistrict || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Cidade</span>
-                    <strong>{collaboratorForm.addressCity || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Estado</span>
-                    <strong>{collaboratorForm.addressState || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CEP</span>
-                    <strong>{collaboratorForm.addressZipCode || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Complemento</span>
-                    <strong>{collaboratorForm.addressComplement || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Pais</span>
-                    <strong>{collaboratorForm.addressCountry || "-"}</strong>
-                  </article>
+                <div>
+                  <p className="profile-modal-title">Detalhes do Colaborador</p>
+                  <p className="profile-modal-subtitle">
+                    Visualize as informações do colaborador
+                  </p>
                 </div>
-              </section>
-            </div>
-
-            <div className="crm-modal-actions">
+              </div>
               <button
                 type="button"
-                className="btn outline"
+                className="profile-modal-close"
+                aria-label="Fechar"
                 onClick={() => setIsCollaboratorViewModalOpen(false)}
               >
-                Fechar
+                ✕
               </button>
+            </div>
+
+            <div className="profile-form">
+              <div className="profile-form-body">
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="collaborator-view-name">Nome</label>
+                      <input
+                        id="collaborator-view-name"
+                        value={collaboratorForm.name}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="collaborator-view-email">Email</label>
+                      <input
+                        id="collaborator-view-email"
+                        type="email"
+                        value={collaboratorForm.email}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="collaborator-view-document">
+                        CPF/CNPJ
+                      </label>
+                      <input
+                        id="collaborator-view-document"
+                        value={maskByFieldKey(
+                          "document",
+                          collaboratorForm.document,
+                        )}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="collaborator-view-contact">Contato</label>
+                      <input
+                        id="collaborator-view-contact"
+                        value={maskPhone(collaboratorForm.contact)}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereço</h3>
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="collaborator-view-address-street">
+                          Rua
+                        </label>
+                        <input
+                          id="collaborator-view-address-street"
+                          value={collaboratorForm.addressStreet}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="collaborator-view-address-number">
+                          Número
+                        </label>
+                        <input
+                          id="collaborator-view-address-number"
+                          value={collaboratorForm.addressNumber}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="collaborator-view-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="collaborator-view-address-complement"
+                          value={collaboratorForm.addressComplement}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="collaborator-view-address-district">
+                          Bairro
+                        </label>
+                        <input
+                          id="collaborator-view-address-district"
+                          value={collaboratorForm.addressDistrict}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="collaborator-view-address-city">
+                          Cidade
+                        </label>
+                        <input
+                          id="collaborator-view-address-city"
+                          value={collaboratorForm.addressCity}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="collaborator-view-address-state">
+                          Estado
+                        </label>
+                        <input
+                          id="collaborator-view-address-state"
+                          value={collaboratorForm.addressState}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="collaborator-view-address-zipcode">
+                          CEP
+                        </label>
+                        <input
+                          id="collaborator-view-address-zipcode"
+                          value={maskZipCode(
+                            collaboratorForm.addressZipCode || "",
+                          )}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="collaborator-view-address-country">
+                          País
+                        </label>
+                        <input
+                          id="collaborator-view-address-country"
+                          value={collaboratorForm.addressCountry}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <div className="profile-modal-footer">
+              <p className="profile-modal-hint">
+                🔒 Campos acinzentados são somente leitura
+              </p>
+              <div className="profile-modal-footer-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => setIsCollaboratorViewModalOpen(false)}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
           </section>
         </div>

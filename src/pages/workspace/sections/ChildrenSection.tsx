@@ -9,66 +9,10 @@ import {
   extractId,
   maskZipCode,
   normalizeDigits,
-  parseIdList,
   toParentFormState,
-  splitTextList,
 } from "../formatter";
 import type { ListItem } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
-
-function formatLinkedNames(idsValue: string, items: ListItem[]): string {
-  const ids = parseIdList(idsValue);
-  if (ids.length === 0) {
-    return "-";
-  }
-
-  const nameById = new Map(
-    items.map((item) => [extractId(item), String(item.name || "")]),
-  );
-
-  return ids
-    .map((id) => nameById.get(id) || id)
-    .filter(Boolean)
-    .join(", ");
-}
-
-function formatListSummary(value: unknown): string {
-  if (!value) return "-";
-
-  if (Array.isArray(value)) {
-    const items = value.map((v) => String(v || "").trim()).filter(Boolean);
-    return items.length > 0 ? items.join(", ") : "-";
-  }
-
-  if (typeof value === "string") {
-    const items = splitTextList(value);
-    return items.length > 0 ? items.join(", ") : "-";
-  }
-
-  return "-";
-}
-
-function formatMedicationSummary(medications: unknown): string {
-  if (!Array.isArray(medications)) {
-    return "-";
-  }
-
-  const items = medications
-    .map((medication) => {
-      if (!medication || typeof medication !== "object") {
-        return "";
-      }
-
-      const current = medication as Record<string, unknown>;
-      return [current.name, current.dosage, current.schedule]
-        .map((value) => String(value || "").trim())
-        .filter(Boolean)
-        .join(" - ");
-    })
-    .filter(Boolean);
-
-  return items.length > 0 ? items.join("; ") : "-";
-}
 
 export function ChildrenSection() {
   const queryClient = useQueryClient();
@@ -291,140 +235,245 @@ export function ChildrenSection() {
           onClick={() => setIsChildViewModalOpen(false)}
         >
           <section
-            className="crm-modal collaborator-view-modal"
+            className="crm-modal crm-modal-wide profile-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Visualizar crianca"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Detalhes da Crianca</h2>
-            <div className="collaborator-view-content">
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Nome</span>
-                    <strong>{childForm.name || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CPF/ID</span>
-                    <strong>{childForm.document || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Email</span>
-                    <strong>{childForm.email || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Contato</span>
-                    <strong>{childForm.contact || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Data de nascimento</span>
-                    <strong>{childForm.birthDate || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Responsaveis vinculados</span>
-                    <strong>
-                      {formatLinkedNames(
-                        childForm.parents,
-                        childParents as ListItem[],
-                      )}
-                    </strong>
-                  </article>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <div className="profile-modal-avatar">
+                  <span>👶</span>
                 </div>
-              </section>
-
-              <section className="profile-section">
-                <h3>Endereco</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Rua</span>
-                    <strong>{childForm.addressStreet || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Numero</span>
-                    <strong>{childForm.addressNumber || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Bairro</span>
-                    <strong>{childForm.addressDistrict || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Cidade</span>
-                    <strong>{childForm.addressCity || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Estado</span>
-                    <strong>{childForm.addressState || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CEP</span>
-                    <strong>{childForm.addressZipCode || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Complemento</span>
-                    <strong>{childForm.addressComplement || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Pais</span>
-                    <strong>{childForm.addressCountry || "-"}</strong>
-                  </article>
+                <div>
+                  <p className="profile-modal-title">Detalhes da Criança</p>
+                  <p className="profile-modal-subtitle">
+                    Visualize as informações da criança
+                  </p>
                 </div>
-              </section>
-
-              <section className="profile-section">
-                <h3>Saude</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Restricoes alimentares</span>
-                    <strong>
-                      {formatListSummary(
-                        childForm.healthInfo.dietaryRestrictions,
-                      )}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Alergias</span>
-                    <strong>
-                      {formatListSummary(childForm.healthInfo.allergies)}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Condicoes medicas</span>
-                    <strong>
-                      {formatListSummary(
-                        childForm.healthInfo.medicalConditions,
-                      )}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Medos ou sensibilidades</span>
-                    <strong>
-                      {formatListSummary(
-                        childForm.healthInfo.fearsOrSensitivities,
-                      )}
-                    </strong>
-                  </article>
-                  <article className="profile-card field-span-2">
-                    <span>Medicamentos</span>
-                    <strong>
-                      {formatMedicationSummary(
-                        childForm.healthInfo.medications,
-                      )}
-                    </strong>
-                  </article>
-                </div>
-              </section>
-            </div>
-
-            <div className="crm-modal-actions">
+              </div>
               <button
                 type="button"
-                className="btn outline"
+                className="profile-modal-close"
+                aria-label="Fechar"
                 onClick={() => setIsChildViewModalOpen(false)}
               >
-                Fechar
+                ✕
               </button>
+            </div>
+
+            <div className="profile-form">
+              <div className="profile-form-body">
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="child-view-name">Nome</label>
+                      <input
+                        id="child-view-name"
+                        value={childForm.name}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-email">Email</label>
+                      <input
+                        id="child-view-email"
+                        type="email"
+                        value={childForm.email}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-document">CPF/ID</label>
+                      <input
+                        id="child-view-document"
+                        value={childForm.document}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-contact">Contato</label>
+                      <input
+                        id="child-view-contact"
+                        value={childForm.contact}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-birthDate">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="child-view-birthDate"
+                        type="date"
+                        value={childForm.birthDate || ""}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Responsável</h3>
+                  <div className="child-section-grid">
+                    <EntitySearchList
+                      label="Responsável para vínculo direto"
+                      searchValue={childCreateParentSearch}
+                      onSearchChange={() => undefined}
+                      options={childCreateParentOptions}
+                      selectedIds={childForm.parents}
+                      onToggle={() => undefined}
+                      isLoading={childrenHook.parentsQuery.isLoading}
+                      placeholder="Buscar por nome ou ID"
+                      mode="radio"
+                      disabled
+                    />
+
+                    <div className="field child-inherit-address-field">
+                      <label className="child-inherit-address-toggle">
+                        <input
+                          type="checkbox"
+                          checked={childForm.inheritParentAddress}
+                          disabled
+                        />
+                        <span>Herdar endereco do responsavel selecionado</span>
+                      </label>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereço</h3>
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-view-address-street">Rua</label>
+                        <input
+                          id="child-view-address-street"
+                          value={childForm.addressStreet}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-view-address-number">
+                          Número
+                        </label>
+                        <input
+                          id="child-view-address-number"
+                          value={childForm.addressNumber}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-view-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="child-view-address-complement"
+                          value={childForm.addressComplement}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-view-address-district">
+                          Bairro
+                        </label>
+                        <input
+                          id="child-view-address-district"
+                          value={childForm.addressDistrict}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-view-address-city">Cidade</label>
+                        <input
+                          id="child-view-address-city"
+                          value={childForm.addressCity}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-view-address-state">Estado</label>
+                        <input
+                          id="child-view-address-state"
+                          value={childForm.addressState}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-view-address-zipcode">CEP</label>
+                        <input
+                          id="child-view-address-zipcode"
+                          value={maskZipCode(childForm.addressZipCode || "")}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-view-address-country">País</label>
+                        <input
+                          id="child-view-address-country"
+                          value={childForm.addressCountry}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Saude</h3>
+                  <ChildHealthInfoFields
+                    value={childForm.healthInfo}
+                    onChange={() => undefined}
+                    onAddMedication={() => undefined}
+                    onRemoveMedication={() => undefined}
+                    disabled
+                  />
+                </section>
+              </div>
+
+              <div className="profile-modal-footer">
+                <p className="profile-modal-hint">
+                  🔒 Campos acinzentados são somente leitura
+                </p>
+                <div className="profile-modal-footer-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setIsChildViewModalOpen(false)}
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
         </div>

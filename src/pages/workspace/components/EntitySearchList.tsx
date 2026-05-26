@@ -11,6 +11,7 @@ type EntitySearchListProps = {
   isLoading?: boolean;
   placeholder?: string;
   mode?: "checkbox" | "radio";
+  disabled?: boolean;
 };
 
 export function EntitySearchList({
@@ -23,6 +24,7 @@ export function EntitySearchList({
   isLoading = false,
   placeholder = "Buscar por nome ou ID",
   mode = "checkbox",
+  disabled = false,
 }: EntitySearchListProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +52,10 @@ export function EntitySearchList({
     event: React.MouseEvent<HTMLButtonElement>,
     chipId: string,
   ) => {
+    if (disabled) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     onToggle(chipId);
@@ -57,6 +63,10 @@ export function EntitySearchList({
 
   // Handle input change
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) {
+      return;
+    }
+
     const value = event.target.value;
     onSearchChange(value);
     if (mode !== "checkbox") {
@@ -66,6 +76,10 @@ export function EntitySearchList({
 
   // Handle clear button click
   const handleClear = (event: React.MouseEvent) => {
+    if (disabled) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     if (selectedIdsArray.length > 0) {
@@ -78,6 +92,10 @@ export function EntitySearchList({
 
   // Handle input focus
   const handleInputFocus = () => {
+    if (disabled) {
+      return;
+    }
+
     if (mode === "checkbox") {
       return; // In checkbox mode, dropdown is always visible
     }
@@ -86,6 +104,10 @@ export function EntitySearchList({
 
   // Handle input blur
   const handleInputBlur = (event: React.FocusEvent) => {
+    if (disabled) {
+      return;
+    }
+
     // In checkbox mode, keep dropdown visible on blur (original behavior)
     if (mode === "checkbox") {
       return;
@@ -100,6 +122,10 @@ export function EntitySearchList({
 
   // Handle option selection
   const handleOptionClick = (optionId: string) => {
+    if (disabled) {
+      return;
+    }
+
     onToggle(optionId);
     if (mode === "radio") {
       onSearchChange("");
@@ -110,6 +136,10 @@ export function EntitySearchList({
 
   // Close dropdown when clicking outside (only in radio mode)
   useEffect(() => {
+    if (disabled) {
+      return;
+    }
+
     if (mode === "checkbox") {
       return; // In checkbox mode, dropdown stays open
     }
@@ -125,7 +155,7 @@ export function EntitySearchList({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [mode]);
+  }, [disabled, mode]);
 
   // Determine if dropdown should be visible
   const shouldShowDropdown = mode === "checkbox" ? true : isDropdownOpen;
@@ -164,6 +194,7 @@ export function EntitySearchList({
             onBlur={handleInputBlur}
             placeholder={placeholder}
             autoComplete="off"
+            disabled={disabled}
           />
           {mode === "radio" && selectedItem && (
             <button
@@ -172,6 +203,7 @@ export function EntitySearchList({
               onClick={handleClear}
               title="Limpar seleção"
               aria-label={`Limpar ${label}`}
+              disabled={disabled}
             >
               ✕
             </button>

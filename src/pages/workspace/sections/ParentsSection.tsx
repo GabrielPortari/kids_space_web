@@ -18,22 +18,6 @@ import {
 import type { ListItem } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
 
-function formatLinkedNames(idsValue: string, items: ListItem[]): string {
-  const ids = parseIdList(idsValue);
-  if (ids.length === 0) {
-    return "-";
-  }
-
-  const nameById = new Map(
-    items.map((item) => [extractId(item), String(item.name || "")]),
-  );
-
-  return ids
-    .map((id) => nameById.get(id) || id)
-    .filter(Boolean)
-    .join(", ");
-}
-
 export function ParentsSection() {
   const queryClient = useQueryClient();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
@@ -250,96 +234,227 @@ export function ParentsSection() {
           onClick={() => setIsParentViewModalOpen(false)}
         >
           <section
-            className="crm-modal collaborator-view-modal"
+            className="crm-modal crm-modal-wide profile-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Visualizar responsavel"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Detalhes do Responsavel</h2>
-            <div className="collaborator-view-content">
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Nome</span>
-                    <strong>{parentForm.name || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CPF</span>
-                    <strong>{maskCpf(parentForm.document) || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Email</span>
-                    <strong>{parentForm.email || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Contato</span>
-                    <strong>{maskPhone(parentForm.contact) || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Data de nascimento</span>
-                    <strong>{parentForm.birthDate || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Criancas vinculadas</span>
-                    <strong>
-                      {formatLinkedNames(
-                        parentForm.children,
-                        childrenHook.children as ListItem[],
-                      )}
-                    </strong>
-                  </article>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <div className="profile-modal-avatar">
+                  <span>👪</span>
                 </div>
-              </section>
-
-              <section className="profile-section">
-                <h3>Endereco</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Rua</span>
-                    <strong>{parentForm.addressStreet || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Numero</span>
-                    <strong>{parentForm.addressNumber || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Bairro</span>
-                    <strong>{parentForm.addressDistrict || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Cidade</span>
-                    <strong>{parentForm.addressCity || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Estado</span>
-                    <strong>{parentForm.addressState || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CEP</span>
-                    <strong>{parentForm.addressZipCode || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Complemento</span>
-                    <strong>{parentForm.addressComplement || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Pais</span>
-                    <strong>{parentForm.addressCountry || "-"}</strong>
-                  </article>
+                <div>
+                  <p className="profile-modal-title">Detalhes do Responsável</p>
+                  <p className="profile-modal-subtitle">
+                    Visualize as informações do responsável
+                  </p>
                 </div>
-              </section>
-            </div>
-
-            <div className="crm-modal-actions">
+              </div>
               <button
                 type="button"
-                className="btn outline"
+                className="profile-modal-close"
+                aria-label="Fechar"
                 onClick={() => setIsParentViewModalOpen(false)}
               >
-                Fechar
+                ✕
               </button>
+            </div>
+
+            <div className="profile-form">
+              <div className="profile-form-body">
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="parent-view-name">Nome</label>
+                      <input
+                        id="parent-view-name"
+                        value={parentForm.name}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="parent-view-document">CPF</label>
+                      <input
+                        id="parent-view-document"
+                        value={maskCpf(parentForm.document)}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="parent-view-contact">Contato</label>
+                      <input
+                        id="parent-view-contact"
+                        value={maskPhone(parentForm.contact)}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="parent-view-email">Email</label>
+                      <input
+                        id="parent-view-email"
+                        type="email"
+                        value={parentForm.email || ""}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="parent-view-birthDate">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="parent-view-birthDate"
+                        type="date"
+                        value={parentForm.birthDate || ""}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Crianças</h3>
+                  <div className="child-section-grid">
+                    <EntitySearchList
+                      label="Crianças para vínculo direto"
+                      searchValue={parentChildrenSearch}
+                      onSearchChange={() => undefined}
+                      options={linkedChildOptions}
+                      selectedIds={parseIdList(parentForm.children)}
+                      onToggle={() => undefined}
+                      isLoading={childrenHook.childrenQuery.isLoading}
+                      placeholder="Buscar por nome ou ID"
+                      mode="checkbox"
+                      disabled
+                    />
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereço</h3>
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="parent-view-address-street">Rua</label>
+                        <input
+                          id="parent-view-address-street"
+                          value={parentForm.addressStreet}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="parent-view-address-number">
+                          Número
+                        </label>
+                        <input
+                          id="parent-view-address-number"
+                          value={parentForm.addressNumber}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="parent-view-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="parent-view-address-complement"
+                          value={parentForm.addressComplement}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="parent-view-address-district">
+                          Bairro
+                        </label>
+                        <input
+                          id="parent-view-address-district"
+                          value={parentForm.addressDistrict}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="parent-view-address-city">Cidade</label>
+                        <input
+                          id="parent-view-address-city"
+                          value={parentForm.addressCity}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="parent-view-address-state">
+                          Estado
+                        </label>
+                        <input
+                          id="parent-view-address-state"
+                          value={parentForm.addressState}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="parent-view-address-zipcode">CEP</label>
+                        <input
+                          id="parent-view-address-zipcode"
+                          value={maskZipCode(parentForm.addressZipCode || "")}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="parent-view-address-country">
+                          País
+                        </label>
+                        <input
+                          id="parent-view-address-country"
+                          value={parentForm.addressCountry}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <div className="profile-modal-footer">
+              <p className="profile-modal-hint">
+                🔒 Campos acinzentados são somente leitura
+              </p>
+              <div className="profile-modal-footer-actions">
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => setIsParentViewModalOpen(false)}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
           </section>
         </div>
