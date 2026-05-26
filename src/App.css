@@ -76,6 +76,7 @@
   gap: 0.65rem;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .btn {
@@ -1472,9 +1473,83 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
+  padding: 0.2rem 0;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--ink-strong);
+}
+
+.child-inherit-address-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 18px;
+  accent-color: var(--accent);
+}
+
+.child-parent-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.child-parent-card {
+  flex: 1 1 15rem;
+  min-width: 13rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(42, 35, 29, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.child-parent-card:hover {
+  transform: translateY(-1px);
+  background: rgba(184, 92, 56, 0.06);
+  border-color: rgba(184, 92, 56, 0.22);
+  box-shadow: 0 10px 24px rgba(24, 18, 14, 0.08);
+}
+
+.child-parent-card .record-avatar {
+  width: 2.4rem;
+  height: 2.4rem;
+  font-size: 0.85rem;
+}
+
+.child-parent-card-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.child-parent-card-copy strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.child-parent-card-copy span {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.child-parent-empty-state {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
 }
 
 .operation-picker-field {
@@ -1902,6 +1977,66 @@ textarea:focus {
   border: 1.5px solid #d9c9b8;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.88);
+}
+
+.child-medications-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.child-medications-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.child-medication-row-draft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.child-medication-row-draft .field {
+  flex: 1 1 12rem;
+  min-width: 12rem;
+}
+
+.child-medication-field-schedule {
+  flex-basis: 8rem;
+  min-width: 8rem;
+}
+
+.child-medication-field-schedule input {
+  width: 100%;
+}
+
+.child-medication-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.child-medication-actions .add-item-btn {
+  min-width: 2.8rem;
+  min-height: 2.8rem;
+  padding: 0;
+}
+
+.child-medications-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.medication-chip {
+  align-items: center;
+}
+
+.medication-chip-text {
+  display: inline-block;
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .crm-panel-head input::placeholder,

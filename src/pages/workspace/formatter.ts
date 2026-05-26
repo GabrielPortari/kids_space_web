@@ -68,48 +68,75 @@ function toMedicationFormState(value: unknown): ChildMedicationFormState {
 }
 
 export function formatMedicationSchedule(input: string): string {
-  const value = String(input || "").trim();
-  if (!value) return "";
+  const raw = String(input ?? "").trim();
+  if (!raw) return "";
 
-  let s = value.toLowerCase();
-  s = s.replace(/h/g, ":").replace(/\./g, ":").replace(/\s+/g, "");
+  // 1. Normaliza separadores: "14h30", "14.30", "14 30" → "14:30"
+  let s = raw
+    .toLowerCase()
+    .replace(/[h\.\s]+/g, ":") // h, ponto, espaço viram ":"
+    .replace(/\s/g, "");
 
-  const ampmMatch = s.match(/(am|pm)$/);
-  const isPM = ampmMatch ? ampmMatch[1] === "pm" : false;
-  if (ampmMatch) s = s.replace(/(am|pm)$/, "");
+  // 2. Extrai AM/PM se presente
+  const ampmMatch = s.match(/(am|pm)$/i);
+  const isPM = ampmMatch?.[1]?.toLowerCase() === "pm";
+  if (ampmMatch) s = s.slice(0, -2);
 
+  // 3. Garante no máximo um separador ":"
+  const parts = s.split(":").filter(Boolean);
   const onlyDigits = s.replace(/\D/g, "");
 
-  if (s.includes(":")) {
-    const [hRaw, mRaw] = s.split(":");
-    let h = parseInt(hRaw.replace(/\D/g, ""), 10);
-    let m = parseInt((mRaw || "").replace(/\D/g, ""), 10);
-    if (Number.isNaN(h)) h = 0;
-    if (Number.isNaN(m)) m = 0;
+  let h: number;
+  let m: number;
 
-    if (ampmMatch) {
-      if (isPM && h < 12) h += 12;
-      if (!isPM && h === 12) h = 0;
+  if (parts.length >= 2) {
+    // Caso "HH:MM" — já tem separador explícito
+    h = parseInt(parts[0], 10);
+    m = parseInt(parts[1], 10);
+  } else if (onlyDigits.length === 1) {
+    // "9" → 09:00
+    h = parseInt(onlyDigits, 10);
+    m = 0;
+  } else if (onlyDigits.length === 2) {
+    const n = parseInt(onlyDigits, 10);
+    if (n <= 23) {
+      // "14" → 14:00  |  "09" → 09:00
+      h = n;
+      m = 0;
+    } else {
+      // "95" → ambíguo: trata como 9h05
+      h = parseInt(onlyDigits[0], 10);
+      m = parseInt(onlyDigits[1] + "0", 10); // "5" → 50min? não. Melhor: pad
+      m = parseInt(onlyDigits.slice(1).padEnd(2, "0"), 10);
     }
-
-    h = Math.max(0, Math.min(23, h));
-    m = Math.max(0, Math.min(59, m));
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  } else if (onlyDigits.length === 3) {
+    // "930" → 9:30  |  "130" → 1:30
+    h = parseInt(onlyDigits[0], 10);
+    m = parseInt(onlyDigits.slice(1), 10);
+  } else if (onlyDigits.length === 4) {
+    // "1430" → 14:30  |  "0900" → 09:00
+    h = parseInt(onlyDigits.slice(0, 2), 10);
+    m = parseInt(onlyDigits.slice(2), 10);
+  } else if (onlyDigits.length > 4) {
+    // Entrada longa demais: pega os primeiros 4 dígitos
+    h = parseInt(onlyDigits.slice(0, 2), 10);
+    m = parseInt(onlyDigits.slice(2, 4), 10);
+  } else {
+    return "";
   }
 
-  if (onlyDigits.length === 3 || onlyDigits.length === 4) {
-    const h = parseInt(onlyDigits.slice(0, onlyDigits.length - 2), 10);
-    const m = parseInt(onlyDigits.slice(-2), 10);
-    if (Number.isNaN(h) || Number.isNaN(m)) return "";
-    const hh = Math.max(0, Math.min(23, h));
-    const mm = Math.max(0, Math.min(59, m));
-    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  if (Number.isNaN(h) || Number.isNaN(m)) return "";
+
+  // 4. Aplica conversão AM/PM
+  if (ampmMatch) {
+    if (isPM && h < 12) h += 12;
+    if (!isPM && h === 12) h = 0;
   }
 
-  const h = parseInt(onlyDigits.slice(0, 2) || "0", 10);
-  if (Number.isNaN(h)) return "";
-  const hh = Math.max(0, Math.min(23, h));
-  return `${String(hh).padStart(2, "0")}:00`;
+  // 5. Clamp em vez de aceitar silenciosamente valores impossíveis
+  if (h > 23 || m > 59) return ""; // retorna vazio para o campo mostrar erro
+
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export function toChildHealthInfoFormState(

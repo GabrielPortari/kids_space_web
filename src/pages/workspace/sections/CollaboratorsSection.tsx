@@ -189,27 +189,27 @@ export function CollaboratorsSection() {
               aria-label="Adicionar colaborador"
               onClick={(event) => event.stopPropagation()}
             >
-            <div className="profile-modal-header">
-              <div className="profile-modal-header-left">
-                <ModalIconWrap>
-                  <GroupIcon />
-                </ModalIconWrap>
-                <div>
-                  <p className="profile-modal-title">Novo Colaborador</p>
-                  <p className="profile-modal-subtitle">
-                    Crie um novo colaborador
-                  </p>
+              <div className="profile-modal-header">
+                <div className="profile-modal-header-left">
+                  <ModalIconWrap>
+                    <GroupIcon />
+                  </ModalIconWrap>
+                  <div>
+                    <p className="profile-modal-title">Novo Colaborador</p>
+                    <p className="profile-modal-subtitle">
+                      Crie um novo colaborador
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  className="profile-modal-close"
+                  aria-label="Fechar"
+                  onClick={() => setIsCollaboratorCreateModalOpen(false)}
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                type="button"
-                className="profile-modal-close"
-                aria-label="Fechar"
-                onClick={() => setIsCollaboratorCreateModalOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
 
             <form className="profile-form" onSubmit={onCreateCollaboratorModal}>
               <div className="profile-form-body">
@@ -430,9 +430,6 @@ export function CollaboratorsSection() {
               </div>
 
               <div className="profile-modal-footer">
-                <p className="profile-modal-hint">
-                  🔒 Campos acinzentados são somente leitura
-                </p>
                 <div className="profile-modal-footer-actions">
                   <button
                     type="button"
@@ -713,9 +710,6 @@ export function CollaboratorsSection() {
               </div>
 
               <div className="profile-modal-footer">
-                <p className="profile-modal-hint">
-                  🔒 Campos acinzentados são somente leitura
-                </p>
                 <div className="profile-modal-footer-actions">
                   <button
                     type="button"

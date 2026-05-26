@@ -465,20 +465,6 @@ export function ParentsSection() {
                 </div>
               </div>
 
-              <div className="profile-modal-footer">
-                <p className="profile-modal-hint">
-                  🔒 Campos acinzentados são somente leitura
-                </p>
-                <div className="profile-modal-footer-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    onClick={() => setIsParentViewModalOpen(false)}
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </div>
             </section>
           </div>,
           document.body,
@@ -786,9 +772,6 @@ export function ParentsSection() {
                 </div>
 
                 <div className="profile-modal-footer">
-                  <p className="profile-modal-hint">
-                    🔒 Campos acinzentados são somente leitura
-                  </p>
                   <div className="profile-modal-footer-actions">
                     <button
                       type="button"

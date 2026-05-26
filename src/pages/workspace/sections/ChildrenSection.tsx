@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useChildren } from "../hooks/useChildren";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { ChildHealthInfoFields } from "../components/ChildHealthInfoFields";
@@ -13,12 +14,16 @@ import {
   PlusIcon,
   RecordAvatar,
   RefreshIcon,
+  PersonIcon,
 } from "../components/WorkspaceVisuals";
 import { createPortal } from "react-dom";
 import {
   extractId,
+  getParentDocument,
+  maskCpf,
   maskZipCode,
   normalizeDigits,
+  parseIdList,
   toParentFormState,
 } from "../formatter";
 import type { ListItem } from "../types";
@@ -27,6 +32,8 @@ import { useQueryClient } from "@tanstack/react-query";
 export function ChildrenSection() {
   const queryClient = useQueryClient();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
+  const [selectedParentPreview, setSelectedParentPreview] =
+    useState<ListItem | null>(null);
 
   const childrenHook = useChildren();
   const isLoading =
@@ -77,6 +84,14 @@ export function ChildrenSection() {
     parents: childParents,
     activeChildIds,
   } = childrenHook;
+
+  const selectedParentIds = parseIdList(childForm.parents);
+  const childParentCards = childParents.filter((item) =>
+    selectedParentIds.includes(extractId(item)),
+  );
+  const selectedParentPreviewForm = selectedParentPreview
+    ? toParentFormState(selectedParentPreview)
+    : null;
 
   function applyInheritedParentAddress(parentId: string) {
     const selectedParent = childParents.find(
@@ -341,33 +356,41 @@ export function ChildrenSection() {
 
                   <section className="profile-section">
                     <h3>Responsável</h3>
-                    <div className="child-section-grid">
-                      <EntitySearchList
-                        label="Responsável para vínculo direto"
-                        searchValue={childCreateParentSearch}
-                        onSearchChange={() => undefined}
-                        options={childCreateParentOptions}
-                        selectedIds={childForm.parents}
-                        onToggle={() => undefined}
-                        isLoading={childrenHook.parentsQuery.isLoading}
-                        placeholder="Buscar por nome"
-                        mode="radio"
-                        disabled
-                      />
+                    {childParentCards.length > 0 ? (
+                      <div className="child-parent-cards">
+                        {childParentCards.map((parentItem) => {
+                          const parentId = extractId(parentItem);
 
-                      <div className="field child-inherit-address-field">
-                        <label className="child-inherit-address-toggle">
-                          <input
-                            type="checkbox"
-                            checked={childForm.inheritParentAddress}
-                            disabled
-                          />
-                          <span>
-                            Herdar endereco do responsavel selecionado
-                          </span>
-                        </label>
+                          return (
+                            <button
+                              key={parentId || JSON.stringify(parentItem)}
+                              type="button"
+                              className="child-parent-card"
+                              onClick={() =>
+                                setSelectedParentPreview(parentItem)
+                              }
+                            >
+                              <RecordAvatar
+                                name={parentItem.name || "Responsavel"}
+                              />
+                              <span className="child-parent-card-copy">
+                                <strong>
+                                  {parentItem.name || "Responsavel sem nome"}
+                                </strong>
+                                <span>
+                                  {maskCpf(getParentDocument(parentItem)) ||
+                                    "CPF nao informado"}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    </div>
+                    ) : (
+                      <p className="child-parent-empty-state">
+                        Nenhum responsável vinculado.
+                      </p>
+                    )}
                   </section>
 
                   <section className="profile-section">
@@ -485,20 +508,6 @@ export function ChildrenSection() {
                   </section>
                 </div>
 
-                <div className="profile-modal-footer">
-                  <p className="profile-modal-hint">
-                    🔒 Campos acinzentados são somente leitura
-                  </p>
-                  <div className="profile-modal-footer-actions">
-                    <button
-                      type="button"
-                      className="btn outline"
-                      onClick={() => setIsChildViewModalOpen(false)}
-                    >
-                      Fechar
-                    </button>
-                  </div>
-                </div>
               </div>
             </section>
           </div>,
@@ -639,58 +648,61 @@ export function ChildrenSection() {
                         mode="radio"
                       />
 
-                      <div className="field child-inherit-address-field">
-                        <label className="child-inherit-address-toggle">
-                          <input
-                            type="checkbox"
-                            checked={childForm.inheritParentAddress}
-                            onChange={(event) =>
-                              setChildForm((current) => {
-                                const nextState = {
-                                  ...current,
-                                  inheritParentAddress: event.target.checked,
-                                };
+                      {parseIdList(childForm.parents).length > 0 && (
+                        <div className="field field-full child-inherit-address-field">
+                          <label className="child-inherit-address-toggle">
+                            <input
+                              type="checkbox"
+                              checked={childForm.inheritParentAddress}
+                              onChange={(event) =>
+                                setChildForm((current) => {
+                                  const nextState = {
+                                    ...current,
+                                    inheritParentAddress: event.target.checked,
+                                  };
 
-                                if (event.target.checked && current.parents) {
-                                  const selectedParent = childParents.find(
-                                    (item: ListItem) =>
-                                      extractId(item) === current.parents,
-                                  );
+                                  if (event.target.checked && current.parents) {
+                                    const selectedParent = childParents.find(
+                                      (item: ListItem) =>
+                                        extractId(item) === current.parents,
+                                    );
 
-                                  if (selectedParent) {
-                                    const parentFormState =
-                                      toParentFormState(selectedParent);
+                                    if (selectedParent) {
+                                      const parentFormState =
+                                        toParentFormState(selectedParent);
 
-                                    return {
-                                      ...nextState,
-                                      addressStreet:
-                                        parentFormState.addressStreet,
-                                      addressNumber:
-                                        parentFormState.addressNumber,
-                                      addressDistrict:
-                                        parentFormState.addressDistrict,
-                                      addressCity: parentFormState.addressCity,
-                                      addressState:
-                                        parentFormState.addressState,
-                                      addressZipCode:
-                                        parentFormState.addressZipCode,
-                                      addressComplement:
-                                        parentFormState.addressComplement,
-                                      addressCountry:
-                                        parentFormState.addressCountry,
-                                    };
+                                      return {
+                                        ...nextState,
+                                        addressStreet:
+                                          parentFormState.addressStreet,
+                                        addressNumber:
+                                          parentFormState.addressNumber,
+                                        addressDistrict:
+                                          parentFormState.addressDistrict,
+                                        addressCity:
+                                          parentFormState.addressCity,
+                                        addressState:
+                                          parentFormState.addressState,
+                                        addressZipCode:
+                                          parentFormState.addressZipCode,
+                                        addressComplement:
+                                          parentFormState.addressComplement,
+                                        addressCountry:
+                                          parentFormState.addressCountry,
+                                      };
+                                    }
                                   }
-                                }
 
-                                return nextState;
-                              })
-                            }
-                          />
-                          <span>
-                            Herdar endereco do responsavel selecionado
-                          </span>
-                        </label>
-                      </div>
+                                  return nextState;
+                                })
+                              }
+                            />
+                            <span>
+                              Herdar endereco do responsavel selecionado
+                            </span>
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -920,9 +932,6 @@ export function ChildrenSection() {
                 </div>
 
                 <div className="profile-modal-footer">
-                  <p className="profile-modal-hint">
-                    🔒 Campos acinzentados são somente leitura
-                  </p>
                   <div className="profile-modal-footer-actions">
                     <button
                       type="button"
@@ -1327,6 +1336,201 @@ export function ChildrenSection() {
                   </button>
                 </div>
               </form>
+            </section>
+          </div>,
+          document.body,
+        )}
+
+      {selectedParentPreviewForm &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setSelectedParentPreview(null)}
+          >
+            <section
+              className="crm-modal crm-modal-wide profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Visualizar responsavel"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="profile-modal-header">
+                <div className="profile-modal-header-left">
+                  <ModalIconWrap>
+                    <PersonIcon />
+                  </ModalIconWrap>
+                  <div>
+                    <p className="profile-modal-title">
+                      Detalhes do Responsável
+                    </p>
+                    <p className="profile-modal-subtitle">
+                      Visualize as informações do responsável
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="profile-modal-close"
+                  aria-label="Fechar"
+                  onClick={() => setSelectedParentPreview(null)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="profile-form">
+                <div className="profile-form-body">
+                  <section className="profile-section">
+                    <h3>Dados pessoais</h3>
+                    <div className="profile-form-fields-grid profile-form-personal-grid">
+                      <div className="field field-span-12">
+                        <label>Nome</label>
+                        <input
+                          value={selectedParentPreviewForm.name}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>CPF</label>
+                        <input
+                          value={maskCpf(selectedParentPreviewForm.document)}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>Contato</label>
+                        <input
+                          value={selectedParentPreviewForm.contact}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>Email</label>
+                        <input
+                          value={selectedParentPreviewForm.email || ""}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>Data de nascimento</label>
+                        <input
+                          type="date"
+                          value={selectedParentPreviewForm.birthDate || ""}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="profile-section">
+                    <h3>Endereço</h3>
+                    <div className="profile-form-address-stack">
+                      <div className="profile-form-fields-grid profile-form-address-grid">
+                        <div className="field field-span-6">
+                          <label>Rua</label>
+                          <input
+                            value={selectedParentPreviewForm.addressStreet}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-1">
+                          <label>Número</label>
+                          <input
+                            value={selectedParentPreviewForm.addressNumber}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-2">
+                          <label>Complemento</label>
+                          <input
+                            value={selectedParentPreviewForm.addressComplement}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-3">
+                          <label>Bairro</label>
+                          <input
+                            value={selectedParentPreviewForm.addressDistrict}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="profile-form-fields-grid profile-form-address-grid">
+                        <div className="field field-span-6">
+                          <label>Cidade</label>
+                          <input
+                            value={selectedParentPreviewForm.addressCity}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-1">
+                          <label>Estado</label>
+                          <input
+                            value={selectedParentPreviewForm.addressState}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-2">
+                          <label>CEP</label>
+                          <input
+                            value={maskZipCode(
+                              selectedParentPreviewForm.addressZipCode || "",
+                            )}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-3">
+                          <label>País</label>
+                          <input
+                            value={selectedParentPreviewForm.addressCountry}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="profile-modal-footer">
+                  <p className="profile-modal-hint">
+                    🔒 Campos acinzentados são somente leitura
+                  </p>
+                  <div className="profile-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setSelectedParentPreview(null)}
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              </div>
             </section>
           </div>,
           document.body,

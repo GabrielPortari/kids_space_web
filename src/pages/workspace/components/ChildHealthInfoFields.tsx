@@ -24,6 +24,7 @@ function MedicationField({
   disabled,
   placeholder,
   onBlur,
+  className,
 }: {
   label: string;
   id: string;
@@ -32,9 +33,10 @@ function MedicationField({
   disabled?: boolean;
   placeholder?: string;
   onBlur?: () => void;
+  className?: string;
 }) {
   return (
-    <div className="field">
+    <div className={className ? `field ${className}` : "field"}>
       <label htmlFor={id}>{label}</label>
       <input
         id={id}
@@ -46,32 +48,6 @@ function MedicationField({
       />
     </div>
   );
-}
-
-const HOURS = Array.from({ length: 24 }, (_, index) =>
-  String(index).padStart(2, "0"),
-);
-
-const MINUTES = Array.from({ length: 12 }, (_, index) =>
-  String(index * 5).padStart(2, "0"),
-);
-
-function splitSchedule(value: string): { hour: string; minute: string } {
-  const formatted = formatMedicationSchedule(value);
-  if (!formatted) {
-    return { hour: "", minute: "" };
-  }
-
-  const [hour = "", minute = ""] = formatted.split(":");
-  return { hour, minute };
-}
-
-function combineSchedule(hour: string, minute: string): string {
-  if (!hour || !minute) {
-    return "";
-  }
-
-  return formatMedicationSchedule(`${hour}:${minute}`);
 }
 
 export function ChildHealthInfoFields({
@@ -317,6 +293,7 @@ export function ChildHealthInfoFields({
               }
               disabled={disabled}
               placeholder="Ritalina"
+              className="child-medication-field child-medication-field-name"
             />
 
             <MedicationField
@@ -331,63 +308,41 @@ export function ChildHealthInfoFields({
               }
               disabled={disabled}
               placeholder="10mg"
+              className="child-medication-field child-medication-field-dosage"
             />
 
-            <div className="field">
-              <label htmlFor="child-medication-draft-schedule">Horario</label>
-              <div className="time-picker-grid">
-                <select
-                  id="child-medication-draft-schedule-hour"
-                  value={splitSchedule(medicationDraft.schedule).hour}
-                  onChange={(event) => {
-                    const current = splitSchedule(medicationDraft.schedule);
-                    const nextSchedule = combineSchedule(
-                      event.target.value,
-                      current.minute || "00",
-                    );
-
-                    setMedicationDraft((draft) => ({
-                      ...draft,
-                      schedule: nextSchedule,
-                    }));
-                  }}
-                  disabled={disabled}
-                >
-                  <option value="">--</option>
-                  {HOURS.map((hour) => (
-                    <option key={hour} value={hour}>
-                      {hour}
-                    </option>
-                  ))}
-                </select>
-
-                <span className="time-picker-separator">:</span>
-
-                <select
-                  id="child-medication-draft-schedule-minute"
-                  value={splitSchedule(medicationDraft.schedule).minute}
-                  onChange={(event) => {
-                    const current = splitSchedule(medicationDraft.schedule);
-                    const nextSchedule = combineSchedule(
-                      current.hour || "00",
-                      event.target.value,
-                    );
-
-                    setMedicationDraft((draft) => ({
-                      ...draft,
-                      schedule: nextSchedule,
-                    }));
-                  }}
-                  disabled={disabled}
-                >
-                  <option value="">--</option>
-                  {MINUTES.map((minute) => (
-                    <option key={minute} value={minute}>
-                      {minute}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="field child-medication-field child-medication-field-schedule">
+              <label htmlFor="child-medication-draft-schedule">Horário</label>
+              <input
+                id="child-medication-draft-schedule"
+                value={medicationDraft.schedule}
+                onChange={(event) => {
+                  const digits = event.target.value
+                    .replace(/\D/g, "")
+                    .slice(0, 4);
+                  let masked = digits;
+                  if (digits.length > 2) {
+                    masked = `${digits.slice(0, 2)}:${digits.slice(2)}`;
+                  }
+                  setMedicationDraft((current) => ({
+                    ...current,
+                    schedule: masked,
+                  }));
+                }}
+                onBlur={(event) => {
+                  const formatted = formatMedicationSchedule(
+                    event.target.value,
+                  );
+                  setMedicationDraft((current) => ({
+                    ...current,
+                    schedule: formatted,
+                  }));
+                }}
+                disabled={disabled}
+                placeholder="15:00"
+                inputMode="numeric"
+                maxLength={5}
+              />
             </div>
 
             <div className="child-medication-actions">
@@ -436,7 +391,7 @@ export function ChildHealthInfoFields({
                     {[medication.name, medication.dosage, medication.schedule]
                       .map((item) => item.trim())
                       .filter(Boolean)
-                      .join(" ")}
+                      .join(" • ")}
                   </span>
                   <button
                     type="button"
