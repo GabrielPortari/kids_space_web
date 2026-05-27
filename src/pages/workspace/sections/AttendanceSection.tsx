@@ -154,9 +154,6 @@ export function AttendanceSection() {
                   <SkeletonBlock width="34%" height="0.85rem" />
                   <SkeletonBlock width="62%" height="0.85rem" />
                 </div>
-                <div className="crm-row-actions">
-                  <SkeletonBlock width="5rem" height="2.4rem" />
-                </div>
               </article>
             ))
           ) : (
