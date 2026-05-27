@@ -4,6 +4,7 @@ import { useDashboard } from "../hooks/useDashboard";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { maskCpf, normalizeDigits } from "../formatter";
 import { useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 
 function getAttendanceKindIcon(item: {
   checkOutLabel?: string;
@@ -311,173 +312,180 @@ export function DashboardSection() {
         </div>
       </section>
 
-      {isCheckinModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={closeCheckinModal}
-        >
-          <section
-            className="crm-modal crm-modal-wide"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Registrar check-in"
-            onClick={(event) => event.stopPropagation()}
+      {isCheckinModalOpen &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={closeCheckinModal}
           >
-            <h2>Registrar Check-in</h2>
-
-            <form
-              className="crm-form-grid checkin-modal-form"
-              onSubmit={onCheckinSubmit}
+            <section
+              className="crm-modal crm-modal-wide"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Registrar check-in"
+              onClick={(event) => event.stopPropagation()}
             >
-              <EntitySearchList
-                label="Crianca"
-                searchValue={checkinChildSearch}
-                onSearchChange={setCheckinChildSearch}
-                options={childOptions}
-                selectedIds={selectedCheckinChildId}
-                onToggle={toggleCheckinChildSelection}
-                isLoading={childrenQuery.isLoading}
-                placeholder="Buscar por nome"
-                mode="radio"
-              />
+              <h2>Registrar Check-in</h2>
 
-              {selectedCheckinChildId && (
+              <form
+                className="crm-form-grid checkin-modal-form"
+                onSubmit={onCheckinSubmit}
+              >
                 <EntitySearchList
-                  label="Responsavel"
-                  searchValue={checkinResponsibleSearch}
-                  onSearchChange={setCheckinResponsibleSearch}
-                  options={responsibleOptions}
-                  selectedIds={selectedCheckinResponsibleId}
-                  onToggle={toggleCheckinResponsibleSelection}
-                  isLoading={parentsQuery.isLoading}
+                  label="Crianca"
+                  searchValue={checkinChildSearch}
+                  onSearchChange={setCheckinChildSearch}
+                  options={childOptions}
+                  selectedIds={selectedCheckinChildId}
+                  onToggle={toggleCheckinChildSelection}
+                  isLoading={childrenQuery.isLoading}
                   placeholder="Buscar por nome"
                   mode="radio"
                 />
-              )}
 
-              <div className="field">
-                <label htmlFor="checkin-notes">Observacoes</label>
-                <textarea
-                  id="checkin-notes"
-                  className="checkin-notes-field"
-                  value={checkinNotes}
-                  onChange={(event) => setCheckinNotes(event.target.value)}
-                  placeholder="Adicione observacoes do check-in"
-                  rows={4}
-                />
-              </div>
+                {selectedCheckinChildId && (
+                  <EntitySearchList
+                    label="Responsavel"
+                    searchValue={checkinResponsibleSearch}
+                    onSearchChange={setCheckinResponsibleSearch}
+                    options={responsibleOptions}
+                    selectedIds={selectedCheckinResponsibleId}
+                    onToggle={toggleCheckinResponsibleSelection}
+                    isLoading={parentsQuery.isLoading}
+                    placeholder="Buscar por nome"
+                    mode="radio"
+                  />
+                )}
 
-              {checkinMut.isPending && (
-                <p className="operation-hint">Processando check-in...</p>
-              )}
+                <div className="field">
+                  <label htmlFor="checkin-notes">Observacoes</label>
+                  <textarea
+                    id="checkin-notes"
+                    className="checkin-notes-field"
+                    value={checkinNotes}
+                    onChange={(event) => setCheckinNotes(event.target.value)}
+                    placeholder="Adicione observacoes do check-in"
+                    rows={4}
+                  />
+                </div>
 
-              {checkinMut.error && !checkinMut.isPending && (
-                <p className="operation-hint">{checkinMut.error.message}</p>
-              )}
+                {checkinMut.isPending && (
+                  <p className="operation-hint">Processando check-in...</p>
+                )}
 
-              <div className="crm-modal-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={closeCheckinModal}
-                  disabled={checkinMut.isPending}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={checkinMut.isPending}
-                >
-                  {checkinMut.isPending
-                    ? "Registrando..."
-                    : "Confirmar Check-in"}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+                {checkinMut.error && !checkinMut.isPending && (
+                  <p className="operation-hint">{checkinMut.error.message}</p>
+                )}
 
-      {isCheckoutModalOpen && selectedCheckoutAttendance && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={closeCheckoutModal}
-        >
-          <section
-            className="crm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Fazer check-out"
-            onClick={(event) => event.stopPropagation()}
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={closeCheckinModal}
+                    disabled={checkinMut.isPending}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn solid"
+                    disabled={checkinMut.isPending}
+                  >
+                    {checkinMut.isPending
+                      ? "Registrando..."
+                      : "Confirmar Check-in"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>,
+          document.body,
+        )}
+
+      {isCheckoutModalOpen &&
+        selectedCheckoutAttendance &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={closeCheckoutModal}
           >
-            <h2>Fazer Check-out</h2>
+            <section
+              className="crm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Fazer check-out"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Fazer Check-out</h2>
 
-            <div className="profile-section">
-              <div className="profile-grid">
-                <article className="profile-card">
-                  <span>Crianca</span>
-                  <strong>{selectedCheckoutAttendance.childDisplayName}</strong>
-                </article>
-                <article className="profile-card">
-                  <span>Check-in</span>
-                  <strong>
-                    {selectedCheckoutAttendance.checkInLabel || "-"}
-                  </strong>
-                </article>
-              </div>
-            </div>
-
-            <form className="crm-form-grid" onSubmit={onCheckoutSubmit}>
-              <div className="field">
-                <label htmlFor="checkout-responsible-document">
-                  CPF do responsavel
-                </label>
-                <input
-                  id="checkout-responsible-document"
-                  value={maskCpf(checkoutResponsibleDocument)}
-                  onChange={(event) =>
-                    setCheckoutResponsibleDocument(
-                      normalizeDigits(event.target.value).slice(0, 11),
-                    )
-                  }
-                  placeholder="000.000.000-00"
-                />
+              <div className="profile-section">
+                <div className="profile-grid">
+                  <article className="profile-card">
+                    <span>Crianca</span>
+                    <strong>
+                      {selectedCheckoutAttendance.childDisplayName}
+                    </strong>
+                  </article>
+                  <article className="profile-card">
+                    <span>Check-in</span>
+                    <strong>
+                      {selectedCheckoutAttendance.checkInLabel || "-"}
+                    </strong>
+                  </article>
+                </div>
               </div>
 
-              {checkoutMut.isPending && (
-                <p className="operation-hint">Processando check-out...</p>
-              )}
+              <form className="crm-form-grid" onSubmit={onCheckoutSubmit}>
+                <div className="field">
+                  <label htmlFor="checkout-responsible-document">
+                    CPF do responsavel
+                  </label>
+                  <input
+                    id="checkout-responsible-document"
+                    value={maskCpf(checkoutResponsibleDocument)}
+                    onChange={(event) =>
+                      setCheckoutResponsibleDocument(
+                        normalizeDigits(event.target.value).slice(0, 11),
+                      )
+                    }
+                    placeholder="000.000.000-00"
+                  />
+                </div>
 
-              {checkoutMut.error && !checkoutMut.isPending && (
-                <p className="operation-hint">{checkoutMut.error.message}</p>
-              )}
+                {checkoutMut.isPending && (
+                  <p className="operation-hint">Processando check-out...</p>
+                )}
 
-              <div className="crm-modal-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={closeCheckoutModal}
-                  disabled={checkoutMut.isPending}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={checkoutMut.isPending}
-                >
-                  {checkoutMut.isPending
-                    ? "Confirmando..."
-                    : "Confirmar Check-out"}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+                {checkoutMut.error && !checkoutMut.isPending && (
+                  <p className="operation-hint">{checkoutMut.error.message}</p>
+                )}
+
+                <div className="crm-modal-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={closeCheckoutModal}
+                    disabled={checkoutMut.isPending}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn solid"
+                    disabled={checkoutMut.isPending}
+                  >
+                    {checkoutMut.isPending
+                      ? "Confirmando..."
+                      : "Confirmar Check-out"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

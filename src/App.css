@@ -2316,6 +2316,9 @@ textarea:focus {
 .profile-modal-footer,
 .crm-modal-actions,
 .profile-form-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   position: sticky;
   bottom: 0;
   margin: 0 -28px -28px;
@@ -2323,6 +2326,31 @@ textarea:focus {
   background: rgba(255, 250, 242, 0.98);
   border-top: 1px solid #eee;
   border-radius: 0 0 10px 10px;
+}
+
+.profile-modal-footer-actions {
+  margin-left: auto;
+}
+
+.assign-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 0;
+}
+
+.assign-modal-form .profile-modal-footer {
+  position: static;
+  bottom: auto;
+  margin: 0;
+  padding: 1rem 0 0;
+  background: transparent;
+  border-top: 1px solid rgba(42, 35, 29, 0.12);
+  border-radius: 0;
+}
+
+.assign-modal-form .profile-modal-footer-actions {
+  margin-left: auto;
 }
 
 .profile-modal-footer-actions .btn,

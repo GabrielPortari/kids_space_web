@@ -464,7 +464,6 @@ export function ParentsSection() {
                   </section>
                 </div>
               </div>
-
             </section>
           </div>,
           document.body,
@@ -1133,7 +1132,10 @@ export function ParentsSection() {
               onClick={(event) => event.stopPropagation()}
             >
               <h2>Vincular Criancas</h2>
-              <form onSubmit={onAssignChildrenToParent}>
+              <form
+                className="assign-modal-form"
+                onSubmit={onAssignChildrenToParent}
+              >
                 <section className="profile-section">
                   <EntitySearchList
                     label="Criancas"
@@ -1155,22 +1157,24 @@ export function ParentsSection() {
                   />
                 </section>
 
-                <div className="crm-modal-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    onClick={() => setIsParentAssignChildrenModalOpen(false)}
-                    disabled={assignChildrenMut.isPending}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn solid"
-                    disabled={assignChildrenMut.isPending}
-                  >
-                    {assignChildrenMut.isPending ? "Salvando..." : "Vincular"}
-                  </button>
+                <div className="profile-modal-footer">
+                  <div className="profile-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setIsParentAssignChildrenModalOpen(false)}
+                      disabled={assignChildrenMut.isPending}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn solid"
+                      disabled={assignChildrenMut.isPending}
+                    >
+                      {assignChildrenMut.isPending ? "Salvando..." : "Vincular"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </section>

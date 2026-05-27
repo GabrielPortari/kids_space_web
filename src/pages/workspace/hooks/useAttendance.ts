@@ -4,7 +4,6 @@ import type { FormEvent } from "react";
 import {
   checkin,
   checkout,
-  deleteAttendance,
   listAttendances,
   type CheckinPayload,
   type CheckoutPayload,
@@ -68,14 +67,6 @@ export function useAttendance() {
     mutationFn: checkout,
     onSuccess: async () => {
       setStatusMessage("Check-out realizado.");
-      await queryClient.invalidateQueries({ queryKey: ["attendances"] });
-    },
-  });
-
-  const deleteAttendanceMut = useMutation<unknown, Error, string>({
-    mutationFn: deleteAttendance,
-    onSuccess: async () => {
-      setStatusMessage("Attendance removida.");
       await queryClient.invalidateQueries({ queryKey: ["attendances"] });
     },
   });
@@ -181,10 +172,6 @@ export function useAttendance() {
     event.currentTarget.reset();
   }
 
-  async function onDeleteAttendance(attendanceId: string) {
-    await deleteAttendanceMut.mutateAsync(attendanceId);
-  }
-
   function openAttendanceViewModal(item: Record<string, unknown>) {
     setViewingAttendance(item);
     setViewingAttendanceId(String(item.id || ""));
@@ -204,7 +191,6 @@ export function useAttendance() {
     attendancesQuery,
     checkinMut,
     checkoutMut,
-    deleteAttendanceMut,
 
     // derived
     attendances: resolvedAttendances,
@@ -215,7 +201,6 @@ export function useAttendance() {
     // handlers
     onCheckin,
     onCheckout,
-    onDeleteAttendance,
     openAttendanceViewModal,
   };
 }

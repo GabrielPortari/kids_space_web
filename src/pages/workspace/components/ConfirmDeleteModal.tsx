@@ -36,23 +36,25 @@ export function ConfirmDeleteModal({
       >
         <h2>{title}</h2>
         <p>{message}</p>
-        <div className="crm-modal-actions">
-          <button
-            type="button"
-            className="btn outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
-            {isLoading ? "Carregando..." : confirmLabel}
-          </button>
+        <div className="profile-modal-footer">
+          <div className="profile-modal-footer-actions">
+            <button
+              type="button"
+              className="btn outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
+              {cancelLabel}
+            </button>
+            <button
+              type="button"
+              className="btn solid"
+              onClick={onConfirm}
+              disabled={isLoading}
+            >
+              {isLoading ? "Carregando..." : confirmLabel}
+            </button>
+          </div>
         </div>
       </section>
     </div>,

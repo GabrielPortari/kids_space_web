@@ -6,6 +6,7 @@ import {
   RefreshIcon,
 } from "../components/WorkspaceVisuals";
 import { useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import { maskPhone } from "../formatter";
 
 export function ProfileSection() {
@@ -192,345 +193,359 @@ export function ProfileSection() {
         )}
       </section>
 
-      {isProfileModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsProfileModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide profile-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Editar perfil"
-            onClick={(event) => event.stopPropagation()}
+      {isProfileModalOpen &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsProfileModalOpen(false)}
           >
-            <div className="profile-modal-header">
-              <div className="profile-modal-header-left">
-                <ModalIconWrap>
-                  <PersonIcon />
-                </ModalIconWrap>
-                <div>
-                  <p className="profile-modal-title">Alterar dados</p>
-                  <p className="profile-modal-subtitle">
-                    Atualize suas informações de perfil
+            <section
+              className="crm-modal crm-modal-wide profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Editar perfil"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="profile-modal-header">
+                <div className="profile-modal-header-left">
+                  <ModalIconWrap>
+                    <PersonIcon />
+                  </ModalIconWrap>
+                  <div>
+                    <p className="profile-modal-title">Alterar dados</p>
+                    <p className="profile-modal-subtitle">
+                      Atualize suas informações de perfil
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="profile-modal-close"
+                  aria-label="Fechar"
+                  onClick={() => setIsProfileModalOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form className="profile-form" onSubmit={onSaveProfileModal}>
+                <div className="profile-form-body">
+                  {personalProfileFields.length > 0 && (
+                    <div className="profile-form-section">
+                      <div className="profile-form-section-header">
+                        <span className="profile-form-section-label">
+                          Dados pessoais
+                        </span>
+                        <div className="profile-form-section-line" />
+                      </div>
+                      {isCompanyProfile ? (
+                        <div className="profile-form-personal-stack">
+                          <div className="profile-form-fields-grid profile-form-company-grid">
+                            {companyPersonalRowOne.map((key) => {
+                              const field = personalFieldsByKey[key];
+                              if (!field) return null;
+
+                              const readOnly = !field.editable;
+
+                              return (
+                                <div
+                                  key={field.key}
+                                  className={`field ${
+                                    field.key === "name"
+                                      ? "field-span-6"
+                                      : "field-span-6"
+                                  }`}
+                                >
+                                  <label htmlFor={`profile-${field.key}`}>
+                                    {field.label}
+                                  </label>
+                                  <input
+                                    id={`profile-${field.key}`}
+                                    type={
+                                      field.key === "email" ? "email" : "text"
+                                    }
+                                    value={profileDraft[field.key] || ""}
+                                    onChange={(event) =>
+                                      setProfileDraft((current) => ({
+                                        ...current,
+                                        [field.key]:
+                                          field.key === "contact"
+                                            ? maskPhone(event.target.value)
+                                            : event.target.value,
+                                      }))
+                                    }
+                                    inputMode={
+                                      field.key === "contact"
+                                        ? "tel"
+                                        : undefined
+                                    }
+                                    readOnly={readOnly}
+                                    disabled={readOnly}
+                                    className={readOnly ? "field-readonly" : ""}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="profile-form-fields-grid profile-form-company-grid">
+                            {companyPersonalRowTwo.map((key) => {
+                              const field = personalFieldsByKey[key];
+                              if (!field) return null;
+
+                              const readOnly = !field.editable;
+
+                              return (
+                                <div
+                                  key={field.key}
+                                  className="field field-span-4"
+                                >
+                                  <label htmlFor={`profile-${field.key}`}>
+                                    {field.label}
+                                  </label>
+                                  <input
+                                    id={`profile-${field.key}`}
+                                    type={
+                                      field.key === "email" ? "email" : "text"
+                                    }
+                                    value={profileDraft[field.key] || ""}
+                                    onChange={(event) =>
+                                      setProfileDraft((current) => ({
+                                        ...current,
+                                        [field.key]:
+                                          field.key === "contact"
+                                            ? maskPhone(event.target.value)
+                                            : event.target.value,
+                                      }))
+                                    }
+                                    inputMode={
+                                      field.key === "contact"
+                                        ? "tel"
+                                        : undefined
+                                    }
+                                    readOnly={readOnly}
+                                    disabled={readOnly}
+                                    className={readOnly ? "field-readonly" : ""}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="profile-form-fields-grid profile-form-company-grid">
+                            {companyPersonalRowThree.map((key) => {
+                              const field = personalFieldsByKey[key];
+                              if (!field) return null;
+
+                              const readOnly = !field.editable;
+                              const spanClass =
+                                field.key === "logoUrl"
+                                  ? "field-span-8"
+                                  : "field-span-4";
+
+                              return (
+                                <div
+                                  key={field.key}
+                                  className={`field ${spanClass}`}
+                                >
+                                  <label htmlFor={`profile-${field.key}`}>
+                                    {field.label}
+                                  </label>
+                                  <input
+                                    id={`profile-${field.key}`}
+                                    type={
+                                      field.key === "email" ? "email" : "text"
+                                    }
+                                    value={profileDraft[field.key] || ""}
+                                    onChange={(event) =>
+                                      setProfileDraft((current) => ({
+                                        ...current,
+                                        [field.key]:
+                                          field.key === "contact"
+                                            ? maskPhone(event.target.value)
+                                            : event.target.value,
+                                      }))
+                                    }
+                                    inputMode={
+                                      field.key === "contact"
+                                        ? "tel"
+                                        : undefined
+                                    }
+                                    readOnly={readOnly}
+                                    disabled={readOnly}
+                                    className={readOnly ? "field-readonly" : ""}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="profile-form-fields-grid profile-form-personal-grid">
+                          {personalProfileFields.map((field) => {
+                            const readOnly = !field.editable;
+                            return (
+                              <div
+                                key={field.key}
+                                className={`field ${personalFieldSpanClasses[field.key] || "field-span-6"}`}
+                              >
+                                <label htmlFor={`profile-${field.key}`}>
+                                  {field.label}
+                                </label>
+                                <input
+                                  id={`profile-${field.key}`}
+                                  type={
+                                    field.key === "email" ? "email" : "text"
+                                  }
+                                  value={profileDraft[field.key] || ""}
+                                  onChange={(event) =>
+                                    setProfileDraft((current) => ({
+                                      ...current,
+                                      [field.key]:
+                                        field.key === "contact"
+                                          ? maskPhone(event.target.value)
+                                          : event.target.value,
+                                    }))
+                                  }
+                                  inputMode={
+                                    field.key === "contact" ? "tel" : undefined
+                                  }
+                                  readOnly={readOnly}
+                                  disabled={readOnly}
+                                  className={readOnly ? "field-readonly" : ""}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {addressProfileFields.length > 0 && (
+                    <div className="profile-form-section">
+                      <div className="profile-form-section-header">
+                        <span className="profile-form-section-label">
+                          Endereço
+                        </span>
+                        <div className="profile-form-section-line" />
+                      </div>
+                      <div className="profile-form-address-stack">
+                        <div className="profile-form-fields-grid profile-form-address-grid">
+                          {addressTopRowKeys.map((key) => {
+                            const field = addressFieldsByKey[key];
+                            if (!field) {
+                              return null;
+                            }
+
+                            const readOnly = !field.editable;
+
+                            return (
+                              <div
+                                key={field.key}
+                                className={`field ${addressFieldSpanClasses[field.key] || "field-span-3"}`}
+                              >
+                                <label htmlFor={`profile-${field.key}`}>
+                                  {field.label}
+                                </label>
+                                <input
+                                  id={`profile-${field.key}`}
+                                  type={
+                                    field.key === "email" ? "email" : "text"
+                                  }
+                                  value={profileDraft[field.key] || ""}
+                                  onChange={(event) =>
+                                    setProfileDraft((current) => ({
+                                      ...current,
+                                      [field.key]:
+                                        field.key === "contact"
+                                          ? maskPhone(event.target.value)
+                                          : event.target.value,
+                                    }))
+                                  }
+                                  inputMode={
+                                    field.key === "contact" ? "tel" : undefined
+                                  }
+                                  readOnly={readOnly}
+                                  disabled={readOnly}
+                                  className={readOnly ? "field-readonly" : ""}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="profile-form-fields-grid profile-form-address-grid">
+                          {addressBottomRowKeys.map((key) => {
+                            const field = addressFieldsByKey[key];
+                            if (!field) {
+                              return null;
+                            }
+
+                            const readOnly = !field.editable;
+
+                            return (
+                              <div
+                                key={field.key}
+                                className={`field ${addressFieldSpanClasses[field.key] || "field-span-3"}`}
+                              >
+                                <label htmlFor={`profile-${field.key}`}>
+                                  {field.label}
+                                </label>
+                                <input
+                                  id={`profile-${field.key}`}
+                                  type={
+                                    field.key === "email" ? "email" : "text"
+                                  }
+                                  value={profileDraft[field.key] || ""}
+                                  onChange={(event) =>
+                                    setProfileDraft((current) => ({
+                                      ...current,
+                                      [field.key]:
+                                        field.key === "contact"
+                                          ? maskPhone(event.target.value)
+                                          : event.target.value,
+                                    }))
+                                  }
+                                  inputMode={
+                                    field.key === "contact" ? "tel" : undefined
+                                  }
+                                  readOnly={readOnly}
+                                  disabled={readOnly}
+                                  className={readOnly ? "field-readonly" : ""}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="profile-modal-footer">
+                  <p className="profile-modal-hint">
+                    🔒 Campos acinzentados são somente leitura
                   </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="profile-modal-close"
-                aria-label="Fechar"
-                onClick={() => setIsProfileModalOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form className="profile-form" onSubmit={onSaveProfileModal}>
-              <div className="profile-form-body">
-                {personalProfileFields.length > 0 && (
-                  <div className="profile-form-section">
-                    <div className="profile-form-section-header">
-                      <span className="profile-form-section-label">
-                        Dados pessoais
-                      </span>
-                      <div className="profile-form-section-line" />
-                    </div>
-                    {isCompanyProfile ? (
-                      <div className="profile-form-personal-stack">
-                        <div className="profile-form-fields-grid profile-form-company-grid">
-                          {companyPersonalRowOne.map((key) => {
-                            const field = personalFieldsByKey[key];
-                            if (!field) return null;
-
-                            const readOnly = !field.editable;
-
-                            return (
-                              <div
-                                key={field.key}
-                                className={`field ${
-                                  field.key === "name"
-                                    ? "field-span-6"
-                                    : "field-span-6"
-                                }`}
-                              >
-                                <label htmlFor={`profile-${field.key}`}>
-                                  {field.label}
-                                </label>
-                                <input
-                                  id={`profile-${field.key}`}
-                                  type={
-                                    field.key === "email" ? "email" : "text"
-                                  }
-                                  value={profileDraft[field.key] || ""}
-                                  onChange={(event) =>
-                                    setProfileDraft((current) => ({
-                                      ...current,
-                                      [field.key]:
-                                        field.key === "contact"
-                                          ? maskPhone(event.target.value)
-                                          : event.target.value,
-                                    }))
-                                  }
-                                  inputMode={
-                                    field.key === "contact" ? "tel" : undefined
-                                  }
-                                  readOnly={readOnly}
-                                  disabled={readOnly}
-                                  className={readOnly ? "field-readonly" : ""}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div className="profile-form-fields-grid profile-form-company-grid">
-                          {companyPersonalRowTwo.map((key) => {
-                            const field = personalFieldsByKey[key];
-                            if (!field) return null;
-
-                            const readOnly = !field.editable;
-
-                            return (
-                              <div
-                                key={field.key}
-                                className="field field-span-4"
-                              >
-                                <label htmlFor={`profile-${field.key}`}>
-                                  {field.label}
-                                </label>
-                                <input
-                                  id={`profile-${field.key}`}
-                                  type={
-                                    field.key === "email" ? "email" : "text"
-                                  }
-                                  value={profileDraft[field.key] || ""}
-                                  onChange={(event) =>
-                                    setProfileDraft((current) => ({
-                                      ...current,
-                                      [field.key]:
-                                        field.key === "contact"
-                                          ? maskPhone(event.target.value)
-                                          : event.target.value,
-                                    }))
-                                  }
-                                  inputMode={
-                                    field.key === "contact" ? "tel" : undefined
-                                  }
-                                  readOnly={readOnly}
-                                  disabled={readOnly}
-                                  className={readOnly ? "field-readonly" : ""}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div className="profile-form-fields-grid profile-form-company-grid">
-                          {companyPersonalRowThree.map((key) => {
-                            const field = personalFieldsByKey[key];
-                            if (!field) return null;
-
-                            const readOnly = !field.editable;
-                            const spanClass =
-                              field.key === "logoUrl"
-                                ? "field-span-8"
-                                : "field-span-4";
-
-                            return (
-                              <div
-                                key={field.key}
-                                className={`field ${spanClass}`}
-                              >
-                                <label htmlFor={`profile-${field.key}`}>
-                                  {field.label}
-                                </label>
-                                <input
-                                  id={`profile-${field.key}`}
-                                  type={
-                                    field.key === "email" ? "email" : "text"
-                                  }
-                                  value={profileDraft[field.key] || ""}
-                                  onChange={(event) =>
-                                    setProfileDraft((current) => ({
-                                      ...current,
-                                      [field.key]:
-                                        field.key === "contact"
-                                          ? maskPhone(event.target.value)
-                                          : event.target.value,
-                                    }))
-                                  }
-                                  inputMode={
-                                    field.key === "contact" ? "tel" : undefined
-                                  }
-                                  readOnly={readOnly}
-                                  disabled={readOnly}
-                                  className={readOnly ? "field-readonly" : ""}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="profile-form-fields-grid profile-form-personal-grid">
-                        {personalProfileFields.map((field) => {
-                          const readOnly = !field.editable;
-                          return (
-                            <div
-                              key={field.key}
-                              className={`field ${personalFieldSpanClasses[field.key] || "field-span-6"}`}
-                            >
-                              <label htmlFor={`profile-${field.key}`}>
-                                {field.label}
-                              </label>
-                              <input
-                                id={`profile-${field.key}`}
-                                type={field.key === "email" ? "email" : "text"}
-                                value={profileDraft[field.key] || ""}
-                                onChange={(event) =>
-                                  setProfileDraft((current) => ({
-                                    ...current,
-                                    [field.key]:
-                                      field.key === "contact"
-                                        ? maskPhone(event.target.value)
-                                        : event.target.value,
-                                  }))
-                                }
-                                inputMode={
-                                  field.key === "contact" ? "tel" : undefined
-                                }
-                                readOnly={readOnly}
-                                disabled={readOnly}
-                                className={readOnly ? "field-readonly" : ""}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                  <div className="profile-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setIsProfileModalOpen(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn solid">
+                      Salvar alterações
+                    </button>
                   </div>
-                )}
-
-                {addressProfileFields.length > 0 && (
-                  <div className="profile-form-section">
-                    <div className="profile-form-section-header">
-                      <span className="profile-form-section-label">
-                        Endereço
-                      </span>
-                      <div className="profile-form-section-line" />
-                    </div>
-                    <div className="profile-form-address-stack">
-                      <div className="profile-form-fields-grid profile-form-address-grid">
-                        {addressTopRowKeys.map((key) => {
-                          const field = addressFieldsByKey[key];
-                          if (!field) {
-                            return null;
-                          }
-
-                          const readOnly = !field.editable;
-
-                          return (
-                            <div
-                              key={field.key}
-                              className={`field ${addressFieldSpanClasses[field.key] || "field-span-3"}`}
-                            >
-                              <label htmlFor={`profile-${field.key}`}>
-                                {field.label}
-                              </label>
-                              <input
-                                id={`profile-${field.key}`}
-                                type={field.key === "email" ? "email" : "text"}
-                                value={profileDraft[field.key] || ""}
-                                onChange={(event) =>
-                                  setProfileDraft((current) => ({
-                                    ...current,
-                                    [field.key]:
-                                      field.key === "contact"
-                                        ? maskPhone(event.target.value)
-                                        : event.target.value,
-                                  }))
-                                }
-                                inputMode={
-                                  field.key === "contact" ? "tel" : undefined
-                                }
-                                readOnly={readOnly}
-                                disabled={readOnly}
-                                className={readOnly ? "field-readonly" : ""}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="profile-form-fields-grid profile-form-address-grid">
-                        {addressBottomRowKeys.map((key) => {
-                          const field = addressFieldsByKey[key];
-                          if (!field) {
-                            return null;
-                          }
-
-                          const readOnly = !field.editable;
-
-                          return (
-                            <div
-                              key={field.key}
-                              className={`field ${addressFieldSpanClasses[field.key] || "field-span-3"}`}
-                            >
-                              <label htmlFor={`profile-${field.key}`}>
-                                {field.label}
-                              </label>
-                              <input
-                                id={`profile-${field.key}`}
-                                type={field.key === "email" ? "email" : "text"}
-                                value={profileDraft[field.key] || ""}
-                                onChange={(event) =>
-                                  setProfileDraft((current) => ({
-                                    ...current,
-                                    [field.key]:
-                                      field.key === "contact"
-                                        ? maskPhone(event.target.value)
-                                        : event.target.value,
-                                  }))
-                                }
-                                inputMode={
-                                  field.key === "contact" ? "tel" : undefined
-                                }
-                                readOnly={readOnly}
-                                disabled={readOnly}
-                                className={readOnly ? "field-readonly" : ""}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="profile-modal-footer">
-                <p className="profile-modal-hint">
-                  🔒 Campos acinzentados são somente leitura
-                </p>
-                <div className="profile-modal-footer-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    onClick={() => setIsProfileModalOpen(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn solid">
-                    Salvar alterações
-                  </button>
                 </div>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+              </form>
+            </section>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

@@ -86,6 +86,16 @@ export function GroupIcon() {
   );
 }
 
+export function AttendanceIcon() {
+  return (
+    <IconShell>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v4l3 2" />
+      <path d="M9 3.5 12 2l3 1.5" />
+    </IconShell>
+  );
+}
+
 export function PlusIcon() {
   return (
     <IconShell>

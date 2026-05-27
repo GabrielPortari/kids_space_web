@@ -2,9 +2,15 @@ import { useAttendance } from "../hooks/useAttendance";
 import { useWorkspaceContext } from "../WorkspaceContext";
 import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
-import { RecordAvatar, RefreshIcon } from "../components/WorkspaceVisuals";
+import {
+  AttendanceIcon,
+  ModalIconWrap,
+  RecordAvatar,
+  RefreshIcon,
+} from "../components/WorkspaceVisuals";
 import { extractId, formatTimestamp } from "../formatter";
 import { useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 
 function getAttendanceType(item: Record<string, unknown>): string {
   if ((item as any).checkInTime && !(item as any).checkOutTime) {
@@ -30,7 +36,6 @@ export function AttendanceSection() {
   const {
     pagedCollection,
     attendancesQuery,
-    onDeleteAttendance,
     isAttendanceViewModalOpen,
     setIsAttendanceViewModalOpen,
     viewingAttendance,
@@ -43,22 +48,87 @@ export function AttendanceSection() {
 
   const PAGE_SIZE = 8;
   const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
+  const attendanceDetails = viewingAttendance
+    ? [
+        {
+          label: "Crianca",
+          value:
+            (viewingAttendance as any).childSnapshot?.name ||
+            (viewingAttendance as any).childName ||
+            "-",
+        },
+        {
+          label: "Tipo",
+          value: getAttendanceTypeLabel(viewingAttendance),
+        },
+        {
+          label: "Hora de entrada",
+          value: (viewingAttendance as any).checkInTime
+            ? formatTimestamp((viewingAttendance as any).checkInTime)
+            : "-",
+        },
+        {
+          label: "Hora de saida",
+          value: (viewingAttendance as any).checkOutTime
+            ? formatTimestamp((viewingAttendance as any).checkOutTime)
+            : "-",
+        },
+        {
+          label: "Tempo de permanencia (segundos)",
+          value: (viewingAttendance as any).timeCheckedInSeconds || "-",
+        },
+        {
+          label: "Responsavel de entrada",
+          value:
+            (viewingAttendance as any).responsibleCheckedInSnapshot?.name ||
+            (viewingAttendance as any).responsibleIdWhoCheckedInId ||
+            "-",
+        },
+        {
+          label: "Responsavel de saida",
+          value:
+            (viewingAttendance as any).responsibleCheckedOutSnapshot?.name ||
+            (viewingAttendance as any).responsibleIdWhoCheckedOutId ||
+            "-",
+        },
+        {
+          label: "Colaborador de entrada",
+          value:
+            (viewingAttendance as any).collaboratorCheckedInSnapshot?.name ||
+            (viewingAttendance as any).collaboratorWhoCheckedInId ||
+            "-",
+        },
+        {
+          label: "Colaborador de saida",
+          value:
+            (viewingAttendance as any).collaboratorCheckedOutSnapshot?.name ||
+            (viewingAttendance as any).collaboratorWhoCheckedOutId ||
+            "-",
+        },
+        {
+          label: "Observacoes",
+          value: (viewingAttendance as any).notes || "-",
+        },
+      ]
+    : [];
 
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Atendimentos</h2>
-          <button
-            type="button"
-            className="btn outline crm-icon-btn"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            aria-label="Atualizar atendimentos"
-            title="Atualizar atendimentos"
-          >
-            <RefreshIcon />
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar atendimentos"
+              title="Atualizar atendimentos"
+            >
+              <RefreshIcon />
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">
@@ -132,19 +202,6 @@ export function AttendanceSection() {
                         </div>
                       </div>
                     </div>
-                    <div className="crm-row-actions">
-                      <button
-                        type="button"
-                        className="crm-remove-action"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          if (!id) return;
-                          onDeleteAttendance(id);
-                        }}
-                      >
-                        Remover
-                      </button>
-                    </div>
                   </article>
                 );
               })}
@@ -166,121 +223,61 @@ export function AttendanceSection() {
         />
       </section>
 
-      {isAttendanceViewModalOpen && viewingAttendance && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsAttendanceViewModalOpen(false)}
-        >
-          <section
-            className="crm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Detalhes de atendimento"
-            onClick={(event) => event.stopPropagation()}
+      {isAttendanceViewModalOpen &&
+        viewingAttendance &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsAttendanceViewModalOpen(false)}
           >
-            <h2>Detalhes de Atendimento</h2>
-            <div className="collaborator-view-content">
-              <section className="profile-section">
-                <h3>Informacoes gerais</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Crianca</span>
-                    <strong>
-                      {(viewingAttendance as any).childSnapshot?.name ||
-                        (viewingAttendance as any).childName ||
-                        "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Tipo</span>
-                    <strong>{getAttendanceTypeLabel(viewingAttendance)}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Hora de entrada</span>
-                    <strong>
-                      {(viewingAttendance as any).checkInTime
-                        ? formatTimestamp(
-                            (viewingAttendance as any).checkInTime,
-                          )
-                        : "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Hora de saida</span>
-                    <strong>
-                      {(viewingAttendance as any).checkOutTime
-                        ? formatTimestamp(
-                            (viewingAttendance as any).checkOutTime,
-                          )
-                        : "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Tempo de permanencia (segundos)</span>
-                    <strong>
-                      {(viewingAttendance as any).timeCheckedInSeconds || "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Responsavel de entrada</span>
-                    <strong>
-                      {(viewingAttendance as any).responsibleCheckedInSnapshot
-                        ?.name ||
-                        (viewingAttendance as any)
-                          .responsibleIdWhoCheckedInId ||
-                        "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Responsavel de saida</span>
-                    <strong>
-                      {(viewingAttendance as any).responsibleCheckedOutSnapshot
-                        ?.name ||
-                        (viewingAttendance as any)
-                          .responsibleIdWhoCheckedOutId ||
-                        "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Colaborador de entrada</span>
-                    <strong>
-                      {(viewingAttendance as any).collaboratorCheckedInSnapshot
-                        ?.name ||
-                        (viewingAttendance as any).collaboratorWhoCheckedInId ||
-                        "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Colaborador de saida</span>
-                    <strong>
-                      {(viewingAttendance as any).collaboratorCheckedOutSnapshot
-                        ?.name ||
-                        (viewingAttendance as any)
-                          .collaboratorWhoCheckedOutId ||
-                        "-"}
-                    </strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Observacoes</span>
-                    <strong>{(viewingAttendance as any).notes || "-"}</strong>
-                  </article>
+            <section
+              className="crm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Detalhes de atendimento"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="profile-modal-header">
+                <div className="profile-modal-header-left">
+                  <ModalIconWrap>
+                    <AttendanceIcon />
+                  </ModalIconWrap>
+                  <div>
+                    <p className="profile-modal-title">
+                      Detalhes de Atendimento
+                    </p>
+                    <p className="profile-modal-subtitle">
+                      Visualize as informações do atendimento
+                    </p>
+                  </div>
                 </div>
-              </section>
-            </div>
-
-            <div className="crm-modal-actions">
-              <button
-                type="button"
-                className="btn outline"
-                onClick={() => setIsAttendanceViewModalOpen(false)}
-              >
-                Fechar
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+                <button
+                  type="button"
+                  className="profile-modal-close"
+                  aria-label="Fechar"
+                  onClick={() => setIsAttendanceViewModalOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="collaborator-view-content">
+                <section className="profile-section">
+                  <h3>Informacoes gerais</h3>
+                  <div className="profile-grid">
+                    {attendanceDetails.map((detail) => (
+                      <article key={detail.label} className="profile-card">
+                        <span>{detail.label}</span>
+                        <strong>{detail.value}</strong>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

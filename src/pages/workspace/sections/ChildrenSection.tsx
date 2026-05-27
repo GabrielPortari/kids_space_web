@@ -21,6 +21,7 @@ import {
   extractId,
   getParentDocument,
   maskCpf,
+  maskPhone,
   maskZipCode,
   normalizeDigits,
   parseIdList,
@@ -309,17 +310,6 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-6">
-                        <label htmlFor="child-view-email">Email</label>
-                        <input
-                          id="child-view-email"
-                          type="email"
-                          value={childForm.email}
-                          disabled
-                          className="field-readonly"
-                        />
-                      </div>
-
-                      <div className="field field-span-6">
                         <label htmlFor="child-view-document">CPF/ID</label>
                         <input
                           id="child-view-document"
@@ -333,7 +323,18 @@ export function ChildrenSection() {
                         <label htmlFor="child-view-contact">Contato</label>
                         <input
                           id="child-view-contact"
-                          value={childForm.contact}
+                          value={maskPhone(childForm.contact)}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label htmlFor="child-view-email">Email</label>
+                        <input
+                          id="child-view-email"
+                          type="email"
+                          value={childForm.email}
                           disabled
                           className="field-readonly"
                         />
@@ -507,7 +508,6 @@ export function ChildrenSection() {
                     />
                   </section>
                 </div>
-
               </div>
             </section>
           </div>,
@@ -578,6 +578,38 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-6">
+                        <label htmlFor="child-document">CPF/ID</label>
+                        <input
+                          id="child-document"
+                          value={childForm.document}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              document: event.target.value,
+                            }))
+                          }
+                          placeholder="ID ou CPF"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label htmlFor="child-contact">Contato</label>
+                        <input
+                          id="child-contact"
+                          value={maskPhone(childForm.contact)}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              contact: normalizeDigits(
+                                event.target.value,
+                              ).slice(0, 11),
+                            }))
+                          }
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
                         <label htmlFor="child-email">Email</label>
                         <input
                           id="child-email"
@@ -594,17 +626,19 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-6">
-                        <label htmlFor="child-document">CPF/ID</label>
+                        <label htmlFor="child-birthDate">
+                          Data de nascimento
+                        </label>
                         <input
-                          id="child-document"
-                          value={childForm.document}
+                          id="child-birthDate"
+                          type="date"
+                          value={childForm.birthDate || ""}
                           onChange={(event) =>
                             setChildForm((current) => ({
                               ...current,
-                              document: event.target.value,
+                              birthDate: event.target.value,
                             }))
                           }
-                          placeholder="ID ou CPF"
                         />
                       </div>
                     </div>
@@ -1019,6 +1053,38 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-6">
+                        <label htmlFor="child-edit-document">CPF/ID</label>
+                        <input
+                          id="child-edit-document"
+                          value={childForm.document}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              document: event.target.value,
+                            }))
+                          }
+                          placeholder="ID ou CPF"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label htmlFor="child-edit-contact">Contato</label>
+                        <input
+                          id="child-edit-contact"
+                          value={maskPhone(childForm.contact)}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              contact: normalizeDigits(
+                                event.target.value,
+                              ).slice(0, 11),
+                            }))
+                          }
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
                         <label htmlFor="child-edit-email">Email</label>
                         <input
                           id="child-edit-email"
@@ -1035,17 +1101,19 @@ export function ChildrenSection() {
                       </div>
 
                       <div className="field field-span-6">
-                        <label htmlFor="child-edit-document">CPF/ID</label>
+                        <label htmlFor="child-edit-birthDate">
+                          Data de nascimento
+                        </label>
                         <input
-                          id="child-edit-document"
-                          value={childForm.document}
+                          id="child-edit-birthDate"
+                          type="date"
+                          value={childForm.birthDate || ""}
                           onChange={(event) =>
                             setChildForm((current) => ({
                               ...current,
-                              document: event.target.value,
+                              birthDate: event.target.value,
                             }))
                           }
-                          placeholder="ID ou CPF"
                         />
                       </div>
                     </div>
@@ -1297,7 +1365,10 @@ export function ChildrenSection() {
               onClick={(event) => event.stopPropagation()}
             >
               <h2>Vincular Responsaveis</h2>
-              <form onSubmit={onAssignParentsToChild}>
+              <form
+                className="assign-modal-form"
+                onSubmit={onAssignParentsToChild}
+              >
                 <section className="profile-section">
                   <EntitySearchList
                     label="Responsaveis"
@@ -1318,22 +1389,24 @@ export function ChildrenSection() {
                   />
                 </section>
 
-                <div className="crm-modal-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    onClick={() => setIsChildAssignParentsModalOpen(false)}
-                    disabled={assignParentsMut.isPending}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn solid"
-                    disabled={assignParentsMut.isPending}
-                  >
-                    {assignParentsMut.isPending ? "Salvando..." : "Vincular"}
-                  </button>
+                <div className="profile-modal-footer">
+                  <div className="profile-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setIsChildAssignParentsModalOpen(false)}
+                      disabled={assignParentsMut.isPending}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn solid"
+                      disabled={assignParentsMut.isPending}
+                    >
+                      {assignParentsMut.isPending ? "Salvando..." : "Vincular"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </section>
@@ -1514,21 +1587,6 @@ export function ChildrenSection() {
                       </div>
                     </div>
                   </section>
-                </div>
-
-                <div className="profile-modal-footer">
-                  <p className="profile-modal-hint">
-                    🔒 Campos acinzentados são somente leitura
-                  </p>
-                  <div className="profile-modal-footer-actions">
-                    <button
-                      type="button"
-                      className="btn outline"
-                      onClick={() => setSelectedParentPreview(null)}
-                    >
-                      Fechar
-                    </button>
-                  </div>
                 </div>
               </div>
             </section>
