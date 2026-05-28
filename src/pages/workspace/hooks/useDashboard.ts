@@ -6,10 +6,6 @@ import { listChildren } from "../../../api/modules/childApi";
 import { listParents } from "../../../api/modules/parentApi";
 import { listCollaborators } from "../../../api/modules/collaboratorApi";
 import {
-  listChildrenAdmin,
-  listCollaboratorsAdmin,
-} from "../../../api/modules/adminApi";
-import {
   checkin,
   checkout,
   getCompanyLastCheckinAndCheckout,
@@ -250,10 +246,7 @@ export function useDashboard() {
 
   const childrenQuery = useQuery({
     queryKey: ["dashboard", "children", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listChildrenAdmin(currentCompanyScope)
-        : listChildren(currentCompanyScope),
+    queryFn: () => listChildren(currentCompanyScope),
     enabled: section === "dashboard",
     staleTime: 60_000,
   });
@@ -267,10 +260,7 @@ export function useDashboard() {
 
   const collaboratorsQuery = useQuery({
     queryKey: ["dashboard", "collaborators", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listCollaboratorsAdmin(currentCompanyScope)
-        : listCollaborators(currentCompanyScope),
+    queryFn: () => listCollaborators(currentCompanyScope),
     enabled: section === "dashboard" && role === "company",
     staleTime: 60_000,
   });

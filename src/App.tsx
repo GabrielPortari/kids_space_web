@@ -6,6 +6,7 @@ import { CompanySignupPage } from "./pages/CompanySignupPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { LoginPage } from "./pages/LoginPage";
+import { MasterPanelPage } from "./pages/master-panel/MasterPanelPage";
 import { RoleWorkspacePage } from "./pages/workspace/RoleWorkspacePage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { AppRedirect } from "./routes/AppRedirect";
@@ -32,7 +33,13 @@ function App() {
             <Route key={role} element={<ProtectedRoute allowedRole={role} />}>
               <Route
                 path={authRolePaths[role]}
-                element={<RoleWorkspacePage role={role} />}
+                element={
+                  role === "master" ? (
+                    <MasterPanelPage />
+                  ) : (
+                    <RoleWorkspacePage role={role} />
+                  )
+                }
               />
             </Route>
           ))}

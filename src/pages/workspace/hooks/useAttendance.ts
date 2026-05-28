@@ -9,7 +9,6 @@ import {
   type CheckoutPayload,
 } from "../../../api/modules/attendanceApi";
 import { getChildName } from "../../../api/modules/childApi";
-import { listAttendancesAdmin } from "../../../api/modules/adminApi";
 import type { ListItem } from "../types";
 import { matchesSearch, paginate } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
@@ -23,7 +22,6 @@ export function useAttendance() {
     search,
     page,
     setStatusMessage,
-    isAdminOrMaster,
     currentCompanyScope,
   } = useWorkspaceContext();
 
@@ -47,10 +45,7 @@ export function useAttendance() {
   // Queries
   const attendancesQuery = useQuery({
     queryKey: ["attendances", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listAttendancesAdmin(currentCompanyScope)
-        : listAttendances(currentCompanyScope),
+    queryFn: () => listAttendances(currentCompanyScope),
     enabled: section === "attendance",
   });
 

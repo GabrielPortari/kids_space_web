@@ -11,7 +11,6 @@ import {
 } from "../../../api/modules/childApi";
 import { listActiveCheckins } from "../../../api/modules/attendanceApi";
 import { buildBackendAddressPayload } from "../../../api/address";
-import { listChildrenAdmin } from "../../../api/modules/adminApi";
 import { listParents } from "../../../api/modules/parentApi";
 import type { ChildFormState, ListItem } from "../types";
 import { INITIAL_CHILD_FORM, PAGE_SIZE } from "../constants";
@@ -65,10 +64,7 @@ export function useChildren() {
 
   const childrenQuery = useQuery({
     queryKey: ["children", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listChildrenAdmin(currentCompanyScope)
-        : listChildren(currentCompanyScope),
+    queryFn: () => listChildren(currentCompanyScope),
     enabled: section === "children" || section === "parents",
   });
 

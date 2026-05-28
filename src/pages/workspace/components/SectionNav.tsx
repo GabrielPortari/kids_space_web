@@ -17,9 +17,6 @@ export function SectionNav({
   const {
     role,
     session,
-    isAdminOrMaster,
-    companyScope,
-    setCompanyScope,
     logout,
   } = useWorkspaceContext();
 
@@ -30,18 +27,6 @@ export function SectionNav({
         <h1>Painel</h1>
         <p>{session?.email || "Usuario autenticado"}</p>
       </div>
-
-      {isAdminOrMaster && (
-        <div className="crm-scope">
-          <label htmlFor="company-scope">Filtro company (opcional)</label>
-          <input
-            id="company-scope"
-            value={companyScope}
-            onChange={(event) => setCompanyScope(event.target.value.trim())}
-            placeholder="Digite companyId"
-          />
-        </div>
-      )}
 
       <nav className="crm-menu">
         {sections.map((item) => (

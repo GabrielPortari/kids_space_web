@@ -7,8 +7,6 @@ import { CollaboratorsSection } from "./sections/CollaboratorsSection";
 import { ParentsSection } from "./sections/ParentsSection";
 import { ChildrenSection } from "./sections/ChildrenSection";
 import { AttendanceSection } from "./sections/AttendanceSection";
-import { CompaniesSection } from "./sections/CompaniesSection";
-import { BootstrapSection } from "./sections/BootstrapSection";
 import type { CrmSection } from "./types";
 
 export function RoleWorkspacePageContent() {
@@ -20,7 +18,6 @@ export function RoleWorkspacePageContent() {
     setStatusMessage,
     statusMessage,
     availableSections,
-    isAdminOrMaster,
   } = useWorkspaceContext();
 
   const handleSectionChange = (newSection: CrmSection) => {
@@ -45,14 +42,10 @@ export function RoleWorkspacePageContent() {
 
         {section === "dashboard" && <DashboardSection />}
         {section === "profile" && <ProfileSection />}
-        {section === "companies" && isAdminOrMaster && <CompaniesSection />}
         {section === "collaborators" && <CollaboratorsSection />}
         {section === "parents" && <ParentsSection />}
         {section === "children" && <ChildrenSection />}
         {section === "attendance" && <AttendanceSection />}
-        {section === "master-bootstrap" && isAdminOrMaster && (
-          <BootstrapSection />
-        )}
       </section>
     </main>
   );

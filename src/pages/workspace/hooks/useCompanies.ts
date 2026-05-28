@@ -8,7 +8,6 @@ import {
   updateCompany,
   type UpdateCompanyPayload,
 } from "../../../api/modules/companyApi";
-import { bootstrapAdmin } from "../../../api/modules/adminApi";
 import type { CompanyFormState, ListItem } from "../types";
 import { INITIAL_COMPANY_FORM, PAGE_SIZE } from "../constants";
 import { buildCompanyPayload } from "../formPayloads";
@@ -88,15 +87,6 @@ export function useCompanies() {
     },
   });
 
-  const bootstrapAdminMut = useMutation<
-    unknown,
-    Error,
-    { bootstrapKey: string; name: string; email: string }
-  >({
-    mutationFn: bootstrapAdmin,
-    onSuccess: () => setStatusMessage("Admin bootstrap criado com sucesso."),
-  });
-
   // Derived
   const companies = companiesQuery.data || [];
   const filteredCollection = companies.filter((item: ListItem) =>
@@ -164,25 +154,6 @@ export function useCompanies() {
     await deleteCompanyMut.mutateAsync(companyId);
   }
 
-  async function onBootstrapAdmin(payload: {
-    bootstrapKey: string;
-    name: string;
-    email: string;
-  }) {
-    const { bootstrapKey, name, email } = payload;
-
-    if (!bootstrapKey || !name || !email) {
-      setStatusMessage("Preencha bootstrap key, nome e email.");
-      return;
-    }
-
-    await bootstrapAdminMut.mutateAsync({
-      bootstrapKey,
-      name,
-      email,
-    });
-  }
-
   return {
     // state
     isCompanyCreateModalOpen,
@@ -203,7 +174,6 @@ export function useCompanies() {
     createCompanyMut,
     updateCompanyMut,
     deleteCompanyMut,
-    bootstrapAdminMut,
 
     // derived
     companies,
@@ -216,6 +186,5 @@ export function useCompanies() {
     onUpdateCompanyModal,
     openCompanyEditModal,
     onDeleteCompany,
-    onBootstrapAdmin,
   };
 }
