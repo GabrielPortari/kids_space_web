@@ -7,7 +7,6 @@ export function BootstrapSection() {
     bootstrapKey: "",
     name: "",
     email: "",
-    password: "",
   });
 
   return (
@@ -39,7 +38,7 @@ export function BootstrapSection() {
         </div>
 
         <div className="field">
-          <label htmlFor="bootstrap-name">Nome da empresa</label>
+          <label htmlFor="bootstrap-name">Nome do admin</label>
           <input
             id="bootstrap-name"
             name="name"
@@ -50,7 +49,7 @@ export function BootstrapSection() {
                 name: event.target.value,
               }))
             }
-            placeholder="Nome da empresa"
+            placeholder="Nome do admin"
             required
           />
         </div>
@@ -69,24 +68,6 @@ export function BootstrapSection() {
               }))
             }
             placeholder="admin@empresa.com"
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="bootstrap-password">Senha do admin</label>
-          <input
-            id="bootstrap-password"
-            name="password"
-            type="password"
-            value={bootstrapForm.password}
-            onChange={(event) =>
-              setBootstrapForm((current) => ({
-                ...current,
-                password: event.target.value,
-              }))
-            }
-            placeholder="Senha do admin"
             required
           />
         </div>

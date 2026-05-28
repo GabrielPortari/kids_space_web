@@ -91,7 +91,7 @@ export function useCompanies() {
   const bootstrapAdminMut = useMutation<
     unknown,
     Error,
-    { bootstrapKey: string; name: string; email: string; password: string }
+    { bootstrapKey: string; name: string; email: string }
   >({
     mutationFn: bootstrapAdmin,
     onSuccess: () => setStatusMessage("Admin bootstrap criado com sucesso."),
@@ -168,12 +168,11 @@ export function useCompanies() {
     bootstrapKey: string;
     name: string;
     email: string;
-    password: string;
   }) {
-    const { bootstrapKey, name, email, password } = payload;
+    const { bootstrapKey, name, email } = payload;
 
-    if (!bootstrapKey || !name || !email || !password) {
-      setStatusMessage("Preencha bootstrap key, nome, email e senha.");
+    if (!bootstrapKey || !name || !email) {
+      setStatusMessage("Preencha bootstrap key, nome e email.");
       return;
     }
 
@@ -181,7 +180,6 @@ export function useCompanies() {
       bootstrapKey,
       name,
       email,
-      password,
     });
   }
 
