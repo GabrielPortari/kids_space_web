@@ -20,7 +20,8 @@ export function SectionTemplate({ item }: SectionTemplateProps) {
       <article className="auth-card">
         <h3>Próximo passo</h3>
         <p>
-          Esta tela é um template inicial do novo painel master. A próxima etapa será conectar os dados do endpoint correspondente.
+          Esta tela é um template inicial do novo painel master. A próxima etapa
+          será conectar os dados do endpoint correspondente.
         </p>
       </article>
 

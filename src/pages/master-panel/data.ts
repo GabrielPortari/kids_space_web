@@ -55,8 +55,7 @@ export const MASTER_SECTION_ITEMS: MasterSectionItem[] = [
     id: "attendances",
     label: "Atendimentos",
     title: "Atendimentos",
-    description:
-      "Check-ins, check-outs e histórico consolidado do sistema.",
+    description: "Check-ins, check-outs e histórico consolidado do sistema.",
   },
   {
     id: "bootstrap",

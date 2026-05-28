@@ -1,57 +1,81 @@
 import { useMasterOverview } from "../hooks/useMasterOverview";
+import { useQueryClient } from "@tanstack/react-query";
+import { SkeletonBlock } from "../../workspace/components/WorkspaceSkeleton";
 
 export function OverviewSection() {
+  const queryClient = useQueryClient();
   const { counts, isLoading } = useMasterOverview();
 
-  if (isLoading) return (
-    <section className="crm-panel">
-      <div className="crm-panel-head">
-        <h2>Visão geral</h2>
-      </div>
-      <p>Carregando...</p>
-    </section>
-  );
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["master"] });
+  };
 
   return (
     <section className="crm-panel">
       <div className="crm-panel-head">
-        <div>
+        <div className="crm-panel-title-group">
           <h2>Visão geral</h2>
-          <p>Resumo rápido do sistema para o master.</p>
+          <span className="pill">Resumo master</span>
+        </div>
+        <div className="crm-panel-head-actions">
+          <button
+            type="button"
+            className="btn outline crm-icon-btn"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            aria-label="Atualizar visão geral"
+            title="Atualizar visão geral"
+          >
+            ↻
+          </button>
         </div>
       </div>
 
-      <div className="crm-grid">
-        <div className="crm-card">
-          <strong>{counts.admins}</strong>
-          <p>Admins</p>
+      {isLoading ? (
+        <div className="profile-grid dashboard-metrics-grid">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <article
+              key={`overview-skeleton-${index}`}
+              className="profile-card profile-card-skeleton"
+            >
+              <SkeletonBlock width="42%" height="0.72rem" />
+              <SkeletonBlock width="68%" height="1.9rem" />
+            </article>
+          ))}
         </div>
+      ) : (
+        <div className="profile-grid dashboard-metrics-grid">
+          <article className="profile-card">
+            <span>Admins</span>
+            <strong>{counts.admins}</strong>
+          </article>
 
-        <div className="crm-card">
-          <strong>{counts.companies}</strong>
-          <p>Companies</p>
-        </div>
+          <article className="profile-card">
+            <span>Empresas</span>
+            <strong>{counts.companies}</strong>
+          </article>
 
-        <div className="crm-card">
-          <strong>{counts.collaborators}</strong>
-          <p>Collaborators</p>
-        </div>
+          <article className="profile-card">
+            <span>Colaboradores</span>
+            <strong>{counts.collaborators}</strong>
+          </article>
 
-        <div className="crm-card">
-          <strong>{counts.parents}</strong>
-          <p>Parents</p>
-        </div>
+          <article className="profile-card">
+            <span>Responsáveis</span>
+            <strong>{counts.parents}</strong>
+          </article>
 
-        <div className="crm-card">
-          <strong>{counts.children}</strong>
-          <p>Children</p>
-        </div>
+          <article className="profile-card">
+            <span>Crianças</span>
+            <strong>{counts.children}</strong>
+          </article>
 
-        <div className="crm-card">
-          <strong>{counts.attendances}</strong>
-          <p>Attendances</p>
+          <article className="profile-card">
+            <span>Atendimentos</span>
+            <strong>{counts.attendances}</strong>
+          </article>
         </div>
-      </div>
+      )}
     </section>
   );
 }

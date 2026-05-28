@@ -14,11 +14,7 @@ export function SectionNav({
   activeSection,
   onSelect,
 }: SectionNavProps) {
-  const {
-    role,
-    session,
-    logout,
-  } = useWorkspaceContext();
+  const { role, session, logout } = useWorkspaceContext();
 
   return (
     <aside className="crm-sidebar">

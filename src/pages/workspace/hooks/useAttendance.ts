@@ -16,14 +16,8 @@ import { PAGE_SIZE } from "../constants";
 
 export function useAttendance() {
   const queryClient = useQueryClient();
-  const {
-    role,
-    section,
-    search,
-    page,
-    setStatusMessage,
-    currentCompanyScope,
-  } = useWorkspaceContext();
+  const { role, section, search, page, setStatusMessage, currentCompanyScope } =
+    useWorkspaceContext();
 
   // State
   const [isAttendanceViewModalOpen, setIsAttendanceViewModalOpen] =

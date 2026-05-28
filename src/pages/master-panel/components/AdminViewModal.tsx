@@ -1,91 +1,181 @@
 import { createPortal } from "react-dom";
-import { ModalIconWrap, GroupIcon } from "../../workspace/components/WorkspaceVisuals";
+import { GroupIcon } from "../../workspace/components/WorkspaceVisuals";
+import {
+  ProfileModal,
+  ProfileModalSection,
+} from "../../workspace/components/ProfileModal";
+import {
+  maskByFieldKey,
+  maskPhone,
+  maskZipCode,
+} from "../../workspace/formatter";
 
 type AdminViewModalProps = {
   isOpen: boolean;
   admin: any | null;
   onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  isDeleting?: boolean;
 };
 
-export function AdminViewModal({ isOpen, admin, onClose, onEdit, onDelete, isDeleting = false }: AdminViewModalProps) {
-  if (!isOpen || !admin) return null;
+export function AdminViewModal({
+  isOpen,
+  admin,
+  onClose,
+}: AdminViewModalProps) {
+  if (!isOpen || !admin) {
+    return null;
+  }
 
   return createPortal(
-    <div className="crm-modal-backdrop" role="presentation" onClick={onClose}>
-      <section className="crm-modal crm-modal-wide profile-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-modal-header">
-          <div className="profile-modal-header-left">
-            <ModalIconWrap>
-              <GroupIcon />
-            </ModalIconWrap>
-            <div>
-              <p className="profile-modal-title">{admin.name || "Admin"}</p>
-              <p className="profile-modal-subtitle">{admin.email}</p>
-            </div>
+    <ProfileModal
+      isOpen={isOpen}
+      onClose={onClose}
+      icon={<GroupIcon />}
+      title={admin.name || "Admin"}
+      subtitle={admin.email || "-"}
+      mode="view"
+    >
+      <ProfileModalSection label="Dados pessoais">
+        <div className="profile-form-fields-grid profile-form-personal-grid">
+          <div className="field field-span-6">
+            <label htmlFor="admin-view-name">Nome</label>
+            <input
+              id="admin-view-name"
+              value={admin.name || "-"}
+              disabled
+              className="field-readonly"
+            />
           </div>
 
-          <div className="profile-modal-footer-actions">
-            <button type="button" className="btn outline" onClick={onEdit}>Editar</button>
-            <button type="button" className="btn danger outline" onClick={onDelete} disabled={isDeleting}>{isDeleting ? "Deletando..." : "Deletar"}</button>
-            <button type="button" className="profile-modal-close" onClick={onClose}>Fechar</button>
-          </div>
-        </div>
-
-        <div className="profile-form-body">
-          <div className="profile-form-section">
-            <div className="profile-form-fields-grid profile-form-personal-grid">
-              <div className="field field-span-6">
-                <label>Nome</label>
-                <div>{admin.name || "-"}</div>
-              </div>
-              <div className="field field-span-6">
-                <label>Email</label>
-                <div>{admin.email || "-"}</div>
-              </div>
-              <div className="field field-span-4">
-                <label>Documento</label>
-                <div>{admin.document || "-"}</div>
-              </div>
-              <div className="field field-span-4">
-                <label>Contato</label>
-                <div>{admin.contact || "-"}</div>
-              </div>
-            </div>
+          <div className="field field-span-6">
+            <label htmlFor="admin-view-email">Email</label>
+            <input
+              id="admin-view-email"
+              value={admin.email || "-"}
+              disabled
+              className="field-readonly"
+            />
           </div>
 
-          <div className="profile-form-section">
-            <div className="profile-form-section-header">
-              <span className="profile-form-section-label">Endereço</span>
-              <div className="profile-form-section-line" />
-            </div>
+          <div className="field field-span-4">
+            <label htmlFor="admin-view-document">Documento</label>
+            <input
+              id="admin-view-document"
+              value={maskByFieldKey("document", admin.document || "")}
+              disabled
+              className="field-readonly"
+            />
+          </div>
 
-            <div className="profile-form-address-stack">
-              <div className="profile-form-fields-grid profile-form-address-grid">
-                <div className="field field-span-6">
-                  <label>Rua</label>
-                  <div>{admin.address?.street || "-"}</div>
-                </div>
-                <div className="field field-span-1">
-                  <label>Número</label>
-                  <div>{admin.address?.number || "-"}</div>
-                </div>
-                <div className="field field-span-2">
-                  <label>Complemento</label>
-                  <div>{admin.address?.complement || "-"}</div>
-                </div>
-                <div className="field field-span-3">
-                  <label>Bairro</label>
-                  <div>{admin.address?.neighborhood || "-"}</div>
-                </div>
-              </div>
-            </div>
+          <div className="field field-span-4">
+            <label htmlFor="admin-view-contact">Contato</label>
+            <input
+              id="admin-view-contact"
+              value={maskPhone(admin.contact || "")}
+              disabled
+              className="field-readonly"
+            />
+          </div>
+
+          <div className="field field-span-4">
+            <label htmlFor="admin-view-active">Status</label>
+            <input
+              id="admin-view-active"
+              value={admin.active ? "Ativo" : "Inativo"}
+              disabled
+              className="field-readonly"
+            />
           </div>
         </div>
-      </section>
-    </div>,
+      </ProfileModalSection>
+
+      <ProfileModalSection label="Endereço">
+        <div className="profile-form-address-stack">
+          <div className="profile-form-fields-grid profile-form-address-grid">
+            <div className="field field-span-6">
+              <label htmlFor="admin-view-street">Rua</label>
+              <input
+                id="admin-view-street"
+                value={admin.address?.street || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+
+            <div className="field field-span-1">
+              <label htmlFor="admin-view-number">Número</label>
+              <input
+                id="admin-view-number"
+                value={admin.address?.number || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+
+            <div className="field field-span-2">
+              <label htmlFor="admin-view-complement">Complemento</label>
+              <input
+                id="admin-view-complement"
+                value={admin.address?.complement || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+
+            <div className="field field-span-3">
+              <label htmlFor="admin-view-district">Bairro</label>
+              <input
+                id="admin-view-district"
+                value={admin.address?.neighborhood || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+          </div>
+
+          <div className="profile-form-fields-grid profile-form-address-grid">
+            <div className="field field-span-6">
+              <label htmlFor="admin-view-city">Cidade</label>
+              <input
+                id="admin-view-city"
+                value={admin.address?.city || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+
+            <div className="field field-span-1">
+              <label htmlFor="admin-view-state">Estado</label>
+              <input
+                id="admin-view-state"
+                value={admin.address?.state || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+
+            <div className="field field-span-2">
+              <label htmlFor="admin-view-zipcode">CEP</label>
+              <input
+                id="admin-view-zipcode"
+                value={maskZipCode(admin.address?.zipcode || "")}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+
+            <div className="field field-span-3">
+              <label htmlFor="admin-view-country">País</label>
+              <input
+                id="admin-view-country"
+                value={admin.address?.country || "-"}
+                disabled
+                className="field-readonly"
+              />
+            </div>
+          </div>
+        </div>
+      </ProfileModalSection>
+    </ProfileModal>,
     document.body,
   );
 }

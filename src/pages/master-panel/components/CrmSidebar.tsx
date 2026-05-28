@@ -26,12 +26,7 @@ export function CrmSidebar({
 
       <div className="crm-scope">
         <label htmlFor="master-scope">Escopo</label>
-        <input
-          id="master-scope"
-          value="Global"
-          readOnly
-          aria-readonly="true"
-        />
+        <input id="master-scope" value="Global" readOnly aria-readonly="true" />
       </div>
 
       <nav className="crm-menu">

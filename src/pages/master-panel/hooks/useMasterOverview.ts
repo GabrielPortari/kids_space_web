@@ -9,12 +9,30 @@ import {
 import { listCompanies } from "../../../api/modules/companyApi";
 
 export function useMasterOverview() {
-  const adminsQ = useQuery({ queryKey: ["master", "admins", "list"], queryFn: () => listAdmins() });
-  const companiesQ = useQuery({ queryKey: ["master", "companies", "list"], queryFn: () => listCompanies() });
-  const collaboratorsQ = useQuery({ queryKey: ["master", "collaborators", "list"], queryFn: () => listCollaboratorsAdmin() });
-  const parentsQ = useQuery({ queryKey: ["master", "parents", "list"], queryFn: () => listParentsAdmin() });
-  const childrenQ = useQuery({ queryKey: ["master", "children", "list"], queryFn: () => listChildrenAdmin() });
-  const attendancesQ = useQuery({ queryKey: ["master", "attendances", "list"], queryFn: () => listAttendancesAdmin() });
+  const adminsQ = useQuery({
+    queryKey: ["master", "admins", "list"],
+    queryFn: () => listAdmins(),
+  });
+  const companiesQ = useQuery({
+    queryKey: ["master", "companies", "list"],
+    queryFn: () => listCompanies(),
+  });
+  const collaboratorsQ = useQuery({
+    queryKey: ["master", "collaborators", "list"],
+    queryFn: () => listCollaboratorsAdmin(),
+  });
+  const parentsQ = useQuery({
+    queryKey: ["master", "parents", "list"],
+    queryFn: () => listParentsAdmin(),
+  });
+  const childrenQ = useQuery({
+    queryKey: ["master", "children", "list"],
+    queryFn: () => listChildrenAdmin(),
+  });
+  const attendancesQ = useQuery({
+    queryKey: ["master", "attendances", "list"],
+    queryFn: () => listAttendancesAdmin(),
+  });
 
   const counts = {
     admins: adminsQ.data?.length ?? 0,
