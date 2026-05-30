@@ -997,6 +997,104 @@ textarea:focus {
 .crm-scope {
   display: grid;
   gap: 0.35rem;
+  position: relative;
+}
+
+.crm-scope-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.2rem;
+  padding: 0.35rem 0.6rem;
+  border: 1.5px solid #d9c9b8;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+}
+
+.crm-scope-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.crm-scope-clear {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.crm-scope-clear:hover {
+  color: var(--danger, #c0392b);
+}
+
+.crm-scope-btn {
+  width: 100%;
+  font-size: 0.84rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.crm-scope-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: #fff;
+  border: 1.5px solid #d9c9b8;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.crm-scope-picker input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-bottom: 1.5px solid #ecdece;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.crm-scope-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.crm-scope-picker-list li button {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.88rem;
+  color: var(--ink);
+  transition: background 0.12s;
+}
+
+.crm-scope-picker-list li button:hover,
+.crm-scope-picker-list li button.active {
+  background: rgba(184, 92, 56, 0.08);
+  color: var(--accent);
+}
+
+.crm-scope-picker-empty {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
 }
 
 .crm-menu {

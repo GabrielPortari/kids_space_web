@@ -52,7 +52,7 @@ function getAttendanceType(item: Record<string, unknown>): string {
   return "Desconhecido";
 }
 
-export function AttendanceSection() {
+export function AttendanceSection({ companyId }: { companyId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -66,8 +66,8 @@ export function AttendanceSection() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const attendancesQuery = useQuery({
-    queryKey: ["master", "attendances"],
-    queryFn: () => listAttendancesAdmin(),
+    queryKey: ["master", "attendances", companyId ?? "all"],
+    queryFn: () => listAttendancesAdmin(companyId),
   });
 
   const attendances = attendancesQuery.data || [];
@@ -97,9 +97,9 @@ export function AttendanceSection() {
 
   useEffect(() => {
     if (isCreateOpen) {
-      setForm(INITIAL_FORM);
+      setForm({ ...INITIAL_FORM, companyId: companyId ?? "" });
     }
-  }, [isCreateOpen]);
+  }, [isCreateOpen, companyId]);
 
   const notify = (message: string) => {
     setStatusMessage(message);
@@ -108,16 +108,17 @@ export function AttendanceSection() {
 
   const createMut = useMutation({
     mutationFn: async () => {
-      if (!form.companyId.trim() || !form.childId.trim()) {
+      const effectiveCompanyId = (companyId || form.companyId).trim();
+      if (!effectiveCompanyId || !form.childId.trim()) {
         throw new Error("Company ID e Child ID sao obrigatorios.");
       }
 
-      return createAttendanceAdmin(form.companyId.trim(), {
+      return createAttendanceAdmin(effectiveCompanyId, {
         childId: form.childId.trim(),
         responsibleIdWhoCheckedInId:
           form.responsibleIdWhoCheckedInId.trim() || undefined,
         notes: form.notes.trim() || undefined,
-        companyId: form.companyId.trim(),
+        companyId: effectiveCompanyId,
       });
     },
     onSuccess: async () => {
@@ -482,15 +483,20 @@ export function AttendanceSection() {
                 <label htmlFor="master-att-company">Company ID</label>
                 <input
                   id="master-att-company"
-                  value={form.companyId}
-                  onChange={(e) =>
-                    setForm((current) => ({
-                      ...current,
-                      companyId: e.target.value,
-                    }))
+                  value={companyId ?? form.companyId}
+                  onChange={
+                    companyId
+                      ? undefined
+                      : (e) =>
+                          setForm((current) => ({
+                            ...current,
+                            companyId: e.target.value,
+                          }))
                   }
                   placeholder="ID da company"
                   required
+                  readOnly={!!companyId}
+                  className={companyId ? "field-readonly" : ""}
                 />
               </div>
               <div className="field field-span-6">

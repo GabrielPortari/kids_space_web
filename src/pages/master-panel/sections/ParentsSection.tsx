@@ -54,7 +54,7 @@ const INITIAL_FORM: ParentAdminFormState = {
   addressCountry: "",
 };
 
-export function ParentsSection() {
+export function ParentsSection({ companyId }: { companyId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -68,8 +68,8 @@ export function ParentsSection() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const parentsQuery = useQuery({
-    queryKey: ["master", "parents"],
-    queryFn: () => listParentsAdmin(),
+    queryKey: ["master", "parents", companyId ?? "all"],
+    queryFn: () => listParentsAdmin(companyId),
   });
 
   const parents = parentsQuery.data || [];
@@ -93,9 +93,9 @@ export function ParentsSection() {
 
   useEffect(() => {
     if (isCreateOpen) {
-      setForm(INITIAL_FORM);
+      setForm({ ...INITIAL_FORM, companyId: companyId ?? "" });
     }
-  }, [isCreateOpen]);
+  }, [isCreateOpen, companyId]);
 
   const notify = (message: string) => {
     setStatusMessage(message);
@@ -104,12 +104,13 @@ export function ParentsSection() {
 
   const createMut = useMutation({
     mutationFn: async () => {
-      if (!form.companyId.trim()) {
+      const effectiveCompanyId = (companyId || form.companyId).trim();
+      if (!effectiveCompanyId) {
         throw new Error("Company ID e obrigatorio para criar responsavel.");
       }
 
       return createParentAdmin(
-        form.companyId.trim(),
+        effectiveCompanyId,
         buildParentAdminPayload(form),
       );
     },
@@ -570,14 +571,19 @@ export function ParentsSection() {
                 <label htmlFor="master-parent-company">Company ID</label>
                 <input
                   id="master-parent-company"
-                  value={form.companyId}
-                  onChange={(e) =>
-                    setForm((current) => ({
-                      ...current,
-                      companyId: e.target.value,
-                    }))
+                  value={companyId ?? form.companyId}
+                  onChange={
+                    companyId
+                      ? undefined
+                      : (e) =>
+                          setForm((current) => ({
+                            ...current,
+                            companyId: e.target.value,
+                          }))
                   }
                   placeholder="ID da company"
+                  readOnly={!!companyId}
+                  className={companyId ? "field-readonly" : ""}
                   required
                 />
               </div>

@@ -66,7 +66,7 @@ function buildInitialForm(): ChildAdminFormState {
 
 const INITIAL_FORM = buildInitialForm();
 
-export function ChildrenSection() {
+export function ChildrenSection({ companyId }: { companyId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -80,8 +80,8 @@ export function ChildrenSection() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const childrenQuery = useQuery({
-    queryKey: ["master", "children"],
-    queryFn: () => listChildrenAdmin(),
+    queryKey: ["master", "children", companyId ?? "all"],
+    queryFn: () => listChildrenAdmin(companyId),
   });
 
   const children = childrenQuery.data || [];
@@ -105,9 +105,9 @@ export function ChildrenSection() {
 
   useEffect(() => {
     if (isCreateOpen) {
-      setForm(buildInitialForm());
+      setForm({ ...buildInitialForm(), companyId: companyId ?? "" });
     }
-  }, [isCreateOpen]);
+  }, [isCreateOpen, companyId]);
 
   const notify = (message: string) => {
     setStatusMessage(message);
@@ -116,14 +116,12 @@ export function ChildrenSection() {
 
   const createMut = useMutation({
     mutationFn: async () => {
-      if (!form.companyId.trim()) {
+      const effectiveCompanyId = (companyId || form.companyId).trim();
+      if (!effectiveCompanyId) {
         throw new Error("Company ID e obrigatorio para criar crianca.");
       }
 
-      return createChildAdmin(
-        form.companyId.trim(),
-        buildChildAdminPayload(form),
-      );
+      return createChildAdmin(effectiveCompanyId, buildChildAdminPayload(form));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["master", "children"] });
@@ -585,15 +583,20 @@ export function ChildrenSection() {
                 <label htmlFor="master-child-company">Company ID</label>
                 <input
                   id="master-child-company"
-                  value={form.companyId}
-                  onChange={(e) =>
-                    setForm((current) => ({
-                      ...current,
-                      companyId: e.target.value,
-                    }))
+                  value={companyId ?? form.companyId}
+                  onChange={
+                    companyId
+                      ? undefined
+                      : (e) =>
+                          setForm((current) => ({
+                            ...current,
+                            companyId: e.target.value,
+                          }))
                   }
                   placeholder="ID da company"
                   required
+                  readOnly={!!companyId}
+                  className={companyId ? "field-readonly" : ""}
                 />
               </div>
               <div className="field field-span-12">

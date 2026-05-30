@@ -52,7 +52,7 @@ const INITIAL_FORM: CollaboratorAdminFormState = {
   addressCountry: "",
 };
 
-export function CollaboratorsSection() {
+export function CollaboratorsSection({ companyId }: { companyId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -66,8 +66,8 @@ export function CollaboratorsSection() {
   const [selectedItem, setSelectedItem] = useState<ListItem | null>(null);
 
   const collaboratorsQuery = useQuery({
-    queryKey: ["master", "collaborators"],
-    queryFn: () => listCollaboratorsAdmin(),
+    queryKey: ["master", "collaborators", companyId ?? "all"],
+    queryFn: () => listCollaboratorsAdmin(companyId),
   });
 
   const collaborators = collaboratorsQuery.data || [];
@@ -91,9 +91,9 @@ export function CollaboratorsSection() {
 
   useEffect(() => {
     if (isCreateOpen) {
-      setForm(INITIAL_FORM);
+      setForm({ ...INITIAL_FORM, companyId: companyId ?? "" });
     }
-  }, [isCreateOpen]);
+  }, [isCreateOpen, companyId]);
 
   const notify = (message: string) => {
     setStatusMessage(message);
@@ -102,12 +102,13 @@ export function CollaboratorsSection() {
 
   const createMut = useMutation({
     mutationFn: async () => {
-      if (!form.companyId.trim()) {
+      const effectiveCompanyId = (companyId || form.companyId).trim();
+      if (!effectiveCompanyId) {
         throw new Error("Company ID e obrigatorio para criar colaborador.");
       }
 
       return createCollaboratorAdmin(
-        form.companyId.trim(),
+        effectiveCompanyId,
         buildCollaboratorAdminPayload(form),
       );
     },
@@ -560,15 +561,20 @@ export function CollaboratorsSection() {
                 <label htmlFor="master-collab-company">Company ID</label>
                 <input
                   id="master-collab-company"
-                  value={form.companyId}
-                  onChange={(e) =>
-                    setForm((current) => ({
-                      ...current,
-                      companyId: e.target.value,
-                    }))
+                  value={companyId ?? form.companyId}
+                  onChange={
+                    companyId
+                      ? undefined
+                      : (e) =>
+                          setForm((current) => ({
+                            ...current,
+                            companyId: e.target.value,
+                          }))
                   }
                   placeholder="ID da company"
                   required
+                  readOnly={!!companyId}
+                  className={companyId ? "field-readonly" : ""}
                 />
               </div>
             </div>
