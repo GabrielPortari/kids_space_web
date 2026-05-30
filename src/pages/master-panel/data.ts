@@ -17,22 +17,22 @@ export const MASTER_SECTION_ITEMS: MasterSectionItem[] = [
   },
   {
     id: "admins",
-    label: "Admins",
-    title: "Gestão de admins",
+    label: "Administradores",
+    title: "Gestão de administradores",
     description:
       "Cadastro, edição, consulta e remoção de administradores do sistema.",
     badge: "core",
   },
   {
     id: "companies",
-    label: "Companies",
+    label: "Empresas",
     title: "Empresas",
     description:
       "Visão consolidada das empresas e seus dados para escopo global.",
   },
   {
     id: "collaborators",
-    label: "Collaborators",
+    label: "Colaboradores",
     title: "Colaboradores",
     description:
       "Lista global e ações operacionais de colaboradores por empresa.",
