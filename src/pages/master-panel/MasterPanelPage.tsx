@@ -3,6 +3,13 @@ import { CrmSidebar } from "./components/CrmSidebar";
 import { SectionTemplate } from "./components/SectionTemplate";
 import { OverviewSection } from "./sections/OverviewSection";
 import { AdminsSection } from "./sections/AdminsSection";
+import { CompaniesSection } from "./sections/CompaniesSection";
+import { ProfileSection } from "./sections/ProfileSection";
+import { CollaboratorsSection } from "./sections/CollaboratorsSection";
+import { ParentsSection } from "./sections/ParentsSection";
+import { ChildrenSection } from "./sections/ChildrenSection";
+import { AttendanceSection } from "./sections/AttendanceSection";
+import { BootstrapSection } from "./sections/BootstrapSection";
 import { MASTER_SECTION_ITEMS } from "./data";
 import type { MasterSectionId } from "./types";
 
@@ -16,6 +23,17 @@ export function MasterPanelPage() {
     [section],
   );
 
+  const showTemplateFallback =
+    section !== "overview" &&
+    section !== "admins" &&
+    section !== "profile" &&
+    section !== "companies" &&
+    section !== "collaborators" &&
+    section !== "parents" &&
+    section !== "children" &&
+    section !== "attendances" &&
+    section !== "bootstrap";
+
   return (
     <main className="crm-shell">
       <CrmSidebar
@@ -26,10 +44,15 @@ export function MasterPanelPage() {
 
       <section className="crm-main">
         {section === "overview" && <OverviewSection />}
+        {section === "profile" && <ProfileSection />}
+        {section === "companies" && <CompaniesSection />}
+        {section === "collaborators" && <CollaboratorsSection />}
+        {section === "parents" && <ParentsSection />}
+        {section === "children" && <ChildrenSection />}
+        {section === "attendances" && <AttendanceSection />}
+        {section === "bootstrap" && <BootstrapSection />}
         {section === "admins" && <AdminsSection />}
-        {section !== "overview" && section !== "admins" && (
-          <SectionTemplate item={currentItem} />
-        )}
+        {showTemplateFallback && <SectionTemplate item={currentItem} />}
       </section>
     </main>
   );

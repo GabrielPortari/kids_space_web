@@ -7,7 +7,11 @@ import type {
   ChildMedicationFormState,
 } from "./types";
 
-export function extractId(item: ListItem): string {
+export function extractId(item?: ListItem | null): string {
+  if (!item) {
+    return "";
+  }
+
   return String(item.id || item._id || item.uid || "");
 }
 
