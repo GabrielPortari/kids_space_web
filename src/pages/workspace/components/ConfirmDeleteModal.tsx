@@ -14,17 +14,14 @@ type ConfirmDeleteModalProps = {
 
 export function ConfirmDeleteModal({
   isOpen,
-  title = "Confirmar exclusao",
+  title = "Confirmar exclusão",
   message = "Quer mesmo excluir este item?",
   onConfirm,
   onCancel,
   isLoading = false,
   confirmLabel = "Excluir",
-  cancelLabel = "Cancelar",
 }: ConfirmDeleteModalProps) {
   if (!isOpen) return null;
-
-  void cancelLabel;
 
   return createPortal(
     <ProfileModal
@@ -32,7 +29,6 @@ export function ConfirmDeleteModal({
       onClose={onCancel}
       icon={<></>}
       title={title}
-      subtitle={undefined}
       mode="create"
       onSubmit={(e) => {
         e.preventDefault();
@@ -40,11 +36,11 @@ export function ConfirmDeleteModal({
       }}
       submitLabel={confirmLabel}
       isPending={isLoading}
-      footerLeft={undefined}
+      modalClassName="crm-modal-sm"
     >
-      <div>
-        <p>{message}</p>
-      </div>
+      <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "0.9375rem" }}>
+        {message}
+      </p>
     </ProfileModal>,
     document.body,
   );

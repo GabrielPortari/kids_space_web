@@ -17,6 +17,7 @@ export type ProfileModalProps = {
   footerLeft?: ReactNode;
   hideFooter?: boolean;
   headerActions?: ReactNode;
+  modalClassName?: string;
 };
 
 export function ProfileModal({
@@ -33,6 +34,7 @@ export function ProfileModal({
   footerLeft,
   hideFooter,
   headerActions,
+  modalClassName,
 }: ProfileModalProps) {
   if (!isOpen) {
     return null;
@@ -109,7 +111,7 @@ export function ProfileModal({
   const shell = (
     <div className="crm-modal-backdrop" role="presentation" onClick={onClose}>
       <section
-        className="crm-modal crm-modal-wide profile-modal"
+        className={`crm-modal crm-modal-wide profile-modal${modalClassName ? ` ${modalClassName}` : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

@@ -4,10 +4,13 @@ import { Pagination } from "../components/Pagination";
 import { SkeletonBlock } from "../components/WorkspaceSkeleton";
 import {
   AttendanceIcon,
-  ModalIconWrap,
   RecordAvatar,
   RefreshIcon,
 } from "../components/WorkspaceVisuals";
+import {
+  ProfileModal,
+  ProfileModalSection,
+} from "../components/ProfileModal";
 import { extractId, formatTimestamp } from "../formatter";
 import { useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
@@ -223,56 +226,152 @@ export function AttendanceSection() {
       {isAttendanceViewModalOpen &&
         viewingAttendance &&
         createPortal(
-          <div
-            className="crm-modal-backdrop"
-            role="presentation"
-            onClick={() => setIsAttendanceViewModalOpen(false)}
+          <ProfileModal
+            isOpen={isAttendanceViewModalOpen}
+            onClose={() => setIsAttendanceViewModalOpen(false)}
+            icon={<AttendanceIcon />}
+            title="Detalhes do Atendimento"
+            subtitle={
+              (viewingAttendance as any).childSnapshot?.name ||
+              (viewingAttendance as any).childName ||
+              "Atendimento"
+            }
+            mode="view"
           >
-            <section
-              className="crm-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Detalhes de atendimento"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="profile-modal-header">
-                <div className="profile-modal-header-left">
-                  <ModalIconWrap>
-                    <AttendanceIcon />
-                  </ModalIconWrap>
-                  <div>
-                    <p className="profile-modal-title">
-                      Detalhes de Atendimento
-                    </p>
-                    <p className="profile-modal-subtitle">
-                      Visualize as informações do atendimento
-                    </p>
-                  </div>
+            <ProfileModalSection label="Criança e tipo">
+              <div className="profile-form-fields-grid profile-form-personal-grid">
+                <div className="field field-span-6">
+                  <label>Criança</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).childSnapshot?.name ||
+                      (viewingAttendance as any).childName ||
+                      "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
                 </div>
-                <button
-                  type="button"
-                  className="profile-modal-close"
-                  aria-label="Fechar"
-                  onClick={() => setIsAttendanceViewModalOpen(false)}
-                >
-                  ✕
-                </button>
+                <div className="field field-span-6">
+                  <label>Tipo</label>
+                  <input
+                    value={getAttendanceTypeLabel(viewingAttendance)}
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
               </div>
-              <div className="collaborator-view-content">
-                <section className="profile-section">
-                  <h3>Informacoes gerais</h3>
-                  <div className="profile-grid">
-                    {attendanceDetails.map((detail) => (
-                      <article key={detail.label} className="profile-card">
-                        <span>{detail.label}</span>
-                        <strong>{detail.value}</strong>
-                      </article>
-                    ))}
-                  </div>
-                </section>
+            </ProfileModalSection>
+
+            <ProfileModalSection label="Horários">
+              <div className="profile-form-fields-grid profile-form-personal-grid">
+                <div className="field field-span-6">
+                  <label>Entrada</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).checkInTime
+                        ? formatTimestamp((viewingAttendance as any).checkInTime)
+                        : "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
+                <div className="field field-span-6">
+                  <label>Saída</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).checkOutTime
+                        ? formatTimestamp(
+                            (viewingAttendance as any).checkOutTime,
+                          )
+                        : "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
+                <div className="field field-span-12">
+                  <label>Tempo de permanência (segundos)</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).timeCheckedInSeconds || "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
               </div>
-            </section>
-          </div>,
+            </ProfileModalSection>
+
+            <ProfileModalSection label="Responsáveis e colaboradores">
+              <div className="profile-form-fields-grid profile-form-personal-grid">
+                <div className="field field-span-6">
+                  <label>Responsável — entrada</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).responsibleCheckedInSnapshot
+                        ?.name ||
+                      (viewingAttendance as any).responsibleIdWhoCheckedInId ||
+                      "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
+                <div className="field field-span-6">
+                  <label>Responsável — saída</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).responsibleCheckedOutSnapshot
+                        ?.name ||
+                      (viewingAttendance as any).responsibleIdWhoCheckedOutId ||
+                      "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
+                <div className="field field-span-6">
+                  <label>Colaborador — entrada</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).collaboratorCheckedInSnapshot
+                        ?.name ||
+                      (viewingAttendance as any).collaboratorWhoCheckedInId ||
+                      "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
+                <div className="field field-span-6">
+                  <label>Colaborador — saída</label>
+                  <input
+                    value={
+                      (viewingAttendance as any).collaboratorCheckedOutSnapshot
+                        ?.name ||
+                      (viewingAttendance as any).collaboratorWhoCheckedOutId ||
+                      "-"
+                    }
+                    disabled
+                    className="field-readonly"
+                  />
+                </div>
+              </div>
+            </ProfileModalSection>
+
+            <ProfileModalSection label="Observações">
+              <div className="field">
+                <textarea
+                  value={(viewingAttendance as any).notes || "-"}
+                  disabled
+                  className="field-readonly"
+                  rows={3}
+                />
+              </div>
+            </ProfileModalSection>
+          </ProfileModal>,
           document.body,
         )}
     </>
