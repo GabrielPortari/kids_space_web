@@ -1,12 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listCompanies } from "../../../api/modules/companyApi";
-
-type PaginatedResult<T> = {
-  items: T[];
-  total: number;
-  page: number;
-  perPage: number;
-};
+import type { Company } from "../../../domain/entities";
+import type { PaginatedResult } from "../types";
 
 export function useCompanies(
   page = 1,
@@ -15,13 +10,11 @@ export function useCompanies(
 ) {
   return useQuery({
     queryKey: ["master", "companies", page, perPage, filters],
-    queryFn: async (): Promise<PaginatedResult<any>> => {
+    queryFn: async (): Promise<PaginatedResult<Company>> => {
       const all = await listCompanies();
       const filtered = filters.name
-        ? all.filter((c: any) =>
-            String(c.name || "")
-              .toLowerCase()
-              .includes(filters.name!.toLowerCase()),
+        ? all.filter((c) =>
+            (c.name ?? "").toLowerCase().includes(filters.name!.toLowerCase()),
           )
         : all;
 

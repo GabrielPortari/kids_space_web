@@ -42,8 +42,6 @@ export function SectionNav({
       </nav>
 
       <div className="crm-sidebar-actions">
-        <hr className="crm-divider" />
-
         <Link to="/" className="btn outline auth-back">
           Voltar para Home
         </Link>

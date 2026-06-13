@@ -1,12 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listAdmins } from "../../../api/modules/adminApi";
-
-type PaginatedResult<T> = {
-  items: T[];
-  total: number;
-  page: number;
-  perPage: number;
-};
+import type { AdminRecord } from "../../../api/modules/adminEndpoints";
+import type { PaginatedResult } from "../types";
 
 export function useAdmins(
   page = 1,
@@ -15,7 +10,7 @@ export function useAdmins(
 ) {
   return useQuery({
     queryKey: ["master", "admins", page, perPage, filters],
-    queryFn: async (): Promise<PaginatedResult<any>> => {
+    queryFn: async (): Promise<PaginatedResult<AdminRecord>> => {
       const all = await listAdmins(filters);
       const total = all.length;
       const start = (page - 1) * perPage;

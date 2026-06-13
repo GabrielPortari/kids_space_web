@@ -1,3 +1,10 @@
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  perPage: number;
+};
+
 export type MasterSectionId =
   | "overview"
   | "profile"

@@ -8,7 +8,6 @@ import { apiRequest } from "../client";
 import { getList, toQueryString } from "./utils";
 import {
   ADMIN_V2_ENDPOINTS,
-  type AdminCompanyOverview,
   type AdminRecord,
   type BootstrapAdminPayload,
   type ChangeCollaboratorPasswordDto,
@@ -26,14 +25,6 @@ import {
   type CollaboratorPasswordChangeResponse,
 } from "./adminEndpoints";
 
-async function getCompanyOverview(companyId: string) {
-  return apiRequest<AdminCompanyOverview>(
-    ADMIN_V2_ENDPOINTS.companyOverview(companyId),
-    {
-      method: "GET",
-    },
-  );
-}
 
 export async function bootstrapAdmin(payload: BootstrapAdminPayload) {
   const { bootstrapKey, ...body } = payload;
@@ -82,37 +73,29 @@ export async function deleteAdmin(adminId: string) {
 
 export async function listCollaboratorsAdmin(companyId?: string) {
   if (companyId) {
-    const overview = await getCompanyOverview(companyId);
-    return overview.collaborators;
+    return getList<Collaborator>(ADMIN_V2_ENDPOINTS.companyCollaborators(companyId));
   }
-
   return getList<Collaborator>(ADMIN_V2_ENDPOINTS.allCollaborators);
 }
 
 export async function listParentsAdmin(companyId?: string) {
   if (companyId) {
-    const overview = await getCompanyOverview(companyId);
-    return overview.parents;
+    return getList<Parent>(ADMIN_V2_ENDPOINTS.companyParents(companyId));
   }
-
   return getList<Parent>(ADMIN_V2_ENDPOINTS.allParents);
 }
 
 export async function listChildrenAdmin(companyId?: string) {
   if (companyId) {
-    const overview = await getCompanyOverview(companyId);
-    return overview.children;
+    return getList<Child>(ADMIN_V2_ENDPOINTS.companyChildren(companyId));
   }
-
   return getList<Child>(ADMIN_V2_ENDPOINTS.allChildren);
 }
 
 export async function listAttendancesAdmin(companyId?: string) {
   if (companyId) {
-    const overview = await getCompanyOverview(companyId);
-    return overview.attendances;
+    return getList<Attendance>(ADMIN_V2_ENDPOINTS.companyAttendances(companyId));
   }
-
   return getList<Attendance>(ADMIN_V2_ENDPOINTS.allAttendances);
 }
 

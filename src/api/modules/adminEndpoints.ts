@@ -23,6 +23,8 @@ export const ADMIN_V2_ENDPOINTS = {
     `/v2/admin-management/companies/${companyId}/children`,
   companyChildById: (companyId: string, childId: string) =>
     `/v2/admin-management/companies/${companyId}/children/${childId}`,
+  companyAttendances: (companyId: string) =>
+    `/v2/admin-management/companies/${companyId}/attendances`,
   companyAttendancesCheckin: (companyId: string) =>
     `/v2/admin-management/companies/${companyId}/attendances/checkin`,
   companyAttendanceById: (companyId: string, attendanceId: string) =>
