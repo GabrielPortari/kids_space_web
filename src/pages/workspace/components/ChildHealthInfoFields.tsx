@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { formatMedicationSchedule } from "../formatter";
 import type {
   ChildHealthInfoFormState,
@@ -67,12 +67,31 @@ export function ChildHealthInfoFields({
     schedule: "",
   });
 
+  const dietInputRef = useRef<HTMLInputElement>(null);
+  const allergyInputRef = useRef<HTMLInputElement>(null);
+  const conditionInputRef = useRef<HTMLInputElement>(null);
+  const fearInputRef = useRef<HTMLInputElement>(null);
+  const medicationNameRef = useRef<HTMLInputElement>(null);
+
+  function warnEmpty(ref: React.RefObject<HTMLInputElement>) {
+    const el = ref.current;
+    if (!el) return;
+    el.setCustomValidity("Preencha este campo");
+    el.reportValidity();
+    el.setCustomValidity("");
+    el.focus();
+  }
+
   const addListItem = (
     key: keyof Omit<ChildHealthInfoFormState, "medications">,
     item: string,
+    ref: React.RefObject<HTMLInputElement>,
   ) => {
     const next = String(item || "").trim();
-    if (!next) return;
+    if (!next) {
+      warnEmpty(ref);
+      return;
+    }
 
     const current = (value[key] as string[]) || [];
     onChange(key, [...current, next]);
@@ -108,19 +127,20 @@ export function ChildHealthInfoFields({
               type="button"
               className="btn outline"
               onClick={() => {
-                addListItem("dietaryRestrictions", dietInput);
-                setDietInput("");
+                addListItem("dietaryRestrictions", dietInput, dietInputRef);
+                if (dietInput.trim()) setDietInput("");
               }}
               disabled={disabled}
             >
               +
             </button>
             <input
+              ref={dietInputRef}
               id="child-health-dietaryRestrictions"
               value={dietInput}
               onChange={(e) => setDietInput(e.target.value)}
               disabled={disabled}
-              placeholder="Adicionar restricao"
+              placeholder="Adicionar restrição"
             />
           </div>
 
@@ -150,14 +170,15 @@ export function ChildHealthInfoFields({
               type="button"
               className="btn outline"
               onClick={() => {
-                addListItem("allergies", allergyInput);
-                setAllergyInput("");
+                addListItem("allergies", allergyInput, allergyInputRef);
+                if (allergyInput.trim()) setAllergyInput("");
               }}
               disabled={disabled}
             >
               +
             </button>
             <input
+              ref={allergyInputRef}
               id="child-health-allergies"
               value={allergyInput}
               onChange={(e) => setAllergyInput(e.target.value)}
@@ -194,19 +215,20 @@ export function ChildHealthInfoFields({
               type="button"
               className="btn outline"
               onClick={() => {
-                addListItem("medicalConditions", conditionInput);
-                setConditionInput("");
+                addListItem("medicalConditions", conditionInput, conditionInputRef);
+                if (conditionInput.trim()) setConditionInput("");
               }}
               disabled={disabled}
             >
               +
             </button>
             <input
+              ref={conditionInputRef}
               id="child-health-medicalConditions"
               value={conditionInput}
               onChange={(e) => setConditionInput(e.target.value)}
               disabled={disabled}
-              placeholder="Adicionar condicao"
+              placeholder="Adicionar condição"
             />
           </div>
 
@@ -238,14 +260,15 @@ export function ChildHealthInfoFields({
               type="button"
               className="btn outline"
               onClick={() => {
-                addListItem("fearsOrSensitivities", fearInput);
-                setFearInput("");
+                addListItem("fearsOrSensitivities", fearInput, fearInputRef);
+                if (fearInput.trim()) setFearInput("");
               }}
               disabled={disabled}
             >
               +
             </button>
             <input
+              ref={fearInputRef}
               id="child-health-fearsOrSensitivities"
               value={fearInput}
               onChange={(e) => setFearInput(e.target.value)}
@@ -281,20 +304,22 @@ export function ChildHealthInfoFields({
 
         <div className="child-medications-list">
           <article className="child-medication-row child-medication-row-draft">
-            <MedicationField
-              label="Nome"
-              id="child-medication-draft-name"
-              value={medicationDraft.name}
-              onChange={(nextValue) =>
-                setMedicationDraft((current) => ({
-                  ...current,
-                  name: nextValue,
-                }))
-              }
-              disabled={disabled}
-              placeholder="Ritalina"
-              className="child-medication-field child-medication-field-name"
-            />
+            <div className={`field child-medication-field child-medication-field-name`}>
+              <label htmlFor="child-medication-draft-name">Nome</label>
+              <input
+                ref={medicationNameRef}
+                id="child-medication-draft-name"
+                value={medicationDraft.name}
+                onChange={(e) =>
+                  setMedicationDraft((current) => ({
+                    ...current,
+                    name: e.target.value,
+                  }))
+                }
+                disabled={disabled}
+                placeholder="Ritalina"
+              />
+            </div>
 
             <MedicationField
               label="Dosagem"
@@ -363,6 +388,7 @@ export function ChildHealthInfoFields({
                     !nextMedication.dosage &&
                     !nextMedication.schedule
                   ) {
+                    warnEmpty(medicationNameRef);
                     return;
                   }
 

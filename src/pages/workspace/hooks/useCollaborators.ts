@@ -8,7 +8,6 @@ import {
   updateCollaborator,
   type CreateCollaboratorPayload,
 } from "../../../api/modules/collaboratorApi";
-import { listCollaboratorsAdmin } from "../../../api/modules/adminApi";
 import type { CollaboratorFormState, ListItem } from "../types";
 import { INITIAL_COLLABORATOR_FORM } from "../constants";
 import { buildCollaboratorPayload } from "../formPayloads";
@@ -29,7 +28,6 @@ export function useCollaborators() {
     search,
     page,
     setStatusMessage,
-    isAdminOrMaster,
     canManageCollaborators,
     currentCompanyScope,
   } = useWorkspaceContext();
@@ -57,10 +55,7 @@ export function useCollaborators() {
   // Queries
   const collaboratorsQuery = useQuery({
     queryKey: ["collaborators", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listCollaboratorsAdmin(currentCompanyScope)
-        : listCollaborators(currentCompanyScope),
+    queryFn: () => listCollaborators(currentCompanyScope),
     enabled: canManageCollaborators && section === "collaborators",
   });
 

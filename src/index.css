@@ -1,44 +1,64 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap");
 
 :root {
-  --bg: #f3ebe0;
-  --bg-alt: #efe4d6;
-  --paper: #fffaf2;
-  --paper-elevated: #fffdf8;
-  --panel: #f8f1e8;
-  --panel-strong: #efe4d6;
-  --ink-strong: #18120e;
-  --ink-soft: #64584d;
-  --ink-muted: #8c7f73;
-  --line-soft: #dcc8b3;
-  --line-strong: #2a231d;
-  --accent: #b5522a;
-  --accent-deep: #7e3016;
-  --accent-soft: #eac6ad;
-  --success: #2e7d51;
-  --warning: #b47b24;
-  --danger: #ab4a3b;
+  /* ─── Surfaces ─────────────────────────────────────── */
+  --bg:              #f0ebe4;
+  --bg-alt:          #e8e1d9;
+  --paper:           #ffffff;
+  --paper-elevated:  #fdfcfb;
+  --panel:           #f7f4f0;
+  --panel-strong:    #ede8e1;
+
+  /* ─── Text ─────────────────────────────────────────── */
+  --ink-strong:  #1a1512;
+  --ink:         #1a1512;
+  --ink-soft:    #5a524c;
+  --ink-muted:   #9a908a;
+
+  /* ─── Borders ──────────────────────────────────────── */
+  --line-soft:   #ddd5cc;
+  --line-strong: #c4b9b2;
+
+  /* ─── Brand ────────────────────────────────────────── */
+  --accent:      #b85c38;
+  --accent-deep: #8e401e;
+  --accent-soft: #f4ddd2;
+
+  /* ─── Status ───────────────────────────────────────── */
+  --success: #2d7a50;
+  --warning: #b07a20;
+  --danger:  #a83832;
+
+  /* ─── Radius ───────────────────────────────────────── */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 12px;
-  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* ─── Typography ───────────────────────────────────── */
+  --font-body:  "Manrope", "Segoe UI", system-ui, sans-serif;
   --font-title: "Fraunces", Georgia, serif;
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-pop: 0 2px 0 var(--accent);
-  --shadow-ink: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
+
+  /* ─── Shadows ──────────────────────────────────────── */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-pop:  0 1px 0 var(--accent-deep);
+  --shadow-ink:  0 8px 32px rgba(0, 0, 0, 0.14);
+
+  /* ─── Space scale (8px grid) ───────────────────────── */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
 
   font-family: var(--font-body);
-  line-height: 1.55;
-  font-weight: 500;
+  line-height: 1.6;
+  font-weight: 400;
   color: var(--ink-strong);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -51,7 +71,7 @@
 }
 
 ::selection {
-  background: rgba(181, 82, 42, 0.2);
+  background: rgba(184, 92, 56, 0.16);
   color: var(--ink-strong);
 }
 
@@ -64,67 +84,12 @@ body {
   margin: 0;
   min-height: 100dvh;
   color: var(--ink-strong);
-  background:
-    radial-gradient(
-      circle at 14% 14%,
-      rgba(183, 108, 58, 0.18),
-      transparent 24%
-    ),
-    radial-gradient(circle at 88% 8%, rgba(98, 123, 85, 0.18), transparent 23%),
-    radial-gradient(
-      circle at 85% 86%,
-      rgba(174, 119, 60, 0.1),
-      transparent 26%
-    ),
-    linear-gradient(180deg, #f7efe3 0%, #f3e7d8 52%, #efe4d6 100%);
+  background: linear-gradient(150deg, #f5f0ea 0%, #ede7de 55%, #e5ddd3 100%);
   overflow-x: clip;
-  position: relative;
-  isolation: isolate;
-}
-
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-}
-
-body::before {
-  background:
-    radial-gradient(
-      circle at 20% 20%,
-      rgba(255, 255, 255, 0.45),
-      transparent 18%
-    ),
-    radial-gradient(
-      circle at 80% 12%,
-      rgba(255, 255, 255, 0.18),
-      transparent 22%
-    ),
-    radial-gradient(
-      circle at 50% 100%,
-      rgba(255, 255, 255, 0.12),
-      transparent 20%
-    );
-  opacity: 0.9;
-}
-
-body::after {
-  background-image: linear-gradient(
-    rgba(24, 18, 14, 0.03) 1px,
-    transparent 1px
-  );
-  background-size: 100% 38px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 80%);
-  opacity: 0.22;
 }
 
 #root {
   min-height: 100dvh;
-  position: relative;
-  z-index: 0;
 }
 
 img {
@@ -144,40 +109,31 @@ textarea {
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(24, 18, 14, 0.05);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(88, 72, 56, 0.4),
-    rgba(181, 82, 42, 0.75)
-  );
-  border: 3px solid transparent;
-  background-clip: content-box;
+  background: rgba(90, 82, 76, 0.22);
   border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(88, 72, 56, 0.5),
-    rgba(181, 82, 42, 0.95)
-  );
+  background: rgba(90, 82, 76, 0.38);
   background-clip: content-box;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -185,24 +141,13 @@ textarea {
 }
 
 @keyframes drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-
-  50% {
-    transform: translate3d(0, -8px, 0);
-  }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%       { transform: translate3d(0, -8px, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
