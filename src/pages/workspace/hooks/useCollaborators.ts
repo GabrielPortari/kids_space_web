@@ -8,13 +8,11 @@ import {
   updateCollaborator,
   type CreateCollaboratorPayload,
 } from "../../../api/modules/collaboratorApi";
-import { buildBackendAddressPayload } from "../../../api/address";
-import { listCollaboratorsAdmin } from "../../../api/modules/adminApi";
 import type { CollaboratorFormState, ListItem } from "../types";
 import { INITIAL_COLLABORATOR_FORM } from "../constants";
+import { buildCollaboratorPayload } from "../formPayloads";
 import {
   extractId,
-  normalizeDigits,
   matchesSearch,
   toCollaboratorFormState,
 } from "../formatter";
@@ -30,7 +28,6 @@ export function useCollaborators() {
     search,
     page,
     setStatusMessage,
-    isAdminOrMaster,
     canManageCollaborators,
     currentCompanyScope,
   } = useWorkspaceContext();
@@ -58,10 +55,7 @@ export function useCollaborators() {
   // Queries
   const collaboratorsQuery = useQuery({
     queryKey: ["collaborators", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listCollaboratorsAdmin(currentCompanyScope)
-        : listCollaborators(currentCompanyScope),
+    queryFn: () => listCollaborators(currentCompanyScope),
     enabled: canManageCollaborators && section === "collaborators",
   });
 
@@ -132,29 +126,27 @@ export function useCollaborators() {
   // Handlers
   async function onCreateCollaboratorModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = collaboratorForm.name.trim();
-    const email = collaboratorForm.email.trim();
-    const document = normalizeDigits(collaboratorForm.document).slice(0, 14);
-    const contact = normalizeDigits(collaboratorForm.contact).slice(0, 11);
-    const birthDate = collaboratorForm.birthDate.trim();
+    const payload = buildCollaboratorPayload(
+      collaboratorForm,
+      currentCompanyScope,
+    );
 
-    if (!name || !email) {
+    if (!payload.name || !payload.email) {
       setStatusMessage("Nome e email sao obrigatorios para colaborador.");
       return;
     }
 
-    await createCollaboratorMut.mutateAsync({
-      name,
-      email,
-      document: document || undefined,
-      contact: contact || undefined,
-      birthDate: birthDate || undefined,
-      address: buildBackendAddressPayload(collaboratorForm),
-      companyId: currentCompanyScope,
-    });
+    await createCollaboratorMut.mutateAsync(payload);
 
     setIsCollaboratorCreateModalOpen(false);
     setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+  }
+
+  function openCollaboratorCreateModal() {
+    setEditingCollaboratorId(null);
+    setViewingCollaboratorId(null);
+    setCollaboratorForm(INITIAL_COLLABORATOR_FORM);
+    setIsCollaboratorCreateModalOpen(true);
   }
 
   async function onUpdateCollaboratorModal(event: FormEvent<HTMLFormElement>) {
@@ -165,25 +157,19 @@ export function useCollaborators() {
       return;
     }
 
-    const name = collaboratorForm.name.trim();
-    const email = collaboratorForm.email.trim();
-    const document = normalizeDigits(collaboratorForm.document).slice(0, 14);
-    const contact = normalizeDigits(collaboratorForm.contact).slice(0, 11);
-    const birthDate = collaboratorForm.birthDate.trim();
+    const payload = buildCollaboratorPayload(
+      collaboratorForm,
+      currentCompanyScope,
+    );
 
-    if (!name || !email) {
+    if (!payload.name || !payload.email) {
       setStatusMessage("Nome e email sao obrigatorios para colaborador.");
       return;
     }
 
     await updateCollaboratorMut.mutateAsync({
       id: editingCollaboratorId,
-      name,
-      email,
-      document: document || undefined,
-      contact: contact || undefined,
-      birthDate: birthDate || undefined,
-      address: buildBackendAddressPayload(collaboratorForm),
+      ...payload,
     });
 
     setIsCollaboratorEditModalOpen(false);
@@ -261,6 +247,7 @@ export function useCollaborators() {
 
     // handlers
     onCreateCollaboratorModal,
+    openCollaboratorCreateModal,
     onUpdateCollaboratorModal,
     openCollaboratorViewModal,
     openCollaboratorEditModal,

@@ -7,6 +7,10 @@ import {
 } from "../../../api/modules/profileApi";
 import { companyUpdateSchema } from "../validators";
 import {
+  buildCollaboratorProfilePayload,
+  buildCompanyProfilePayload,
+} from "../formPayloads";
+import {
   flattenRecord,
   maskByFieldKey,
   sortByPriority,
@@ -14,6 +18,25 @@ import {
 } from "../formatter";
 import type { ProfileFieldConfig } from "../types";
 import { useWorkspaceContext } from "../WorkspaceContext";
+
+function formatProfileFieldLabel(key: string): string {
+  if (!key.startsWith("address.")) {
+    return toFieldLabel(key);
+  }
+
+  const addressKey = key.slice("address.".length);
+  const labelMap: Record<string, string> = {
+    street: "Address",
+    number: "Number",
+    complement: "Complement",
+    neighborhood: "Neighborhood",
+    city: "City",
+    state: "State",
+    zipcode: "Zipcode",
+  };
+
+  return labelMap[addressKey] || toFieldLabel(addressKey);
+}
 
 export function useProfile() {
   const queryClient = useQueryClient();
@@ -56,9 +79,9 @@ export function useProfile() {
   const updateMyCollaboratorMut = useMutation<
     unknown,
     Error,
-    { name?: string; contact?: string }
+    Record<string, unknown>
   >({
-    mutationFn: ({ name, contact }) => updateMyCollaborator({ name, contact }),
+    mutationFn: (payload) => updateMyCollaborator(payload),
     onSuccess: async () => {
       setStatusMessage("Seu perfil foi atualizado.");
       await queryClient.invalidateQueries({ queryKey: ["my-collaborator"] });
@@ -78,11 +101,55 @@ export function useProfile() {
 
   const flattenedProfile = flattenRecord(profileData);
 
+  const hiddenProfileKeys = new Set([
+    "createdAt",
+    "created_at",
+    "updatedAt",
+    "updated_at",
+    "id",
+    "_id",
+    "active",
+    "userType",
+    "user_type",
+    "verified",
+    "companyId",
+    "company_id",
+    "userId",
+    "user_id",
+    "role",
+  ]);
+
   const editableKeys = new Set(
     isCompany
-      ? ["name", "legalName", "email", "contact"]
+      ? [
+          "name",
+          "legalName",
+          "email",
+          "contact",
+          "logoUrl",
+          "website",
+          "address.street",
+          "address.number",
+          "address.complement",
+          "address.neighborhood",
+          "address.city",
+          "address.state",
+          "address.zipCode",
+          "address.country",
+        ]
       : isCollaborator
-        ? ["name", "contact"]
+        ? [
+            "name",
+            "contact",
+            "address.street",
+            "address.number",
+            "address.complement",
+            "address.neighborhood",
+            "address.city",
+            "address.state",
+            "address.zipCode",
+            "address.country",
+          ]
         : [],
   );
 
@@ -91,33 +158,31 @@ export function useProfile() {
     "legalName",
     "email",
     "contact",
+    "logoUrl",
+    "website",
     "document",
     "cnpj",
     "birthDate",
-    "createdAt",
-    "updatedAt",
-    "companyId",
-    "id",
-    "userId",
-    "role",
   ];
 
   const addressPriorityOrder = [
     "address.street",
     "address.number",
-    "address.district",
+    "address.complement",
+    "address.neighborhood",
     "address.city",
     "address.state",
     "address.zipCode",
-    "address.complement",
     "address.country",
   ];
 
-  const allKeys = Object.keys(flattenedProfile);
+  const allKeys = Object.keys(flattenedProfile).filter(
+    (key) => !hiddenProfileKeys.has(key),
+  );
 
   const profileFields: ProfileFieldConfig[] = allKeys.map((key) => ({
     key,
-    label: toFieldLabel(key),
+    label: formatProfileFieldLabel(key),
     editable: editableKeys.has(key),
     value: maskByFieldKey(key, flattenedProfile[key] || ""),
   }));
@@ -169,11 +234,12 @@ export function useProfile() {
     event.preventDefault();
 
     if (isCompany) {
+      const payload = buildCompanyProfilePayload(profileDraft);
       const parseResult = companyUpdateSchema.safeParse({
-        name: profileDraft.name || "",
-        legalName: profileDraft.legalName || "",
-        contact: profileDraft.contact || "",
-        email: profileDraft.email || "",
+        name: payload.name || "",
+        legalName: payload.legalName || "",
+        contact: payload.contact || "",
+        email: payload.email || "",
       });
 
       if (!parseResult.success) {
@@ -181,22 +247,16 @@ export function useProfile() {
         return;
       }
 
-      const { email, ...rest } = parseResult.data;
-
-      await updateMyCompanyMut.mutateAsync({
-        ...rest,
-        email: email || undefined,
-      });
+      await updateMyCompanyMut.mutateAsync(payload);
 
       setIsProfileModalOpen(false);
       return;
     }
 
     if (isCollaborator) {
-      await updateMyCollaboratorMut.mutateAsync({
-        name: (profileDraft.name || "").trim() || undefined,
-        contact: (profileDraft.contact || "").trim() || undefined,
-      });
+      await updateMyCollaboratorMut.mutateAsync(
+        buildCollaboratorProfilePayload(profileDraft),
+      );
       setIsProfileModalOpen(false);
       return;
     }

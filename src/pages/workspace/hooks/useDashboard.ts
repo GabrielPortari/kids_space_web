@@ -6,12 +6,10 @@ import { listChildren } from "../../../api/modules/childApi";
 import { listParents } from "../../../api/modules/parentApi";
 import { listCollaborators } from "../../../api/modules/collaboratorApi";
 import {
-  listChildrenAdmin,
-  listCollaboratorsAdmin,
-} from "../../../api/modules/adminApi";
-import {
   checkin,
   checkout,
+  getCompanyLastCheckinAndCheckout,
+  listCompanyLast10Attendances,
   listActiveCheckins,
   type CheckinPayload,
   type CheckoutPayload,
@@ -28,6 +26,17 @@ type DashboardAttendanceItem = Attendance & {
   collaboratorDisplayName: string;
   checkInLabel: string;
   checkInEpoch: number;
+};
+
+type DashboardAttendanceCardItem = {
+  id: string;
+  childDisplayName: string;
+  collaboratorDisplayName: string;
+  checkInLabel: string;
+  checkOutLabel: string;
+  checkInEpoch: number;
+  checkOutEpoch: number;
+  sortEpoch: number;
 };
 
 function toEpoch(value: unknown): number {
@@ -74,6 +83,113 @@ function getAttendanceCheckInValue(item: Attendance): unknown {
     (item as Record<string, unknown>).checkInAt ||
     (item as Record<string, unknown>).checkedInTime
   );
+}
+
+function getAttendanceCheckOutValue(item: Attendance): unknown {
+  return (
+    item.checkedOutAt ||
+    (item as Record<string, unknown>).checkOutTime ||
+    (item as Record<string, unknown>).checkOutAt ||
+    (item as Record<string, unknown>).checkedOutTime
+  );
+}
+
+function isAttendanceLike(value: unknown): value is Attendance {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    ("childId" in value ||
+      "checkInTime" in value ||
+      "checkedInAt" in value ||
+      "checkedOutAt" in value ||
+      "checkOutTime" in value)
+  );
+}
+
+function getAttendanceFromRecord(
+  payload: unknown,
+  keys: string[],
+): Attendance | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  for (const key of keys) {
+    const value = record[key];
+    if (isAttendanceLike(value)) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function resolveLatestAttendancePair(payload: unknown): {
+  lastCheckin: Attendance | null;
+  lastCheckout: Attendance | null;
+} {
+  if (Array.isArray(payload)) {
+    return {
+      lastCheckin: isAttendanceLike(payload[0]) ? payload[0] : null,
+      lastCheckout: isAttendanceLike(payload[1]) ? payload[1] : null,
+    };
+  }
+
+  if (isAttendanceLike(payload)) {
+    return {
+      lastCheckin: payload,
+      lastCheckout: payload,
+    };
+  }
+
+  return {
+    lastCheckin: getAttendanceFromRecord(payload, [
+      "lastCheckin",
+      "lastCheckIn",
+      "checkin",
+      "checkIn",
+      "lastCheckinAttendance",
+      "lastCheckInAttendance",
+    ]),
+    lastCheckout: getAttendanceFromRecord(payload, [
+      "lastCheckout",
+      "lastCheckOut",
+      "checkout",
+      "checkOut",
+      "lastCheckoutAttendance",
+      "lastCheckOutAttendance",
+    ]),
+  };
+}
+
+function toDashboardAttendanceCardItem(
+  item: Attendance | null,
+): DashboardAttendanceCardItem | null {
+  if (!item) {
+    return null;
+  }
+
+  const checkInValue = getAttendanceCheckInValue(item);
+  const checkOutValue = getAttendanceCheckOutValue(item);
+  const checkInEpoch = toEpoch(checkInValue);
+  const checkOutEpoch = toEpoch(checkOutValue);
+
+  return {
+    id: String(item.id || ""),
+    childDisplayName:
+      getChildName(item, "Crianca sem nome") || "Crianca sem nome",
+    collaboratorDisplayName:
+      getCollaboratorName(item, "Colaborador sem nome") ||
+      "Colaborador sem nome",
+    checkInLabel: formatDateTime(checkInValue),
+    checkOutLabel: formatDateTime(checkOutValue),
+    checkInEpoch,
+    checkOutEpoch,
+    sortEpoch: Math.max(checkInEpoch, checkOutEpoch),
+  };
 }
 
 function getSnapshotName(snapshot: unknown, fallback: string): string {
@@ -130,10 +246,7 @@ export function useDashboard() {
 
   const childrenQuery = useQuery({
     queryKey: ["dashboard", "children", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listChildrenAdmin(currentCompanyScope)
-        : listChildren(currentCompanyScope),
+    queryFn: () => listChildren(currentCompanyScope),
     enabled: section === "dashboard",
     staleTime: 60_000,
   });
@@ -147,10 +260,7 @@ export function useDashboard() {
 
   const collaboratorsQuery = useQuery({
     queryKey: ["dashboard", "collaborators", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listCollaboratorsAdmin(currentCompanyScope)
-        : listCollaborators(currentCompanyScope),
+    queryFn: () => listCollaborators(currentCompanyScope),
     enabled: section === "dashboard" && role === "company",
     staleTime: 60_000,
   });
@@ -162,6 +272,25 @@ export function useDashboard() {
     staleTime: 10_000,
     refetchInterval: 15_000,
     refetchIntervalInBackground: true,
+  });
+
+  const latestCheckinAndCheckoutQuery = useQuery({
+    queryKey: [
+      "dashboard",
+      "last-checkin-and-checkout",
+      currentCompanyScope,
+      role,
+    ],
+    queryFn: () => getCompanyLastCheckinAndCheckout(currentCompanyScope),
+    enabled: section === "dashboard",
+    staleTime: 60_000,
+  });
+
+  const last10AttendancesQuery = useQuery({
+    queryKey: ["dashboard", "last10", currentCompanyScope, role],
+    queryFn: () => listCompanyLast10Attendances(currentCompanyScope),
+    enabled: section === "dashboard",
+    staleTime: 60_000,
   });
 
   const checkinMut = useMutation<unknown, Error, CheckinPayload>({
@@ -199,6 +328,26 @@ export function useDashboard() {
   const parents = (parentsQuery.data || []) as Parent[];
   const collaborators = (collaboratorsQuery.data || []) as Collaborator[];
   const activeAttendances = (activeAttendancesQuery.data || []) as Attendance[];
+  const latestAttendancePair = useMemo(
+    () => resolveLatestAttendancePair(latestCheckinAndCheckoutQuery.data),
+    [latestCheckinAndCheckoutQuery.data],
+  );
+  const latestCheckinCard = useMemo(
+    () => toDashboardAttendanceCardItem(latestAttendancePair.lastCheckin),
+    [latestAttendancePair.lastCheckin],
+  );
+  const latestCheckoutCard = useMemo(
+    () => toDashboardAttendanceCardItem(latestAttendancePair.lastCheckout),
+    [latestAttendancePair.lastCheckout],
+  );
+  const last10AttendanceCards = useMemo(
+    () =>
+      ((last10AttendancesQuery.data || []) as Attendance[])
+        .map((item) => toDashboardAttendanceCardItem(item))
+        .filter((item): item is DashboardAttendanceCardItem => item !== null)
+        .sort((left, right) => right.sortEpoch - left.sortEpoch),
+    [last10AttendancesQuery.data],
+  );
 
   const childOptions = useMemo(
     () =>
@@ -393,6 +542,8 @@ export function useDashboard() {
     parentsQuery,
     collaboratorsQuery,
     activeAttendancesQuery,
+    latestCheckinAndCheckoutQuery,
+    last10AttendancesQuery,
     checkinMut,
     checkoutMut,
     checkinChildSearch,
@@ -413,6 +564,9 @@ export function useDashboard() {
     responsibleOptions,
     dashboardMetrics,
     dashboardAttendances,
+    latestCheckinCard,
+    latestCheckoutCard,
+    last10AttendanceCards,
     isCheckoutModalOpen,
     selectedCheckoutAttendance,
     checkoutResponsibleDocument,

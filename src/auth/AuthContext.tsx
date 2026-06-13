@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   getMe,
@@ -26,7 +26,16 @@ import type {
 } from "./authTypes";
 
 const AUTH_STORAGE_KEY = "kidsspace.session";
-const TOKEN_REFRESH_TOLERANCE_MS = 30_000;
+
+/**
+ * How early before expiration we proactively refresh the token.
+ * 5 minutes covers slow networks and API latency comfortably.
+ */
+const TOKEN_REFRESH_TOLERANCE_MS = 5 * 60 * 1000;
+
+// ---------------------------------------------------------------------------
+// localStorage helpers
+// ---------------------------------------------------------------------------
 
 function readSession(): AuthSession | null {
   if (typeof window === "undefined") {
@@ -47,11 +56,37 @@ function readSession(): AuthSession | null {
   }
 }
 
+function persistSession(session: AuthSession | null): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (session) {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+  } else {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(() =>
     readSession(),
   );
   const [status, setStatus] = useState<AuthStatus>("loading");
+
+  /**
+   * Ref used to prevent a scheduled refresh from running after the component
+   * unmounts or after the user has already logged out.
+   */
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Core helpers
+  // ---------------------------------------------------------------------------
 
   const buildSession = useCallback(
     async (
@@ -99,32 +134,150 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const applySession = useCallback((next: AuthSession) => {
+    setSession(next);
+    persistSession(next);
+    setStatus("authenticated");
+  }, []);
+
   const clearSession = useCallback(() => {
+    if (refreshTimerRef.current !== null) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+
     setSession(null);
+    persistSession(null);
     setStatus("anonymous");
   }, []);
 
-  const refreshSession = useCallback(async () => {
-    if (!session?.refreshToken) {
-      clearSession();
+  // ---------------------------------------------------------------------------
+  // Refresh
+  // ---------------------------------------------------------------------------
+
+  const refreshSession = useCallback(
+    async (currentSession: AuthSession | null = null) => {
+      // Accept the session as a parameter so the proactive timer can pass
+      // the captured snapshot even if React state hasn't re-rendered yet.
+      const target = currentSession ?? session;
+
+      if (!target?.refreshToken) {
+        clearSession();
+        return;
+      }
+
+      try {
+        const refreshed = await refreshAuth(target.refreshToken);
+        const nextSession = await buildSession(refreshed, {
+          email: target.email,
+          refreshToken: target.refreshToken,
+        });
+
+        applySession(nextSession);
+      } catch {
+        clearSession();
+      }
+    },
+    [applySession, buildSession, clearSession, session],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Proactive refresh timer
+  //
+  // Whenever the session's expiresAt changes (new login, successful refresh),
+  // we schedule a refresh TOKEN_REFRESH_TOLERANCE_MS before expiry.
+  // This ensures the token is always valid while the app is open, without
+  // requiring any manual intervention or API-level 401 handling.
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (!session || status !== "authenticated") {
       return;
     }
 
-    setStatus("loading");
+    const msUntilExpiry = session.expiresAt - Date.now();
+    const msUntilRefresh = msUntilExpiry - TOKEN_REFRESH_TOLERANCE_MS;
 
-    try {
-      const refreshed = await refreshAuth(session.refreshToken);
-      const nextSession = await buildSession(refreshed, {
-        email: session.email,
-        refreshToken: session.refreshToken,
-      });
-
-      setSession(nextSession);
-      setStatus("authenticated");
-    } catch {
-      clearSession();
+    // Token is already within the tolerance window — refresh immediately.
+    if (msUntilRefresh <= 0) {
+      void refreshSession(session);
+      return;
     }
-  }, [buildSession, clearSession, session]);
+
+    // Capture the session snapshot so the timer closure doesn't hold a stale
+    // reference if the user logs out and back in before the timer fires.
+    const capturedSession = session;
+
+    refreshTimerRef.current = setTimeout(() => {
+      void refreshSession(capturedSession);
+    }, msUntilRefresh);
+
+    return () => {
+      if (refreshTimerRef.current !== null) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.expiresAt, status]);
+
+  // ---------------------------------------------------------------------------
+  // Bootstrap
+  //
+  // Runs once on mount. Uses the session already loaded into state by useState
+  // to avoid reading localStorage twice. If the token is still valid it sets
+  // status to "authenticated" immediately; otherwise it attempts a refresh.
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    let active = true;
+
+    async function bootstrap() {
+      // session was already initialised from localStorage by useState.
+      const storedSession = session;
+
+      if (!storedSession?.refreshToken) {
+        if (active) setStatus("anonymous");
+        return;
+      }
+
+      const hasValidTokenLifetime =
+        storedSession.expiresAt - Date.now() > TOKEN_REFRESH_TOLERANCE_MS;
+
+      if (hasValidTokenLifetime) {
+        if (active) setStatus("authenticated");
+        return;
+      }
+
+      try {
+        const refreshed = await refreshAuth(storedSession.refreshToken);
+        if (!active) return;
+
+        const nextSession = await buildSession(refreshed, {
+          email: storedSession.email,
+          refreshToken: storedSession.refreshToken,
+        });
+
+        if (!active) return;
+        applySession(nextSession);
+      } catch {
+        if (!active) return;
+        clearSession();
+      }
+    }
+
+    void bootstrap();
+
+    return () => {
+      active = false;
+    };
+    // Intentionally empty deps — runs only on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Auth actions
+  // ---------------------------------------------------------------------------
 
   const login = useCallback(
     async ({ email, password }: LoginCredentials) => {
@@ -134,14 +287,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const tokens = await loginWithEmailAndPassword(email, password);
         const nextSession = await buildSession(tokens, { email });
 
-        setSession(nextSession);
-        setStatus("authenticated");
+        applySession(nextSession);
       } catch (error) {
         setStatus("anonymous");
         throw error;
       }
     },
-    [buildSession],
+    [applySession, buildSession],
   );
 
   const registerCompany = useCallback(
@@ -157,97 +309,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: payload.email,
         });
 
-        setSession(nextSession);
-        setStatus("authenticated");
+        applySession(nextSession);
       } catch (error) {
         setStatus("anonymous");
         throw error;
       }
     },
-    [buildSession],
+    [applySession, buildSession],
   );
 
   const logout = useCallback(async () => {
     const currentToken = session?.idToken;
 
-    setStatus("loading");
+    // Clear local state immediately — no "loading" flash.
+    // The server call is best-effort; the session is gone either way.
+    clearSession();
 
     try {
       if (currentToken) {
         await logoutSession(currentToken);
       }
-    } finally {
-      clearSession();
+    } catch {
+      // Swallow — local session is already cleared.
     }
   }, [clearSession, session?.idToken]);
 
-  useEffect(() => {
-    let active = true;
-
-    async function bootstrap() {
-      const storedSession = readSession();
-
-      if (!active) {
-        return;
-      }
-
-      if (!storedSession?.refreshToken) {
-        setStatus("anonymous");
-        return;
-      }
-
-      setSession(storedSession);
-
-      const hasValidTokenLifetime =
-        storedSession.expiresAt - Date.now() > TOKEN_REFRESH_TOLERANCE_MS;
-
-      if (hasValidTokenLifetime) {
-        setStatus("authenticated");
-        return;
-      }
-
-      try {
-        const refreshed = await refreshAuth(storedSession.refreshToken);
-
-        if (!active) {
-          return;
-        }
-
-        const nextSession = await buildSession(refreshed, {
-          email: storedSession.email,
-          refreshToken: storedSession.refreshToken,
-        });
-
-        if (!active) {
-          return;
-        }
-
-        setSession(nextSession);
-        setStatus("authenticated");
-      } catch {
-        if (!active) {
-          return;
-        }
-
-        clearSession();
-      }
-    }
-
-    void bootstrap();
-
-    return () => {
-      active = false;
-    };
-  }, [buildSession, clearSession]);
-
-  useEffect(() => {
-    if (session) {
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-      return;
-    }
-
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
-  }, [session]);
+  // ---------------------------------------------------------------------------
+  // Context value
+  // ---------------------------------------------------------------------------
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -256,7 +345,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       signupCompany: registerCompany,
       logout,
-      refreshSession,
+      refreshSession: () => refreshSession(),
     }),
     [login, logout, refreshSession, registerCompany, session, status],
   );

@@ -1,24 +1,64 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap");
 
 :root {
-  --bg: #fbf3e8;
-  --paper: #fffdf8;
-  --panel: #fff9f0;
-  --ink-strong: #1f1b18;
-  --ink-soft: #5d534b;
-  --line-soft: #decfbd;
-  --line-strong: #2d2621;
-  --radius-sm: 12px;
-  --radius-md: 20px;
-  --radius-lg: 34px;
-  --font-body: "Manrope", "Segoe UI", sans-serif;
-  --font-title: "Syne", "Trebuchet MS", sans-serif;
-  --shadow-soft: 0 10px 24px rgba(44, 28, 14, 0.1);
-  --shadow-pop: 0 4px 0 #f07f48;
+  /* ─── Surfaces ─────────────────────────────────────── */
+  --bg:              #f0ebe4;
+  --bg-alt:          #e8e1d9;
+  --paper:           #ffffff;
+  --paper-elevated:  #fdfcfb;
+  --panel:           #f7f4f0;
+  --panel-strong:    #ede8e1;
+
+  /* ─── Text ─────────────────────────────────────────── */
+  --ink-strong:  #1a1512;
+  --ink:         #1a1512;
+  --ink-soft:    #5a524c;
+  --ink-muted:   #9a908a;
+
+  /* ─── Borders ──────────────────────────────────────── */
+  --line-soft:   #ddd5cc;
+  --line-strong: #c4b9b2;
+
+  /* ─── Brand ────────────────────────────────────────── */
+  --accent:      #b85c38;
+  --accent-deep: #8e401e;
+  --accent-soft: #f4ddd2;
+
+  /* ─── Status ───────────────────────────────────────── */
+  --success: #2d7a50;
+  --warning: #b07a20;
+  --danger:  #a83832;
+
+  /* ─── Radius ───────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* ─── Typography ───────────────────────────────────── */
+  --font-body:  "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-title: "Fraunces", Georgia, serif;
+
+  /* ─── Shadows ──────────────────────────────────────── */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-pop:  0 1px 0 var(--accent-deep);
+  --shadow-ink:  0 8px 32px rgba(0, 0, 0, 0.14);
+
+  /* ─── Space scale (8px grid) ───────────────────────── */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
   font-family: var(--font-body);
-  line-height: 1.5;
-  font-weight: 500;
+  line-height: 1.6;
+  font-weight: 400;
   color: var(--ink-strong);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -30,27 +70,87 @@
   box-sizing: border-box;
 }
 
+::selection {
+  background: rgba(184, 92, 56, 0.16);
+  color: var(--ink-strong);
+}
+
 html {
   scroll-behavior: smooth;
+  background: var(--bg);
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
-  background:
-    radial-gradient(
-      circle at 80% -10%,
-      rgba(255, 160, 102, 0.4),
-      transparent 44%
-    ),
-    radial-gradient(
-      circle at -5% 50%,
-      rgba(95, 185, 225, 0.28),
-      transparent 40%
-    ),
-    var(--bg);
+  color: var(--ink-strong);
+  background: linear-gradient(150deg, #f5f0ea 0%, #ede7de 55%, #e5ddd3 100%);
+  overflow-x: clip;
 }
 
 #root {
   min-height: 100dvh;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(90, 82, 76, 0.22);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(90, 82, 76, 0.38);
+  background-clip: content-box;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%       { transform: translate3d(0, -8px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

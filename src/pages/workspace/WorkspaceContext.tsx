@@ -80,18 +80,10 @@ export function WorkspaceProvider({
     }
 
     base.push({ id: "children", label: "Criancas" });
-    base.push({ id: "attendance", label: "Attendances" });
+    base.push({ id: "attendance", label: "Atendimentos" });
 
     if (!isAdminOrMaster) {
       base.splice(3, 0, { id: "parents", label: "Responsaveis" });
-    }
-
-    if (isAdminOrMaster) {
-      base.splice(1, 0, { id: "companies", label: "Companies" });
-    }
-
-    if (role === "master") {
-      base.push({ id: "master-bootstrap", label: "Bootstrap Admin" });
     }
 
     return base;

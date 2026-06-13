@@ -1,36 +1,57 @@
+import { useState } from "react";
 import { useChildren } from "../hooks/useChildren";
 import { useWorkspaceContext } from "../WorkspaceContext";
-import { AddressFormFields } from "../components/AddressFormFields";
+import { ChildHealthInfoFields } from "../components/ChildHealthInfoFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { EntitySearchList } from "../components/EntitySearchList";
 import { Pagination } from "../components/Pagination";
-import { extractId, parseIdList } from "../formatter";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import { ProfileModal } from "../components/ProfileModal";
+import {
+  EditIcon,
+  GroupIcon,
+  LinkIcon,
+  ModalIconWrap,
+  PlusIcon,
+  RecordAvatar,
+  RefreshIcon,
+  PersonIcon,
+} from "../components/WorkspaceVisuals";
+import { createPortal } from "react-dom";
+import {
+  extractId,
+  getParentDocument,
+  maskCpf,
+  maskPhone,
+  maskZipCode,
+  normalizeDigits,
+  parseIdList,
+  toParentFormState,
+} from "../formatter";
 import type { ListItem } from "../types";
-
-function formatLinkedNames(idsValue: string, items: ListItem[]): string {
-  const ids = parseIdList(idsValue);
-  if (ids.length === 0) {
-    return "-";
-  }
-
-  const nameById = new Map(
-    items.map((item) => [extractId(item), String(item.name || "")]),
-  );
-
-  return ids
-    .map((id) => nameById.get(id) || id)
-    .filter(Boolean)
-    .join(", ");
-}
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ChildrenSection() {
+  const queryClient = useQueryClient();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
+  const [selectedParentPreview, setSelectedParentPreview] =
+    useState<ListItem | null>(null);
 
   const childrenHook = useChildren();
+  const isLoading =
+    childrenHook.childrenQuery.isLoading ||
+    childrenHook.parentsQuery.isLoading ||
+    childrenHook.activeAttendancesQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["children"] });
+    void queryClient.resetQueries({ queryKey: ["parents"] });
+  };
 
   const {
     pagedCollection,
+    totalPages,
     onCreateChildModal,
+    openChildCreateModal,
     onUpdateChildModal,
     openChildViewModal,
     openChildEditModal,
@@ -44,6 +65,9 @@ export function ChildrenSection() {
     assignParentsMut,
     childForm,
     setChildForm,
+    childCreateParentSearch,
+    setChildCreateParentSearch,
+    childCreateParentOptions,
     isChildCreateModalOpen,
     setIsChildCreateModalOpen,
     isChildViewModalOpen,
@@ -60,23 +84,66 @@ export function ChildrenSection() {
     assigningChildParentOptions,
     pendingDeleteChildId,
     parents: childParents,
+    activeChildIds,
   } = childrenHook;
 
-  const PAGE_SIZE = 8;
-  const totalPages = Math.ceil(pagedCollection.length / PAGE_SIZE) || 1;
+  const selectedParentIds = parseIdList(childForm.parents);
+  const childParentCards = childParents.filter((item) =>
+    selectedParentIds.includes(extractId(item)),
+  );
+  const selectedParentPreviewForm = selectedParentPreview
+    ? toParentFormState(selectedParentPreview)
+    : null;
+
+  function applyInheritedParentAddress(parentId: string) {
+    const selectedParent = childParents.find(
+      (item: ListItem) => extractId(item) === parentId,
+    );
+
+    if (!selectedParent) {
+      return;
+    }
+
+    const parentFormState = toParentFormState(selectedParent);
+
+    setChildForm((current) => ({
+      ...current,
+      addressStreet: parentFormState.addressStreet,
+      addressNumber: parentFormState.addressNumber,
+      addressDistrict: parentFormState.addressDistrict,
+      addressCity: parentFormState.addressCity,
+      addressState: parentFormState.addressState,
+      addressZipCode: parentFormState.addressZipCode,
+      addressComplement: parentFormState.addressComplement,
+      addressCountry: parentFormState.addressCountry,
+    }));
+  }
 
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Criancas</h2>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => setIsChildCreateModalOpen(true)}
-          >
-            Nova criança
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn solid crm-add-button"
+              onClick={openChildCreateModal}
+            >
+              <PlusIcon />
+              Adicionar novo
+            </button>
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar crianças"
+              title="Atualizar crianças"
+            >
+              <RefreshIcon />
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">
@@ -86,69 +153,102 @@ export function ChildrenSection() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nome ou ID"
+            placeholder="Buscar por nome"
           />
         </div>
 
         <div className="crm-table">
-          {pagedCollection.map((item) => {
-            const typed = item as ListItem;
-            const id = extractId(typed);
-
-            return (
+          {isLoading && pagedCollection.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
               <article
-                key={id || JSON.stringify(item)}
-                className="crm-row"
-                onClick={() => openChildViewModal(typed)}
-                style={{ cursor: "pointer" }}
+                key={`child-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
               >
-                <div>
-                  <strong>{typed.name || "Crianca sem nome"}</strong>
-                  <p>{typed.email || "Email nao informado"}</p>
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="45%" height="1rem" />
+                  <SkeletonBlock width="64%" height="0.8rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Vincular responsaveis"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      openChildAssignParentsModal(id);
-                    }}
-                  >
-                    🔗
-                  </button>
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Editar"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openChildEditModal(typed);
-                    }}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!id) return;
-                      childrenHook.setPendingDeleteChildId(id);
-                      setIsChildDeleteModalOpen(true);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedCollection.map((item) => {
+                const typed = item as ListItem;
+                const id = extractId(typed);
 
-          {pagedCollection.length === 0 && (
-            <p>Nenhuma crianca encontrada para a busca informada.</p>
+                return (
+                  <article
+                    key={id || JSON.stringify(item)}
+                    className="crm-row"
+                    onClick={() => openChildViewModal(typed)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="record-row-main">
+                      <RecordAvatar name={typed.name || "Crianca"} />
+                      <div className="record-row-copy">
+                        <div className="child-row-title">
+                          <strong>{typed.name || "Crianca sem nome"}</strong>
+                          {id && activeChildIds.has(id) && (
+                            <span
+                              className="child-status-dot"
+                              title="Check-in ativo"
+                              aria-label="Check-in ativo"
+                            />
+                          )}
+                        </div>
+                        <p>{typed.email || "Email nao informado"}</p>
+                      </div>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="crm-icon-action"
+                        title="Vincular responsaveis"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          openChildAssignParentsModal(id);
+                        }}
+                      >
+                        <LinkIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="crm-icon-action"
+                        title="Editar"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openChildEditModal(typed);
+                        }}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="crm-remove-action"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!id) return;
+                          childrenHook.setPendingDeleteChildId(id);
+                          setIsChildDeleteModalOpen(true);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedCollection.length === 0 && (
+                <p>Nenhuma crianca encontrada para a busca informada.</p>
+              )}
+            </>
           )}
         </div>
 
@@ -159,335 +259,985 @@ export function ChildrenSection() {
         />
       </section>
 
-      {isChildViewModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsChildViewModalOpen(false)}
-        >
-          <section
-            className="crm-modal collaborator-view-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Visualizar crianca"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2>Detalhes da Crianca</h2>
-            <div className="collaborator-view-content">
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Nome</span>
-                    <strong>{childForm.name || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CPF/ID</span>
-                    <strong>{childForm.document || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Email</span>
-                    <strong>{childForm.email || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Contato</span>
-                    <strong>{childForm.contact || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Data de nascimento</span>
-                    <strong>{childForm.birthDate || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Responsaveis vinculados</span>
-                    <strong>
-                      {formatLinkedNames(
-                        childForm.parents,
-                        childParents as ListItem[],
-                      )}
-                    </strong>
-                  </article>
-                </div>
-              </section>
-
-              <section className="profile-section">
-                <h3>Endereco</h3>
-                <div className="profile-grid">
-                  <article className="profile-card">
-                    <span>Rua</span>
-                    <strong>{childForm.addressStreet || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Numero</span>
-                    <strong>{childForm.addressNumber || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Bairro</span>
-                    <strong>{childForm.addressDistrict || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Cidade</span>
-                    <strong>{childForm.addressCity || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Estado</span>
-                    <strong>{childForm.addressState || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>CEP</span>
-                    <strong>{childForm.addressZipCode || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Complemento</span>
-                    <strong>{childForm.addressComplement || "-"}</strong>
-                  </article>
-                  <article className="profile-card">
-                    <span>Pais</span>
-                    <strong>{childForm.addressCountry || "-"}</strong>
-                  </article>
-                </div>
-              </section>
-            </div>
-
-            <div className="crm-modal-actions">
+      {isChildViewModalOpen &&
+        createPortal(
+          <ProfileModal
+            isOpen={isChildViewModalOpen}
+            onClose={() => setIsChildViewModalOpen(false)}
+            icon={<GroupIcon />}
+            title="Detalhes da Criança"
+            subtitle="Visualize as informações da criança"
+            mode="view"
+            headerActions={
               <button
                 type="button"
-                className="btn outline"
+                className="profile-modal-close"
+                aria-label="Fechar"
                 onClick={() => setIsChildViewModalOpen(false)}
               >
-                Fechar
+                ✕
               </button>
+            }
+          >
+            <div className="profile-form">
+              <div className="profile-form-body">
+                <section className="profile-section">
+                  <h3>Dados pessoais</h3>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="child-view-name">Nome</label>
+                      <input
+                        id="child-view-name"
+                        value={childForm.name}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-document">CPF/ID</label>
+                      <input
+                        id="child-view-document"
+                        value={childForm.document}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-contact">Contato</label>
+                      <input
+                        id="child-view-contact"
+                        value={maskPhone(childForm.contact)}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-email">Email</label>
+                      <input
+                        id="child-view-email"
+                        type="email"
+                        value={childForm.email}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-birthDate">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="child-view-birthDate"
+                        type="date"
+                        value={childForm.birthDate || ""}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Responsável</h3>
+                  {childParentCards.length > 0 ? (
+                    <div className="child-parent-cards">
+                      {childParentCards.map((parentItem) => {
+                        const parentId = extractId(parentItem);
+
+                        return (
+                          <button
+                            key={parentId || JSON.stringify(parentItem)}
+                            type="button"
+                            className="child-parent-card"
+                            onClick={() => setSelectedParentPreview(parentItem)}
+                          >
+                            <RecordAvatar
+                              name={parentItem.name || "Responsavel"}
+                            />
+                            <span className="child-parent-card-copy">
+                              <strong>
+                                {parentItem.name || "Responsavel sem nome"}
+                              </strong>
+                              <span>
+                                {maskCpf(getParentDocument(parentItem)) ||
+                                  "CPF nao informado"}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="child-parent-empty-state">
+                      Nenhum responsável vinculado.
+                    </p>
+                  )}
+                </section>
+
+                <section className="profile-section">
+                  <h3>Endereço</h3>
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-view-address-street">Rua</label>
+                        <input
+                          id="child-view-address-street"
+                          value={childForm.addressStreet}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-view-address-number">
+                          Número
+                        </label>
+                        <input
+                          id="child-view-address-number"
+                          value={childForm.addressNumber}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-view-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="child-view-address-complement"
+                          value={childForm.addressComplement}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-view-address-district">
+                          Bairro
+                        </label>
+                        <input
+                          id="child-view-address-district"
+                          value={childForm.addressDistrict}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-view-address-city">Cidade</label>
+                        <input
+                          id="child-view-address-city"
+                          value={childForm.addressCity}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-view-address-state">Estado</label>
+                        <input
+                          id="child-view-address-state"
+                          value={childForm.addressState}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-view-address-zipcode">CEP</label>
+                        <input
+                          id="child-view-address-zipcode"
+                          value={maskZipCode(childForm.addressZipCode || "")}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-view-address-country">País</label>
+                        <input
+                          id="child-view-address-country"
+                          value={childForm.addressCountry}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="profile-section">
+                  <h3>Saude</h3>
+                  <ChildHealthInfoFields
+                    value={childForm.healthInfo}
+                    onChange={() => undefined}
+                    onAddMedication={() => undefined}
+                    onRemoveMedication={() => undefined}
+                    disabled
+                  />
+                </section>
+              </div>
             </div>
-          </section>
-        </div>
-      )}
+          </ProfileModal>,
+          document.body,
+        )}
 
-      {isChildCreateModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsChildCreateModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide child-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Adicionar crianca"
-            onClick={(event) => event.stopPropagation()}
+      {isChildCreateModalOpen &&
+        createPortal(
+          <ProfileModal
+            isOpen={isChildCreateModalOpen}
+            onClose={() => setIsChildCreateModalOpen(false)}
+            icon={<GroupIcon />}
+            title="Nova Criança"
+            subtitle="Crie um novo cadastro de criança"
+            mode="view"
           >
-            <h2>Nova Crianca</h2>
-            <form
-              className="crm-form-grid child-modal-form"
-              onSubmit={onCreateChildModal}
-            >
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="child-section-grid">
-                  <div className="field">
-                    <label htmlFor="child-name">Nome</label>
-                    <input
-                      id="child-name"
-                      value={childForm.name}
-                      onChange={(event) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          name: event.target.value,
-                        }))
-                      }
-                      placeholder="Nome completo"
-                      required
-                    />
+            <form className="profile-form" onSubmit={onCreateChildModal}>
+              <div className="profile-form-body">
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">
+                      Dados pessoais
+                    </span>
+                    <div className="profile-form-section-line" />
                   </div>
 
-                  <div className="field">
-                    <label htmlFor="child-email">Email</label>
-                    <input
-                      id="child-email"
-                      type="email"
-                      value={childForm.email}
-                      onChange={(event) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="child-name">Nome</label>
+                      <input
+                        id="child-name"
+                        value={childForm.name}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
 
-                  <div className="field">
-                    <label htmlFor="child-document">CPF/ID</label>
-                    <input
-                      id="child-document"
-                      value={childForm.document}
-                      onChange={(event) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          document: event.target.value,
-                        }))
-                      }
-                      placeholder="ID ou CPF"
-                    />
+                    <div className="field field-span-6">
+                      <label htmlFor="child-document">CPF/ID</label>
+                      <input
+                        id="child-document"
+                        value={childForm.document}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            document: event.target.value,
+                          }))
+                        }
+                        placeholder="ID ou CPF"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-contact">Contato</label>
+                      <input
+                        id="child-contact"
+                        value={maskPhone(childForm.contact)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-email">Email</label>
+                      <input
+                        id="child-email"
+                        type="email"
+                        value={childForm.email}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-birthDate">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="child-birthDate"
+                        type="date"
+                        value={childForm.birthDate || ""}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
-              </section>
 
-              <section className="profile-section">
-                <h3>Endereco</h3>
-                <AddressFormFields
-                  values={{
-                    addressStreet: childForm.addressStreet,
-                    addressNumber: childForm.addressNumber,
-                    addressDistrict: childForm.addressDistrict,
-                    addressCity: childForm.addressCity,
-                    addressState: childForm.addressState,
-                    addressZipCode: childForm.addressZipCode,
-                    addressComplement: childForm.addressComplement,
-                    addressCountry: childForm.addressCountry,
-                  }}
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">
+                      Responsável
+                    </span>
+                    <div className="profile-form-section-line" />
+                  </div>
+                  <div className="child-section-grid">
+                    <EntitySearchList
+                      label="Responsável para vínculo direto"
+                      searchValue={childCreateParentSearch}
+                      onSearchChange={setChildCreateParentSearch}
+                      options={childCreateParentOptions}
+                      selectedIds={childForm.parents}
+                      onToggle={(parentId) =>
+                        setChildForm((current) => {
+                          const nextParentId =
+                            current.parents === parentId ? "" : parentId;
+
+                          if (
+                            current.inheritParentAddress &&
+                            nextParentId &&
+                            nextParentId !== current.parents
+                          ) {
+                            applyInheritedParentAddress(nextParentId);
+                          }
+
+                          return {
+                            ...current,
+                            parents: nextParentId,
+                          };
+                        })
+                      }
+                      isLoading={childrenHook.parentsQuery.isLoading}
+                      placeholder="Buscar por nome"
+                      mode="radio"
+                    />
+
+                    {parseIdList(childForm.parents).length > 0 && (
+                      <div className="field field-full child-inherit-address-field">
+                        <label className="child-inherit-address-toggle">
+                          <input
+                            type="checkbox"
+                            checked={childForm.inheritParentAddress}
+                            onChange={(event) =>
+                              setChildForm((current) => {
+                                const nextState = {
+                                  ...current,
+                                  inheritParentAddress: event.target.checked,
+                                };
+
+                                if (event.target.checked && current.parents) {
+                                  const selectedParent = childParents.find(
+                                    (item: ListItem) =>
+                                      extractId(item) === current.parents,
+                                  );
+
+                                  if (selectedParent) {
+                                    const parentFormState =
+                                      toParentFormState(selectedParent);
+
+                                    return {
+                                      ...nextState,
+                                      addressStreet:
+                                        parentFormState.addressStreet,
+                                      addressNumber:
+                                        parentFormState.addressNumber,
+                                      addressDistrict:
+                                        parentFormState.addressDistrict,
+                                      addressCity: parentFormState.addressCity,
+                                      addressState:
+                                        parentFormState.addressState,
+                                      addressZipCode:
+                                        parentFormState.addressZipCode,
+                                      addressComplement:
+                                        parentFormState.addressComplement,
+                                      addressCountry:
+                                        parentFormState.addressCountry,
+                                    };
+                                  }
+                                }
+
+                                return nextState;
+                              })
+                            }
+                          />
+                          <span>
+                            Herdar endereco do responsavel selecionado
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">Endereço</span>
+                    <div className="profile-form-section-line" />
+                  </div>
+
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-address-street">Rua</label>
+                        <input
+                          id="child-address-street"
+                          value={childForm.addressStreet}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressStreet: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-address-number">Número</label>
+                        <input
+                          id="child-address-number"
+                          value={childForm.addressNumber}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressNumber: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="child-address-complement"
+                          value={childForm.addressComplement}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressComplement: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-address-district">Bairro</label>
+                        <input
+                          id="child-address-district"
+                          value={childForm.addressDistrict}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressDistrict: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-address-city">Cidade</label>
+                        <input
+                          id="child-address-city"
+                          value={childForm.addressCity}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressCity: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-address-state">Estado</label>
+                        <input
+                          id="child-address-state"
+                          value={childForm.addressState}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressState: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-address-zipcode">CEP</label>
+                        <input
+                          id="child-address-zipcode"
+                          value={maskZipCode(childForm.addressZipCode || "")}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressZipCode: normalizeDigits(
+                                event.target.value,
+                              ).slice(0, 8),
+                            }))
+                          }
+                          placeholder="00000-000"
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-address-country">País</label>
+                        <input
+                          id="child-address-country"
+                          value={childForm.addressCountry}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressCountry: event.target.value,
+                            }))
+                          }
+                          disabled={childForm.inheritParentAddress}
+                          className={
+                            childForm.inheritParentAddress
+                              ? "field-readonly"
+                              : ""
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">Saude</span>
+                    <div className="profile-form-section-line" />
+                  </div>
+
+                  <ChildHealthInfoFields
+                    value={childForm.healthInfo}
+                    onChange={(key, value) =>
+                      setChildForm((current) => ({
+                        ...current,
+                        healthInfo: {
+                          ...current.healthInfo,
+                          [key]: value,
+                        },
+                      }))
+                    }
+                    onAddMedication={(medication) =>
+                      setChildForm((current) => ({
+                        ...current,
+                        healthInfo: {
+                          ...current.healthInfo,
+                          medications: [
+                            ...current.healthInfo.medications,
+                            medication,
+                          ],
+                        },
+                      }))
+                    }
+                    onRemoveMedication={(index) =>
+                      setChildForm((current) => ({
+                        ...current,
+                        healthInfo: {
+                          ...current.healthInfo,
+                          medications: current.healthInfo.medications.filter(
+                            (_medication, medicationIndex) =>
+                              medicationIndex !== index,
+                          ),
+                        },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="profile-modal-footer">
+                <div className="profile-modal-footer-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setIsChildCreateModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn solid"
+                    disabled={createChildMut.isPending}
+                  >
+                    {createChildMut.isPending ? "Salvando..." : "Salvar"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </ProfileModal>,
+          document.body,
+        )}
+
+      {isChildEditModalOpen &&
+        createPortal(
+          <ProfileModal
+            isOpen={isChildEditModalOpen}
+            onClose={() => setIsChildEditModalOpen(false)}
+            icon={<GroupIcon />}
+            title="Editar Criança"
+            subtitle="Atualize o cadastro da criança"
+            mode="view"
+          >
+            <form className="profile-form" onSubmit={onUpdateChildModal}>
+              <div className="profile-form-body">
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">
+                      Dados pessoais
+                    </span>
+                    <div className="profile-form-section-line" />
+                  </div>
+
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="child-edit-name">Nome</label>
+                      <input
+                        id="child-edit-name"
+                        value={childForm.name}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo"
+                        required
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-edit-document">CPF/ID</label>
+                      <input
+                        id="child-edit-document"
+                        value={childForm.document}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            document: event.target.value,
+                          }))
+                        }
+                        placeholder="ID ou CPF"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-edit-contact">Contato</label>
+                      <input
+                        id="child-edit-contact"
+                        value={maskPhone(childForm.contact)}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            contact: normalizeDigits(event.target.value).slice(
+                              0,
+                              11,
+                            ),
+                          }))
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-edit-email">Email</label>
+                      <input
+                        id="child-edit-email"
+                        type="email"
+                        value={childForm.email}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-edit-birthDate">
+                        Data de nascimento
+                      </label>
+                      <input
+                        id="child-edit-birthDate"
+                        type="date"
+                        value={childForm.birthDate || ""}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">Endereço</span>
+                    <div className="profile-form-section-line" />
+                  </div>
+
+                  <div className="profile-form-address-stack">
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-edit-address-street">Rua</label>
+                        <input
+                          id="child-edit-address-street"
+                          value={childForm.addressStreet}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressStreet: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-edit-address-number">
+                          Número
+                        </label>
+                        <input
+                          id="child-edit-address-number"
+                          value={childForm.addressNumber}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressNumber: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-edit-address-complement">
+                          Complemento
+                        </label>
+                        <input
+                          id="child-edit-address-complement"
+                          value={childForm.addressComplement}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressComplement: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-edit-address-district">
+                          Bairro
+                        </label>
+                        <input
+                          id="child-edit-address-district"
+                          value={childForm.addressDistrict}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressDistrict: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="profile-form-fields-grid profile-form-address-grid">
+                      <div className="field field-span-6">
+                        <label htmlFor="child-edit-address-city">Cidade</label>
+                        <input
+                          id="child-edit-address-city"
+                          value={childForm.addressCity}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressCity: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-1">
+                        <label htmlFor="child-edit-address-state">Estado</label>
+                        <input
+                          id="child-edit-address-state"
+                          value={childForm.addressState}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressState: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="field field-span-2">
+                        <label htmlFor="child-edit-address-zipcode">CEP</label>
+                        <input
+                          id="child-edit-address-zipcode"
+                          value={maskZipCode(childForm.addressZipCode || "")}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressZipCode: normalizeDigits(
+                                event.target.value,
+                              ).slice(0, 8),
+                            }))
+                          }
+                          placeholder="00000-000"
+                        />
+                      </div>
+
+                      <div className="field field-span-3">
+                        <label htmlFor="child-edit-address-country">País</label>
+                        <input
+                          id="child-edit-address-country"
+                          value={childForm.addressCountry}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              addressCountry: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <ChildHealthInfoFields
+                  value={childForm.healthInfo}
                   onChange={(key, value) =>
                     setChildForm((current) => ({
                       ...current,
-                      [key]: value,
+                      healthInfo: {
+                        ...current.healthInfo,
+                        [key]: value,
+                      },
                     }))
                   }
-                />
-              </section>
-
-              <div className="crm-modal-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => setIsChildCreateModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={createChildMut.isPending}
-                >
-                  {createChildMut.isPending ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
-
-      {isChildEditModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsChildEditModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide child-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Editar crianca"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2>Editar Crianca</h2>
-            <form
-              className="crm-form-grid child-form"
-              onSubmit={onUpdateChildModal}
-            >
-              <section className="profile-section">
-                <h3>Dados pessoais</h3>
-                <div className="child-section-grid">
-                  <div className="field">
-                    <label htmlFor="child-edit-name">Nome</label>
-                    <input
-                      id="child-edit-name"
-                      value={childForm.name}
-                      onChange={(event) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          name: event.target.value,
-                        }))
-                      }
-                      placeholder="Nome completo"
-                      required
-                    />
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="child-edit-email">Email</label>
-                    <input
-                      id="child-edit-email"
-                      type="email"
-                      value={childForm.email}
-                      onChange={(event) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="child-edit-document">CPF/ID</label>
-                    <input
-                      id="child-edit-document"
-                      value={childForm.document}
-                      onChange={(event) =>
-                        setChildForm((current) => ({
-                          ...current,
-                          document: event.target.value,
-                        }))
-                      }
-                      placeholder="ID ou CPF"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              <section className="profile-section">
-                <h3>Endereco</h3>
-                <AddressFormFields
-                  values={{
-                    addressStreet: childForm.addressStreet,
-                    addressNumber: childForm.addressNumber,
-                    addressDistrict: childForm.addressDistrict,
-                    addressCity: childForm.addressCity,
-                    addressState: childForm.addressState,
-                    addressZipCode: childForm.addressZipCode,
-                    addressComplement: childForm.addressComplement,
-                    addressCountry: childForm.addressCountry,
-                  }}
-                  onChange={(key, value) =>
+                  onAddMedication={(medication) =>
                     setChildForm((current) => ({
                       ...current,
-                      [key]: value,
+                      healthInfo: {
+                        ...current.healthInfo,
+                        medications: [
+                          ...current.healthInfo.medications,
+                          medication,
+                        ],
+                      },
+                    }))
+                  }
+                  onRemoveMedication={(index) =>
+                    setChildForm((current) => ({
+                      ...current,
+                      healthInfo: {
+                        ...current.healthInfo,
+                        medications: current.healthInfo.medications.filter(
+                          (_medication, medicationIndex) =>
+                            medicationIndex !== index,
+                        ),
+                      },
                     }))
                   }
                 />
-              </section>
+              </div>
 
-              <div className="crm-modal-actions">
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => setIsChildEditModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={updateChildMut.isPending}
-                >
-                  {updateChildMut.isPending
-                    ? "Salvando..."
-                    : "Salvar alteracoes"}
-                </button>
+              <div className="profile-modal-footer">
+                <p className="profile-modal-hint">
+                  🔒 Campos acinzentados são somente leitura
+                </p>
+                <div className="profile-modal-footer-actions">
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setIsChildEditModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn solid"
+                    disabled={updateChildMut.isPending}
+                  >
+                    {updateChildMut.isPending
+                      ? "Salvando..."
+                      : "Salvar alteracoes"}
+                  </button>
+                </div>
               </div>
             </form>
-          </section>
-        </div>
-      )}
+          </ProfileModal>,
+          document.body,
+        )}
 
       <ConfirmDeleteModal
         isOpen={isChildDeleteModalOpen}
@@ -509,62 +1259,249 @@ export function ChildrenSection() {
         cancelLabel="Cancelar"
       />
 
-      {isChildAssignParentsModalOpen && (
-        <div
-          className="crm-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsChildAssignParentsModalOpen(false)}
-        >
-          <section
-            className="crm-modal crm-modal-wide"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Vincular responsaveis"
-            onClick={(event) => event.stopPropagation()}
+      {isChildAssignParentsModalOpen &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsChildAssignParentsModalOpen(false)}
           >
-            <h2>Vincular Responsaveis</h2>
-            <form onSubmit={onAssignParentsToChild}>
-              <section className="profile-section">
-                <EntitySearchList
-                  label="Responsaveis"
-                  searchValue={childParentsSearch}
-                  onSearchChange={setChildParentsSearch}
-                  options={
-                    assigningChildParentOptions.length === 0
-                      ? childParents.map((p: ListItem) => ({
-                          id: extractId(p),
-                          name: String(p.name || "Responsavel sem nome"),
-                        }))
-                      : assigningChildParentOptions
-                  }
-                  selectedIds={assigningChildParentIds}
-                  onToggle={toggleAssignChildParentSelection}
-                  isLoading={false}
-                  mode="checkbox"
-                />
-              </section>
+            <section
+              className="crm-modal crm-modal-wide"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Vincular responsaveis"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2>Vincular Responsaveis</h2>
+              <form
+                className="assign-modal-form"
+                onSubmit={onAssignParentsToChild}
+              >
+                <section className="profile-section">
+                  <EntitySearchList
+                    label="Responsaveis"
+                    searchValue={childParentsSearch}
+                    onSearchChange={setChildParentsSearch}
+                    options={
+                      assigningChildParentOptions.length === 0
+                        ? childParents.map((p: ListItem) => ({
+                            id: extractId(p),
+                            name: String(p.name || "Responsavel sem nome"),
+                          }))
+                        : assigningChildParentOptions
+                    }
+                    selectedIds={assigningChildParentIds}
+                    onToggle={toggleAssignChildParentSelection}
+                    isLoading={false}
+                    mode="checkbox"
+                  />
+                </section>
 
-              <div className="crm-modal-actions">
+                <div className="profile-modal-footer">
+                  <div className="profile-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setIsChildAssignParentsModalOpen(false)}
+                      disabled={assignParentsMut.isPending}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn solid"
+                      disabled={assignParentsMut.isPending}
+                    >
+                      {assignParentsMut.isPending ? "Salvando..." : "Vincular"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </section>
+          </div>,
+          document.body,
+        )}
+
+      {selectedParentPreviewForm &&
+        createPortal(
+          <div
+            className="crm-modal-backdrop"
+            role="presentation"
+            onClick={() => setSelectedParentPreview(null)}
+          >
+            <section
+              className="crm-modal crm-modal-wide profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Visualizar responsavel"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="profile-modal-header">
+                <div className="profile-modal-header-left">
+                  <ModalIconWrap>
+                    <PersonIcon />
+                  </ModalIconWrap>
+                  <div>
+                    <p className="profile-modal-title">
+                      Detalhes do Responsável
+                    </p>
+                    <p className="profile-modal-subtitle">
+                      Visualize as informações do responsável
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  className="btn outline"
-                  onClick={() => setIsChildAssignParentsModalOpen(false)}
-                  disabled={assignParentsMut.isPending}
+                  className="profile-modal-close"
+                  aria-label="Fechar"
+                  onClick={() => setSelectedParentPreview(null)}
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn solid"
-                  disabled={assignParentsMut.isPending}
-                >
-                  {assignParentsMut.isPending ? "Salvando..." : "Vincular"}
+                  ✕
                 </button>
               </div>
-            </form>
-          </section>
-        </div>
-      )}
+
+              <div className="profile-form">
+                <div className="profile-form-body">
+                  <section className="profile-section">
+                    <h3>Dados pessoais</h3>
+                    <div className="profile-form-fields-grid profile-form-personal-grid">
+                      <div className="field field-span-12">
+                        <label>Nome</label>
+                        <input
+                          value={selectedParentPreviewForm.name}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>CPF</label>
+                        <input
+                          value={maskCpf(selectedParentPreviewForm.document)}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>Contato</label>
+                        <input
+                          value={selectedParentPreviewForm.contact}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>Email</label>
+                        <input
+                          value={selectedParentPreviewForm.email || ""}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+
+                      <div className="field field-span-6">
+                        <label>Data de nascimento</label>
+                        <input
+                          type="date"
+                          value={selectedParentPreviewForm.birthDate || ""}
+                          disabled
+                          className="field-readonly"
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="profile-section">
+                    <h3>Endereço</h3>
+                    <div className="profile-form-address-stack">
+                      <div className="profile-form-fields-grid profile-form-address-grid">
+                        <div className="field field-span-6">
+                          <label>Rua</label>
+                          <input
+                            value={selectedParentPreviewForm.addressStreet}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-1">
+                          <label>Número</label>
+                          <input
+                            value={selectedParentPreviewForm.addressNumber}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-2">
+                          <label>Complemento</label>
+                          <input
+                            value={selectedParentPreviewForm.addressComplement}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-3">
+                          <label>Bairro</label>
+                          <input
+                            value={selectedParentPreviewForm.addressDistrict}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="profile-form-fields-grid profile-form-address-grid">
+                        <div className="field field-span-6">
+                          <label>Cidade</label>
+                          <input
+                            value={selectedParentPreviewForm.addressCity}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-1">
+                          <label>Estado</label>
+                          <input
+                            value={selectedParentPreviewForm.addressState}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-2">
+                          <label>CEP</label>
+                          <input
+                            value={maskZipCode(
+                              selectedParentPreviewForm.addressZipCode || "",
+                            )}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+
+                        <div className="field field-span-3">
+                          <label>País</label>
+                          <input
+                            value={selectedParentPreviewForm.addressCountry}
+                            disabled
+                            className="field-readonly"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

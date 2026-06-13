@@ -1,3 +1,6 @@
+import { createPortal } from "react-dom";
+import { ProfileModal } from "./ProfileModal";
+
 type ConfirmDeleteModalProps = {
   isOpen: boolean;
   title?: string;
@@ -11,48 +14,34 @@ type ConfirmDeleteModalProps = {
 
 export function ConfirmDeleteModal({
   isOpen,
-  title = "Confirmar exclusao",
+  title = "Confirmar exclusão",
   message = "Quer mesmo excluir este item?",
   onConfirm,
   onCancel,
   isLoading = false,
   confirmLabel = "Excluir",
-  cancelLabel = "Cancelar",
 }: ConfirmDeleteModalProps) {
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
-  return (
-    <div className="crm-modal-backdrop" role="presentation" onClick={onCancel}>
-      <section
-        className="crm-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2>{title}</h2>
-        <p>{message}</p>
-        <div className="crm-modal-actions">
-          <button
-            type="button"
-            className="btn outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
-            {isLoading ? "Carregando..." : confirmLabel}
-          </button>
-        </div>
-      </section>
-    </div>
+  return createPortal(
+    <ProfileModal
+      isOpen={isOpen}
+      onClose={onCancel}
+      icon={<></>}
+      title={title}
+      mode="create"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void Promise.resolve(onConfirm());
+      }}
+      submitLabel={confirmLabel}
+      isPending={isLoading}
+      modalClassName="crm-modal-sm"
+    >
+      <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "0.9375rem" }}>
+        {message}
+      </p>
+    </ProfileModal>,
+    document.body,
   );
 }

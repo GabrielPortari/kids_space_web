@@ -39,7 +39,7 @@ export function decodeJwtPayload(token: string): JwtPayload | null {
   }
 }
 
-function parseRole(value: unknown): AuthRole | null {
+export function parseRole(value: unknown): AuthRole | null {
   if (typeof value !== "string") {
     return null;
   }

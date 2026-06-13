@@ -8,6 +8,8 @@ export type UpdateCompanyPayload = {
   cnpj?: string;
   contact?: string;
   email?: string;
+  logoUrl?: string;
+  website?: string;
   address?: Record<string, unknown>;
 };
 

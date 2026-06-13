@@ -3,6 +3,20 @@ import type { BackendAddressPayload } from "../address";
 import type { Child } from "../../domain/entities";
 import { getList, toQueryString } from "./utils";
 
+export type ChildMedicationPayload = {
+  name: string;
+  dosage?: string;
+  schedule?: string;
+};
+
+export type ChildHealthInfoPayload = {
+  dietaryRestrictions?: string[];
+  allergies?: string[];
+  medications?: ChildMedicationPayload[];
+  medicalConditions?: string[];
+  fearsOrSensitivities?: string[];
+};
+
 export type CreateChildPayload = {
   name: string;
   document?: string;
@@ -11,6 +25,7 @@ export type CreateChildPayload = {
   birthDate?: string;
   companyId?: string;
   parents?: string[];
+  healthInfo?: ChildHealthInfoPayload;
   address?: {
     address?: string;
     number?: string;

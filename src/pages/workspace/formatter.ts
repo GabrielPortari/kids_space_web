@@ -3,9 +3,15 @@ import type {
   ParentFormState,
   ChildFormState,
   CompanyFormState,
+  ChildHealthInfoFormState,
+  ChildMedicationFormState,
 } from "./types";
 
-export function extractId(item: ListItem): string {
+export function extractId(item?: ListItem | null): string {
+  if (!item) {
+    return "";
+  }
+
   return String(item.id || item._id || item.uid || "");
 }
 
@@ -41,6 +47,140 @@ export function parseIdList(value: string | string[] | unknown): string[] {
   }
 
   return [];
+}
+
+export function splitTextList(value: string): string[] {
+  return value
+    .split(/[\r\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+// helper removed: formatting to newline string is no longer needed for health arrays
+
+function toMedicationFormState(value: unknown): ChildMedicationFormState {
+  const medication =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+
+  return {
+    name: String(medication.name || ""),
+    dosage: String(medication.dosage || ""),
+    schedule: String(medication.schedule || ""),
+  };
+}
+
+export function formatMedicationSchedule(input: string): string {
+  const raw = String(input ?? "").trim();
+  if (!raw) return "";
+
+  // 1. Normaliza separadores: "14h30", "14.30", "14 30" → "14:30"
+  let s = raw
+    .toLowerCase()
+    .replace(/[h\.\s]+/g, ":") // h, ponto, espaço viram ":"
+    .replace(/\s/g, "");
+
+  // 2. Extrai AM/PM se presente
+  const ampmMatch = s.match(/(am|pm)$/i);
+  const isPM = ampmMatch?.[1]?.toLowerCase() === "pm";
+  if (ampmMatch) s = s.slice(0, -2);
+
+  // 3. Garante no máximo um separador ":"
+  const parts = s.split(":").filter(Boolean);
+  const onlyDigits = s.replace(/\D/g, "");
+
+  let h: number;
+  let m: number;
+
+  if (parts.length >= 2) {
+    // Caso "HH:MM" — já tem separador explícito
+    h = parseInt(parts[0], 10);
+    m = parseInt(parts[1], 10);
+  } else if (onlyDigits.length === 1) {
+    // "9" → 09:00
+    h = parseInt(onlyDigits, 10);
+    m = 0;
+  } else if (onlyDigits.length === 2) {
+    const n = parseInt(onlyDigits, 10);
+    if (n <= 23) {
+      // "14" → 14:00  |  "09" → 09:00
+      h = n;
+      m = 0;
+    } else {
+      // "95" → ambíguo: trata como 9h05
+      h = parseInt(onlyDigits[0], 10);
+      m = parseInt(onlyDigits[1] + "0", 10); // "5" → 50min? não. Melhor: pad
+      m = parseInt(onlyDigits.slice(1).padEnd(2, "0"), 10);
+    }
+  } else if (onlyDigits.length === 3) {
+    // "930" → 9:30  |  "130" → 1:30
+    h = parseInt(onlyDigits[0], 10);
+    m = parseInt(onlyDigits.slice(1), 10);
+  } else if (onlyDigits.length === 4) {
+    // "1430" → 14:30  |  "0900" → 09:00
+    h = parseInt(onlyDigits.slice(0, 2), 10);
+    m = parseInt(onlyDigits.slice(2), 10);
+  } else if (onlyDigits.length > 4) {
+    // Entrada longa demais: pega os primeiros 4 dígitos
+    h = parseInt(onlyDigits.slice(0, 2), 10);
+    m = parseInt(onlyDigits.slice(2, 4), 10);
+  } else {
+    return "";
+  }
+
+  if (Number.isNaN(h) || Number.isNaN(m)) return "";
+
+  // 4. Aplica conversão AM/PM
+  if (ampmMatch) {
+    if (isPM && h < 12) h += 12;
+    if (!isPM && h === 12) h = 0;
+  }
+
+  // 5. Clamp em vez de aceitar silenciosamente valores impossíveis
+  if (h > 23 || m > 59) return ""; // retorna vazio para o campo mostrar erro
+
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+export function toChildHealthInfoFormState(
+  item: ListItem,
+): ChildHealthInfoFormState {
+  const healthInfo =
+    item.healthInfo &&
+    typeof item.healthInfo === "object" &&
+    !Array.isArray(item.healthInfo)
+      ? (item.healthInfo as Record<string, unknown>)
+      : {};
+
+  const medications = Array.isArray(healthInfo.medications)
+    ? healthInfo.medications
+        .map((value) => toMedicationFormState(value))
+        .filter(
+          (medication) =>
+            medication.name || medication.dosage || medication.schedule,
+        )
+    : [];
+
+  const toArray = (value: unknown): string[] => {
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v || "").trim()).filter(Boolean);
+    }
+
+    if (typeof value === "string") {
+      return splitTextList(value);
+    }
+
+    return [];
+  };
+
+  return {
+    dietaryRestrictions: toArray(healthInfo.dietaryRestrictions),
+    allergies: toArray(healthInfo.allergies),
+    medications,
+    medicalConditions: toArray(healthInfo.medicalConditions),
+    fearsOrSensitivities: toArray(healthInfo.fearsOrSensitivities),
+  };
 }
 
 export function getParentDocument(item: ListItem): string {
@@ -116,6 +256,7 @@ export function toChildFormState(item: ListItem): ChildFormState {
     birthDate: normalizeDateInput(String(item.birthDate || "")),
     parents,
     inheritParentAddress: false,
+    healthInfo: toChildHealthInfoFormState(item),
     addressStreet: String(address.address || address.street || ""),
     addressNumber: String(address.number || ""),
     addressDistrict: String(address.neighborhood || address.district || ""),

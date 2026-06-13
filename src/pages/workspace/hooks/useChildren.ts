@@ -9,18 +9,22 @@ import {
   updateChild,
   type CreateChildPayload,
 } from "../../../api/modules/childApi";
+import { listActiveCheckins } from "../../../api/modules/attendanceApi";
 import { buildBackendAddressPayload } from "../../../api/address";
-import { listChildrenAdmin } from "../../../api/modules/adminApi";
 import { listParents } from "../../../api/modules/parentApi";
 import type { ChildFormState, ListItem } from "../types";
 import { INITIAL_CHILD_FORM, PAGE_SIZE } from "../constants";
 import {
+  buildCreateChildPayload,
+  sanitizeChildFormStateForPayload,
+} from "../childPayload";
+import {
   extractId,
-  normalizeDigits,
-  parseIdList,
   matchesSearch,
   toChildFormState,
   paginate,
+  normalizeDigits,
+  parseIdList,
 } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
 
@@ -36,7 +40,6 @@ export function useChildren() {
     currentCompanyScope,
   } = useWorkspaceContext();
 
-  // State
   const [isChildCreateModalOpen, setIsChildCreateModalOpen] = useState(false);
   const [isChildViewModalOpen, setIsChildViewModalOpen] = useState(false);
   const [isChildEditModalOpen, setIsChildEditModalOpen] = useState(false);
@@ -53,18 +56,15 @@ export function useChildren() {
   >(null);
   const [childForm, setChildForm] =
     useState<ChildFormState>(INITIAL_CHILD_FORM);
+  const [childCreateParentSearch, setChildCreateParentSearch] = useState("");
   const [childParentsSearch, setChildParentsSearch] = useState("");
   const [assigningChildParentIds, setAssigningChildParentIds] = useState<
     string[]
   >([]);
 
-  // Queries
   const childrenQuery = useQuery({
     queryKey: ["children", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listChildrenAdmin(currentCompanyScope)
-        : listChildren(currentCompanyScope),
+    queryFn: () => listChildren(currentCompanyScope),
     enabled: section === "children" || section === "parents",
   });
 
@@ -75,7 +75,15 @@ export function useChildren() {
       !isAdminOrMaster && (section === "parents" || section === "children"),
   });
 
-  // Mutations
+  const activeAttendancesQuery = useQuery({
+    queryKey: ["children", "active-checkins", currentCompanyScope, role],
+    queryFn: () => listActiveCheckins(currentCompanyScope),
+    enabled: section === "children" || section === "parents",
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
+  });
+
   const createChildMut = useMutation<unknown, Error, CreateChildPayload>({
     mutationFn: createChild,
     onSuccess: async () => {
@@ -118,17 +126,44 @@ export function useChildren() {
       setStatusMessage("Vinculo de crianca para responsaveis atualizado."),
   });
 
-  // Derived
   const children = childrenQuery.data || [];
   const parents = parentsQuery.data || [];
+  const activeAttendances = activeAttendancesQuery.data || [];
+
+  const activeChildIds = useMemo(
+    () =>
+      new Set(
+        activeAttendances
+          .map((attendance) => String(attendance.childId || ""))
+          .filter(Boolean),
+      ),
+    [activeAttendances],
+  );
+
   const filteredCollection = children.filter((item: ListItem) =>
     matchesSearch(item as ListItem, search),
   );
+
+  const orderedCollection = filteredCollection
+    .map((item, index) => ({
+      item,
+      index,
+      isActive: activeChildIds.has(extractId(item)),
+    }))
+    .sort((left, right) => {
+      if (left.isActive !== right.isActive) {
+        return left.isActive ? -1 : 1;
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ item }) => item);
+
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredCollection.length / PAGE_SIZE),
+    Math.ceil(orderedCollection.length / PAGE_SIZE),
   );
-  const pagedCollection = paginate(filteredCollection, page, PAGE_SIZE);
+  const pagedCollection = paginate(orderedCollection, page, PAGE_SIZE);
 
   const assigningChildParentOptions = useMemo(() => {
     const term = childParentsSearch.trim().toLowerCase();
@@ -157,35 +192,69 @@ export function useChildren() {
       });
   }, [parents, childParentsSearch]);
 
-  // Handlers
+  const childCreateParentOptions = useMemo(() => {
+    const term = childCreateParentSearch.trim().toLowerCase();
+
+    return (parents as ListItem[])
+      .map((item) => {
+        const id = extractId(item);
+        return {
+          id,
+          name: String(item.name || "Responsavel sem nome"),
+        };
+      })
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [parents, childCreateParentSearch]);
+
   async function onCreateChildModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = childForm.name.trim();
-    const document = normalizeDigits(childForm.document).slice(0, 11);
-    const email = childForm.email.trim();
-    const contact = normalizeDigits(childForm.contact).slice(0, 11);
-    const birthDate = childForm.birthDate.trim();
 
-    let addressPayload: Record<string, unknown> | undefined =
-      buildBackendAddressPayload(childForm);
+    const payload = buildCreateChildPayload({
+      childForm,
+      parents: parents as ListItem[],
+      currentCompanyScope,
+    });
 
-    if (!name) {
+    if (!payload.name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
       return;
     }
 
+    if (childForm.inheritParentAddress && !payload.parents?.[0]) {
+      setStatusMessage(
+        "Selecione um responsavel para herdar o endereco antes de salvar.",
+      );
+      return;
+    }
+
     await createChildMut.mutateAsync({
-      name,
-      document: document || undefined,
-      email: email || undefined,
-      contact: contact || undefined,
-      birthDate: birthDate || undefined,
-      address: addressPayload,
-      companyId: currentCompanyScope,
+      ...payload,
     });
 
     setChildForm(INITIAL_CHILD_FORM);
     setIsChildCreateModalOpen(false);
+  }
+
+  function openChildCreateModal() {
+    setEditingChildId(null);
+    setViewingChildId(null);
+    setChildCreateParentSearch("");
+    setChildParentsSearch("");
+    setChildForm(INITIAL_CHILD_FORM);
+    setIsChildCreateModalOpen(true);
   }
 
   async function onUpdateChildModal(event: FormEvent<HTMLFormElement>) {
@@ -202,8 +271,7 @@ export function useChildren() {
     const contact = normalizeDigits(childForm.contact).slice(0, 11);
     const birthDate = childForm.birthDate.trim();
 
-    let addressPayload: Record<string, unknown> | undefined =
-      buildBackendAddressPayload(childForm);
+    const addressPayload = buildBackendAddressPayload(childForm);
 
     if (!name) {
       setStatusMessage("Nome da crianca e obrigatorio.");
@@ -216,6 +284,7 @@ export function useChildren() {
       email: email || undefined,
       contact: contact || undefined,
       birthDate: birthDate || undefined,
+      healthInfo: sanitizeChildFormStateForPayload(childForm).healthInfo,
       address: addressPayload,
     };
 
@@ -234,6 +303,7 @@ export function useChildren() {
 
     setEditingChildId(id);
     setChildForm(toChildFormState(item));
+    setChildCreateParentSearch("");
     setChildParentsSearch("");
     setIsChildEditModalOpen(true);
   }
@@ -310,7 +380,6 @@ export function useChildren() {
   }
 
   return {
-    // state
     isChildCreateModalOpen,
     setIsChildCreateModalOpen,
     isChildViewModalOpen,
@@ -331,29 +400,29 @@ export function useChildren() {
     setAssigningChildParentsId,
     childForm,
     setChildForm,
+    childCreateParentSearch,
+    setChildCreateParentSearch,
     childParentsSearch,
     setChildParentsSearch,
     assigningChildParentIds,
     setAssigningChildParentIds,
-
-    // queries/mutations
     childrenQuery,
     parentsQuery,
+    activeAttendancesQuery,
     createChildMut,
     updateChildMut,
     deleteChildMut,
     assignParentsMut,
-
-    // derived
     children,
     parents,
+    activeChildIds,
     filteredCollection,
     totalPages,
     pagedCollection,
     assigningChildParentOptions,
-
-    // handlers
+    childCreateParentOptions,
     onCreateChildModal,
+    openChildCreateModal,
     onUpdateChildModal,
     openChildViewModal,
     openChildEditModal,

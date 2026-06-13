@@ -8,13 +8,11 @@ import {
   updateCompany,
   type UpdateCompanyPayload,
 } from "../../../api/modules/companyApi";
-import { bootstrapAdmin } from "../../../api/modules/adminApi";
-import { buildBackendAddressPayload } from "../../../api/address";
 import type { CompanyFormState, ListItem } from "../types";
 import { INITIAL_COMPANY_FORM, PAGE_SIZE } from "../constants";
+import { buildCompanyPayload } from "../formPayloads";
 import {
   extractId,
-  normalizeDigits,
   toCompanyFormState,
   matchesSearch,
   paginate,
@@ -89,15 +87,6 @@ export function useCompanies() {
     },
   });
 
-  const bootstrapAdminMut = useMutation<
-    unknown,
-    Error,
-    { bootstrapKey: string; name: string; email: string; password: string }
-  >({
-    mutationFn: bootstrapAdmin,
-    onSuccess: () => setStatusMessage("Admin bootstrap criado com sucesso."),
-  });
-
   // Derived
   const companies = companiesQuery.data || [];
   const filteredCollection = companies.filter((item: ListItem) =>
@@ -113,24 +102,13 @@ export function useCompanies() {
   async function onCreateCompanyModal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = companyForm.name.trim();
-    const legalName = companyForm.legalName.trim();
-    const cnpj = normalizeDigits(companyForm.cnpj).slice(0, 14);
-    const contact = normalizeDigits(companyForm.contact).slice(0, 11);
-    const email = companyForm.email.trim();
 
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");
       return;
     }
 
-    await createCompanyMut.mutateAsync({
-      name,
-      legalName: legalName || undefined,
-      cnpj: cnpj || undefined,
-      contact: contact || undefined,
-      email: email || undefined,
-      address: buildBackendAddressPayload(companyForm),
-    });
+    await createCompanyMut.mutateAsync(buildCompanyPayload(companyForm));
 
     setCompanyForm(INITIAL_COMPANY_FORM);
     setIsCompanyCreateModalOpen(false);
@@ -145,26 +123,16 @@ export function useCompanies() {
     }
 
     const name = companyForm.name.trim();
-    const legalName = companyForm.legalName.trim();
-    const cnpj = normalizeDigits(companyForm.cnpj).slice(0, 14);
-    const contact = normalizeDigits(companyForm.contact).slice(0, 11);
-    const email = companyForm.email.trim();
 
     if (!name) {
       setStatusMessage("Nome da company e obrigatorio.");
       return;
     }
 
-    const payload: Record<string, unknown> = {
-      name,
-      legalName: legalName || undefined,
-      cnpj: cnpj || undefined,
-      contact: contact || undefined,
-      email: email || undefined,
-      address: buildBackendAddressPayload(companyForm),
-    };
-
-    await updateCompanyMut.mutateAsync({ id: editingCompanyId, payload });
+    await updateCompanyMut.mutateAsync({
+      id: editingCompanyId,
+      payload: buildCompanyPayload(companyForm),
+    });
     setIsCompanyEditModalOpen(false);
     setEditingCompanyId(null);
     setCompanyForm(INITIAL_COMPANY_FORM);
@@ -184,27 +152,6 @@ export function useCompanies() {
 
   async function onDeleteCompany(companyId: string) {
     await deleteCompanyMut.mutateAsync(companyId);
-  }
-
-  async function onBootstrapAdmin(payload: {
-    bootstrapKey: string;
-    name: string;
-    email: string;
-    password: string;
-  }) {
-    const { bootstrapKey, name, email, password } = payload;
-
-    if (!bootstrapKey || !name || !email || !password) {
-      setStatusMessage("Preencha bootstrap key, nome, email e senha.");
-      return;
-    }
-
-    await bootstrapAdminMut.mutateAsync({
-      bootstrapKey,
-      name,
-      email,
-      password,
-    });
   }
 
   return {
@@ -227,7 +174,6 @@ export function useCompanies() {
     createCompanyMut,
     updateCompanyMut,
     deleteCompanyMut,
-    bootstrapAdminMut,
 
     // derived
     companies,
@@ -240,6 +186,5 @@ export function useCompanies() {
     onUpdateCompanyModal,
     openCompanyEditModal,
     onDeleteCompany,
-    onBootstrapAdmin,
   };
 }

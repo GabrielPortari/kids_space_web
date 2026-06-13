@@ -3,13 +3,25 @@ import { useWorkspaceContext } from "../WorkspaceContext";
 import { AddressFormFields } from "../components/AddressFormFields";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Pagination } from "../components/Pagination";
-import { extractId } from "../formatter";
+import { SkeletonBlock } from "../components/WorkspaceSkeleton";
+import {
+  EditIcon,
+  GroupIcon,
+  ModalIconWrap,
+  PlusIcon,
+  RecordAvatar,
+  RefreshIcon,
+} from "../components/WorkspaceVisuals";
+import { extractId, maskPhone, normalizeDigits } from "../formatter";
 import type { ListItem } from "../types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function CompaniesSection() {
+  const queryClient = useQueryClient();
   const {
     pagedCollection,
     totalPages,
+    companiesQuery,
     companyForm,
     setCompanyForm,
     isCompanyCreateModalOpen,
@@ -28,21 +40,38 @@ export function CompaniesSection() {
     pendingDeleteCompanyId,
   } = useCompanies();
   const { page, setPage, search, setSearch } = useWorkspaceContext();
+  const isLoading = companiesQuery.isLoading;
+  const handleRefresh = () => {
+    void queryClient.resetQueries({ queryKey: ["companies"] });
+  };
 
   return (
     <>
       <section className="crm-panel">
         <div className="crm-panel-head">
           <h2>Empresas</h2>
-          <button
-            type="button"
-            className="btn solid"
-            onClick={() => {
-              setIsCompanyCreateModalOpen(true);
-            }}
-          >
-            Adicionar
-          </button>
+          <div className="crm-panel-head-actions">
+            <button
+              type="button"
+              className="btn solid crm-add-button"
+              onClick={() => {
+                setIsCompanyCreateModalOpen(true);
+              }}
+            >
+              <PlusIcon />
+              Adicionar novo
+            </button>
+            <button
+              type="button"
+              className="btn outline crm-icon-btn"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              aria-label="Atualizar empresas"
+              title="Atualizar empresas"
+            >
+              <RefreshIcon />
+            </button>
+          </div>
         </div>
 
         <div className="crm-panel-head">
@@ -52,47 +81,70 @@ export function CompaniesSection() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nome ou ID"
+            placeholder="Buscar por nome"
           />
         </div>
 
         <div className="crm-table">
-          {pagedCollection.map((item) => {
-            const typed = item as ListItem;
-            const id = extractId(typed);
-
-            return (
-              <article key={id || JSON.stringify(item)} className="crm-row">
-                <div>
-                  <strong>{typed.name || "Empresa sem nome"}</strong>
-                  <p>{id || "ID nao informado"}</p>
+          {isLoading && pagedCollection.length === 0 ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <article
+                key={`company-skeleton-${index}`}
+                className="crm-row crm-row-skeleton"
+              >
+                <div className="workspace-skeleton-stack">
+                  <SkeletonBlock width="40%" height="1rem" />
+                  <SkeletonBlock width="58%" height="0.8rem" />
                 </div>
                 <div className="crm-row-actions">
-                  <button
-                    type="button"
-                    className="btn outline"
-                    title="Editar"
-                    onClick={() => openCompanyEditModal(typed)}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={() => {
-                      if (!id) return;
-                      setIsCompanyDeleteModalOpen(true);
-                    }}
-                  >
-                    Remover
-                  </button>
+                  <SkeletonBlock width="2.4rem" height="2.4rem" />
+                  <SkeletonBlock width="5rem" height="2.4rem" />
                 </div>
               </article>
-            );
-          })}
+            ))
+          ) : (
+            <>
+              {pagedCollection.map((item) => {
+                const typed = item as ListItem;
+                const id = extractId(typed);
 
-          {pagedCollection.length === 0 && (
-            <p>Nenhuma empresa encontrada para a busca informada.</p>
+                return (
+                  <article key={id || JSON.stringify(item)} className="crm-row">
+                    <div className="record-row-main">
+                      <RecordAvatar name={typed.name || "Empresa"} />
+                      <div className="record-row-copy">
+                        <strong>{typed.name || "Empresa sem nome"}</strong>
+                        <p>{id || "ID nao informado"}</p>
+                      </div>
+                    </div>
+                    <div className="crm-row-actions">
+                      <button
+                        type="button"
+                        className="crm-icon-action"
+                        title="Editar"
+                        onClick={() => openCompanyEditModal(typed)}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="crm-remove-action"
+                        onClick={() => {
+                          if (!id) return;
+                          setIsCompanyDeleteModalOpen(true);
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {pagedCollection.length === 0 && (
+                <p>Nenhuma empresa encontrada para a busca informada.</p>
+              )}
+            </>
           )}
         </div>
 
@@ -116,7 +168,19 @@ export function CompaniesSection() {
             aria-label="Adicionar empresa"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Nova Empresa</h2>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
+                <div>
+                  <p className="profile-modal-title">Nova Empresa</p>
+                  <p className="profile-modal-subtitle">
+                    Cadastre a empresa e seus dados de acesso
+                  </p>
+                </div>
+              </div>
+            </div>
             <form
               className="crm-form-grid company-form"
               onSubmit={onCreateCompanyModal}
@@ -160,13 +224,17 @@ export function CompaniesSection() {
                     <label htmlFor="company-contact">Contato</label>
                     <input
                       id="company-contact"
-                      value={companyForm.contact}
+                      value={maskPhone(companyForm.contact)}
                       onChange={(event) =>
                         setCompanyForm((current) => ({
                           ...current,
-                          contact: event.target.value,
+                          contact: normalizeDigits(event.target.value).slice(
+                            0,
+                            11,
+                          ),
                         }))
                       }
+                      inputMode="tel"
                       placeholder="Telefone ou contato"
                     />
                   </div>
@@ -226,7 +294,19 @@ export function CompaniesSection() {
             aria-label="Editar empresa"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2>Editar Empresa</h2>
+            <div className="profile-modal-header">
+              <div className="profile-modal-header-left">
+                <ModalIconWrap>
+                  <GroupIcon />
+                </ModalIconWrap>
+                <div>
+                  <p className="profile-modal-title">Editar Empresa</p>
+                  <p className="profile-modal-subtitle">
+                    Atualize as informações da empresa
+                  </p>
+                </div>
+              </div>
+            </div>
             <form
               className="crm-form-grid company-form"
               onSubmit={onUpdateCompanyModal}
@@ -270,13 +350,17 @@ export function CompaniesSection() {
                     <label htmlFor="company-edit-contact">Contato</label>
                     <input
                       id="company-edit-contact"
-                      value={companyForm.contact}
+                      value={maskPhone(companyForm.contact)}
                       onChange={(event) =>
                         setCompanyForm((current) => ({
                           ...current,
-                          contact: event.target.value,
+                          contact: normalizeDigits(event.target.value).slice(
+                            0,
+                            11,
+                          ),
                         }))
                       }
+                      inputMode="tel"
                       placeholder="Telefone ou contato"
                     />
                   </div>

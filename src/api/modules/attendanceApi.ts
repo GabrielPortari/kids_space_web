@@ -26,6 +26,21 @@ export async function listActiveCheckins(companyId?: string) {
   );
 }
 
+export async function getCompanyLastCheckinAndCheckout(companyId?: string) {
+  return apiRequest<unknown>(
+    `/v2/attendance/company/last-checkin-and-checkout${toQueryString({ companyId })}`,
+    {
+      method: "GET",
+    },
+  );
+}
+
+export async function listCompanyLast10Attendances(companyId?: string) {
+  return getList<Attendance>(
+    `/v2/attendance/company/last10${toQueryString({ companyId })}`,
+  );
+}
+
 export async function checkin(payload: CheckinPayload) {
   return apiRequest<Attendance>("/v2/attendance/checkin", {
     method: "POST",

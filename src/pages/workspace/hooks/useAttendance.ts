@@ -4,13 +4,11 @@ import type { FormEvent } from "react";
 import {
   checkin,
   checkout,
-  deleteAttendance,
   listAttendances,
   type CheckinPayload,
   type CheckoutPayload,
 } from "../../../api/modules/attendanceApi";
 import { getChildName } from "../../../api/modules/childApi";
-import { listAttendancesAdmin } from "../../../api/modules/adminApi";
 import type { ListItem } from "../types";
 import { matchesSearch, paginate } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
@@ -18,15 +16,8 @@ import { PAGE_SIZE } from "../constants";
 
 export function useAttendance() {
   const queryClient = useQueryClient();
-  const {
-    role,
-    section,
-    search,
-    page,
-    setStatusMessage,
-    isAdminOrMaster,
-    currentCompanyScope,
-  } = useWorkspaceContext();
+  const { role, section, search, page, setStatusMessage, currentCompanyScope } =
+    useWorkspaceContext();
 
   // State
   const [isAttendanceViewModalOpen, setIsAttendanceViewModalOpen] =
@@ -48,10 +39,7 @@ export function useAttendance() {
   // Queries
   const attendancesQuery = useQuery({
     queryKey: ["attendances", currentCompanyScope, role],
-    queryFn: () =>
-      isAdminOrMaster
-        ? listAttendancesAdmin(currentCompanyScope)
-        : listAttendances(currentCompanyScope),
+    queryFn: () => listAttendances(currentCompanyScope),
     enabled: section === "attendance",
   });
 
@@ -68,14 +56,6 @@ export function useAttendance() {
     mutationFn: checkout,
     onSuccess: async () => {
       setStatusMessage("Check-out realizado.");
-      await queryClient.invalidateQueries({ queryKey: ["attendances"] });
-    },
-  });
-
-  const deleteAttendanceMut = useMutation<unknown, Error, string>({
-    mutationFn: deleteAttendance,
-    onSuccess: async () => {
-      setStatusMessage("Attendance removida.");
       await queryClient.invalidateQueries({ queryKey: ["attendances"] });
     },
   });
@@ -181,10 +161,6 @@ export function useAttendance() {
     event.currentTarget.reset();
   }
 
-  async function onDeleteAttendance(attendanceId: string) {
-    await deleteAttendanceMut.mutateAsync(attendanceId);
-  }
-
   function openAttendanceViewModal(item: Record<string, unknown>) {
     setViewingAttendance(item);
     setViewingAttendanceId(String(item.id || ""));
@@ -204,7 +180,6 @@ export function useAttendance() {
     attendancesQuery,
     checkinMut,
     checkoutMut,
-    deleteAttendanceMut,
 
     // derived
     attendances: resolvedAttendances,
@@ -215,7 +190,6 @@ export function useAttendance() {
     // handlers
     onCheckin,
     onCheckout,
-    onDeleteAttendance,
     openAttendanceViewModal,
   };
 }

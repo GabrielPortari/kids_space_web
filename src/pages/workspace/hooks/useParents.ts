@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { FormEvent } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import type { Dispatch, FormEvent, SetStateAction } from "react";
 import {
   assignChildrenToParent,
   createParent,
@@ -9,19 +15,82 @@ import {
   type CreateParentPayload,
   updateParent,
 } from "../../../api/modules/parentApi";
-import { buildBackendAddressPayload } from "../../../api/address";
-import type { ParentFormState, ListItem } from "../types";
+import { listChildren } from "../../../api/modules/childApi";
+import type { ListItem, ParentFormState } from "../types";
 import { INITIAL_PARENT_FORM } from "../constants";
+import { buildParentPayload } from "../formPayloads";
 import {
   extractId,
-  normalizeDigits,
-  parseIdList,
   matchesParentSearch,
+  parseIdList,
   toParentFormState,
 } from "../formatter";
 import { useWorkspaceContext } from "../WorkspaceContext";
 
-export function useParents() {
+type ParentChildOption = {
+  id: string;
+  name: string;
+};
+
+type UseParentsResult = {
+  isParentModalOpen: boolean;
+  setIsParentModalOpen: Dispatch<SetStateAction<boolean>>;
+  isParentViewModalOpen: boolean;
+  setIsParentViewModalOpen: Dispatch<SetStateAction<boolean>>;
+  isParentEditModalOpen: boolean;
+  setIsParentEditModalOpen: Dispatch<SetStateAction<boolean>>;
+  isParentAssignChildrenModalOpen: boolean;
+  setIsParentAssignChildrenModalOpen: Dispatch<SetStateAction<boolean>>;
+  editingParentId: string | null;
+  setEditingParentId: Dispatch<SetStateAction<string | null>>;
+  viewingParentId: string | null;
+  setViewingParentId: Dispatch<SetStateAction<string | null>>;
+  assigningParentChildrenId: string | null;
+  setAssigningParentChildrenId: Dispatch<SetStateAction<string | null>>;
+  parentForm: ParentFormState;
+  setParentForm: Dispatch<SetStateAction<ParentFormState>>;
+  parentChildrenSearch: string;
+  setParentChildrenSearch: Dispatch<SetStateAction<string>>;
+  assigningParentChildIds: string[];
+  setAssigningParentChildIds: Dispatch<SetStateAction<string[]>>;
+  parentsQuery: UseQueryResult<ListItem[], Error>;
+  childrenQuery: UseQueryResult<ListItem[], Error>;
+  createParentMut: UseMutationResult<
+    unknown,
+    Error,
+    CreateParentPayload,
+    unknown
+  >;
+  updateParentMut: UseMutationResult<
+    unknown,
+    Error,
+    { id: string; payload: Partial<CreateParentPayload> },
+    unknown
+  >;
+  deleteParentMut: UseMutationResult<unknown, Error, string, unknown>;
+  assignChildrenMut: UseMutationResult<
+    unknown,
+    Error,
+    { parentId: string; childIds: string[] },
+    unknown
+  >;
+  parents: ListItem[];
+  filteredParents: ListItem[];
+  assigningParentChildOptions: ParentChildOption[];
+  onCreateParent: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  openParentCreateModal: () => void;
+  onUpdateParent: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  openParentViewModal: (item: ListItem) => void;
+  openParentEditModal: (item: ListItem) => void;
+  onDeleteParent: (parentId: string) => Promise<void>;
+  openParentAssignChildrenModal: (parentId: string) => void;
+  onAssignChildrenToParent: (
+    event?: FormEvent<HTMLFormElement>,
+  ) => Promise<void>;
+  toggleAssignParentChildSelection: (childId: string) => void;
+};
+
+export function useParents(): UseParentsResult {
   const queryClient = useQueryClient();
   const {
     role,
@@ -32,7 +101,6 @@ export function useParents() {
     currentCompanyScope,
   } = useWorkspaceContext();
 
-  // State
   const [isParentModalOpen, setIsParentModalOpen] = useState(false);
   const [isParentViewModalOpen, setIsParentViewModalOpen] = useState(false);
   const [isParentEditModalOpen, setIsParentEditModalOpen] = useState(false);
@@ -50,16 +118,20 @@ export function useParents() {
     string[]
   >([]);
 
-  // Query
-  const parentsQuery = useQuery({
+  const parentsQuery = useQuery<ListItem[], Error>({
     queryKey: ["parents", currentCompanyScope, role],
     queryFn: () => listParents(currentCompanyScope),
     enabled:
       !isAdminOrMaster && (section === "parents" || section === "children"),
   });
 
-  // Mutations
-  const createParentMut = useMutation({
+  const childrenQuery = useQuery<ListItem[], Error>({
+    queryKey: ["children", currentCompanyScope, role, "parent-assign"],
+    queryFn: () => listChildren(currentCompanyScope),
+    enabled: section === "parents" || section === "children",
+  });
+
+  const createParentMut = useMutation<unknown, Error, CreateParentPayload>({
     mutationFn: createParent,
     onSuccess: async () => {
       setStatusMessage("Responsavel criado.");
@@ -67,14 +139,12 @@ export function useParents() {
     },
   });
 
-  const updateParentMut = useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string;
-      payload: Partial<CreateParentPayload>;
-    }) => updateParent(id, payload),
+  const updateParentMut = useMutation<
+    unknown,
+    Error,
+    { id: string; payload: Partial<CreateParentPayload> }
+  >({
+    mutationFn: ({ id, payload }) => updateParent(id, payload),
     onSuccess: async () => {
       setStatusMessage("Responsavel atualizado.");
       await queryClient.invalidateQueries({ queryKey: ["parents"] });
@@ -89,53 +159,68 @@ export function useParents() {
     },
   });
 
-  const assignChildrenMut = useMutation({
-    mutationFn: ({
-      parentId,
-      childIds,
-    }: {
-      parentId: string;
-      childIds: string[];
-    }) => assignChildrenToParent(parentId, childIds),
+  const assignChildrenMut = useMutation<
+    unknown,
+    Error,
+    { parentId: string; childIds: string[] }
+  >({
+    mutationFn: ({ parentId, childIds }) =>
+      assignChildrenToParent(parentId, childIds),
     onSuccess: () =>
       setStatusMessage("Vinculo de responsavel para criancas atualizado."),
   });
 
-  // Derived
   const parents = parentsQuery.data || [];
+  const children = childrenQuery.data || [];
   const filteredParents = parents.filter((item: ListItem) =>
     matchesParentSearch(item as ListItem, search),
   );
 
-  const assigningParentChildOptions = useMemo(() => [], [parentChildrenSearch]);
+  const assigningParentChildOptions = useMemo<ParentChildOption[]>(() => {
+    const term = parentChildrenSearch.trim().toLowerCase();
 
-  // Handlers
+    return (children as ListItem[])
+      .map((item) => ({
+        id: extractId(item),
+        name: String(item.name || "Crianca sem nome"),
+      }))
+      .filter((option) => {
+        if (!option.id) {
+          return false;
+        }
+
+        if (!term) {
+          return true;
+        }
+
+        return (
+          option.name.toLowerCase().includes(term) ||
+          option.id.toLowerCase().includes(term)
+        );
+      });
+  }, [children, parentChildrenSearch]);
+
   async function onCreateParent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = parentForm.name.trim();
-    const document = normalizeDigits(parentForm.document);
-    const email = parentForm.email.trim();
-    const contact = parentForm.contact.trim();
-    const birthDate = parentForm.birthDate.trim();
 
-    if (!name) {
+    const payload = buildParentPayload(parentForm, currentCompanyScope);
+
+    if (!payload.name) {
       setStatusMessage("Nome do responsavel e obrigatorio.");
       return;
     }
 
-    const payload: CreateParentPayload = {
-      name,
-      companyId: currentCompanyScope,
-      document: document || undefined,
-      email: email || undefined,
-      contact: contact || undefined,
-      birthDate: birthDate || undefined,
-      address: buildBackendAddressPayload(parentForm),
-    };
-
     await createParentMut.mutateAsync(payload);
-    setParentForm(INITIAL_PARENT_FORM);
     setIsParentModalOpen(false);
+    setParentForm(INITIAL_PARENT_FORM);
+  }
+
+  function openParentCreateModal() {
+    setEditingParentId(null);
+    setViewingParentId(null);
+    setParentChildrenSearch("");
+    setParentForm(INITIAL_PARENT_FORM);
+    setIsParentModalOpen(true);
   }
 
   async function onUpdateParent(event: FormEvent<HTMLFormElement>) {
@@ -148,27 +233,18 @@ export function useParents() {
       return;
     }
 
-    const name = parentForm.name.trim();
-    const document = normalizeDigits(parentForm.document);
-    const email = parentForm.email.trim();
-    const contact = parentForm.contact.trim();
-    const birthDate = parentForm.birthDate.trim();
+    const payload = buildParentPayload(parentForm, currentCompanyScope);
+    const { companyId: _companyId, ...updatePayload } = payload;
 
-    if (!name) {
+    if (!updatePayload.name) {
       setStatusMessage("Nome do responsavel e obrigatorio.");
       return;
     }
 
-    const payload: Partial<CreateParentPayload> = {
-      name,
-      document: document || undefined,
-      email: email || undefined,
-      contact: contact || undefined,
-      birthDate: birthDate || undefined,
-      address: buildBackendAddressPayload(parentForm),
-    };
-
-    await updateParentMut.mutateAsync({ id: editingParentId, payload });
+    await updateParentMut.mutateAsync({
+      id: editingParentId,
+      payload: updatePayload,
+    });
     setIsParentEditModalOpen(false);
     setEditingParentId(null);
     setParentForm(INITIAL_PARENT_FORM);
@@ -261,7 +337,6 @@ export function useParents() {
   }
 
   return {
-    // state
     isParentModalOpen,
     setIsParentModalOpen,
     isParentViewModalOpen,
@@ -282,21 +357,17 @@ export function useParents() {
     setParentChildrenSearch,
     assigningParentChildIds,
     setAssigningParentChildIds,
-
-    // queries/mutations
     parentsQuery,
+    childrenQuery,
     createParentMut,
     updateParentMut,
     deleteParentMut,
     assignChildrenMut,
-
-    // derived
     parents,
     filteredParents,
     assigningParentChildOptions,
-
-    // handlers
     onCreateParent,
+    openParentCreateModal,
     onUpdateParent,
     openParentViewModal,
     openParentEditModal,
