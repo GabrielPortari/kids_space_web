@@ -1475,19 +1475,18 @@ textarea:focus {
 
 .profile-card strong {
   display: block;
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  font-family: var(--font-title);
-  font-weight: 600;
-  color: var(--ink-strong);
-  line-height: 1.1;
-}
-
-/* Profile data cards (text values, not numbers) */
-.profile-section .profile-card strong {
   font-size: 0.9375rem;
   font-family: var(--font-body);
   font-weight: 600;
+  color: var(--ink-strong);
   line-height: 1.4;
+}
+
+.profile-card--metric strong {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-family: var(--font-title);
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 /* ═══════════════════════════════════════════════════════

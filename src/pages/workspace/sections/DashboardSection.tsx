@@ -129,21 +129,21 @@ export function DashboardSection() {
           </div>
         ) : (
           <div className="profile-grid dashboard-metrics-grid">
-            <article className="profile-card">
+            <article className="profile-card profile-card--metric">
               <span>👶 Crianças</span>
               <strong>{dashboardMetrics.totalChildren}</strong>
             </article>
-            <article className="profile-card">
+            <article className="profile-card profile-card--metric">
               <span>👨‍👩‍👧 Responsáveis</span>
               <strong>{dashboardMetrics.totalParents}</strong>
             </article>
             {role === "company" && (
-              <article className="profile-card">
+              <article className="profile-card profile-card--metric">
                 <span>👷 Colaboradores</span>
                 <strong>{dashboardMetrics.totalCollaborators}</strong>
               </article>
             )}
-            <article className="profile-card">
+            <article className="profile-card profile-card--metric">
               <span>✅ No espaço agora</span>
               <strong>{dashboardMetrics.totalActiveAttendances}</strong>
             </article>

@@ -45,32 +45,32 @@ export function OverviewSection() {
         </div>
       ) : (
         <div className="profile-grid dashboard-metrics-grid">
-          <article className="profile-card">
+          <article className="profile-card profile-card--metric">
             <span>Admins</span>
             <strong>{counts.admins}</strong>
           </article>
 
-          <article className="profile-card">
+          <article className="profile-card profile-card--metric">
             <span>Empresas</span>
             <strong>{counts.companies}</strong>
           </article>
 
-          <article className="profile-card">
+          <article className="profile-card profile-card--metric">
             <span>Colaboradores</span>
             <strong>{counts.collaborators}</strong>
           </article>
 
-          <article className="profile-card">
+          <article className="profile-card profile-card--metric">
             <span>Responsáveis</span>
             <strong>{counts.parents}</strong>
           </article>
 
-          <article className="profile-card">
+          <article className="profile-card profile-card--metric">
             <span>Crianças</span>
             <strong>{counts.children}</strong>
           </article>
 
-          <article className="profile-card">
+          <article className="profile-card profile-card--metric">
             <span>Atendimentos</span>
             <strong>{counts.attendances}</strong>
           </article>
