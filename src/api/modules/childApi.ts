@@ -17,6 +17,13 @@ export type ChildHealthInfoPayload = {
   fearsOrSensitivities?: string[];
 };
 
+export type ConsentPayload = {
+  accepted: boolean;
+  acceptedByName: string;
+  acceptedByParentId?: string;
+  termsVersion: string;
+};
+
 export type CreateChildPayload = {
   name: string;
   document?: string;
@@ -26,6 +33,7 @@ export type CreateChildPayload = {
   companyId?: string;
   parents?: string[];
   healthInfo?: ChildHealthInfoPayload;
+  consent: ConsentPayload;
   address?: {
     address?: string;
     number?: string;

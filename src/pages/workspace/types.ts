@@ -66,6 +66,8 @@ export type ChildFormState = {
   parents: string;
   inheritParentAddress: boolean;
   healthInfo: ChildHealthInfoFormState;
+  consentAccepted: boolean;
+  consentAcceptedByName: string;
   addressStreet: string;
   addressNumber: string;
   addressDistrict: string;

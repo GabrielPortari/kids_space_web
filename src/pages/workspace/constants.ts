@@ -7,6 +7,10 @@ import type {
 
 export const PAGE_SIZE = 8;
 
+// Bump this when the consent terms shown to guardians change, so past
+// acceptances remain tied to the version they actually agreed to.
+export const CHILD_CONSENT_TERMS_VERSION = "1.0";
+
 export const INITIAL_COLLABORATOR_FORM: CollaboratorFormState = {
   name: "",
   email: "",
@@ -55,6 +59,8 @@ export const INITIAL_CHILD_FORM: ChildFormState = {
     medicalConditions: [],
     fearsOrSensitivities: [],
   },
+  consentAccepted: false,
+  consentAcceptedByName: "",
   addressStreet: "",
   addressNumber: "",
   addressDistrict: "",

@@ -482,6 +482,37 @@ export function ChildrenSection() {
                     disabled
                   />
                 </section>
+
+                <section className="profile-section">
+                  <h3>Consentimento (LGPD)</h3>
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-consent-accepted">
+                        Consentimento registrado
+                      </label>
+                      <input
+                        id="child-view-consent-accepted"
+                        value={
+                          childForm.consentAccepted ? "Sim" : "Não informado"
+                        }
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+
+                    <div className="field field-span-6">
+                      <label htmlFor="child-view-consent-name">
+                        Responsável que consentiu
+                      </label>
+                      <input
+                        id="child-view-consent-name"
+                        value={childForm.consentAcceptedByName}
+                        disabled
+                        className="field-readonly"
+                      />
+                    </div>
+                  </div>
+                </section>
               </div>
             </div>
           </ProfileModal>,
@@ -908,6 +939,58 @@ export function ChildrenSection() {
                       }))
                     }
                   />
+                </div>
+
+                <div className="profile-form-section">
+                  <div className="profile-form-section-header">
+                    <span className="profile-form-section-label">
+                      Consentimento (LGPD)
+                    </span>
+                    <div className="profile-form-section-line" />
+                  </div>
+
+                  <div className="profile-form-fields-grid profile-form-personal-grid">
+                    <div className="field field-span-12">
+                      <label htmlFor="child-consent-accepted-by">
+                        Nome do responsável legal que está consentindo
+                      </label>
+                      <input
+                        id="child-consent-accepted-by"
+                        value={childForm.consentAcceptedByName}
+                        onChange={(event) =>
+                          setChildForm((current) => ({
+                            ...current,
+                            consentAcceptedByName: event.target.value,
+                          }))
+                        }
+                        placeholder="Nome completo do responsável"
+                        required
+                      />
+                    </div>
+
+                    <div className="field field-span-12 child-inherit-address-field">
+                      <label className="child-inherit-address-toggle">
+                        <input
+                          type="checkbox"
+                          checked={childForm.consentAccepted}
+                          onChange={(event) =>
+                            setChildForm((current) => ({
+                              ...current,
+                              consentAccepted: event.target.checked,
+                            }))
+                          }
+                          required
+                        />
+                        <span>
+                          Declaro, como responsável legal, que li e aceito o
+                          tratamento dos dados desta criança pela Kids Space,
+                          incluindo dados de saúde (alergias, medicamentos e
+                          condições médicas), conforme a Lei Geral de Proteção
+                          de Dados (LGPD).
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 

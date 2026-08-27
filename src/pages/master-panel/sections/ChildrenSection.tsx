@@ -53,6 +53,8 @@ function buildInitialForm(): ChildAdminFormState {
       medicalConditions: [],
       fearsOrSensitivities: [],
     },
+    consentAccepted: false,
+    consentAcceptedByName: "",
     addressStreet: "",
     addressNumber: "",
     addressComplement: "",
@@ -119,6 +121,12 @@ export function ChildrenSection({ companyId }: { companyId?: string }) {
       const effectiveCompanyId = (companyId || form.companyId).trim();
       if (!effectiveCompanyId) {
         throw new Error("Company ID e obrigatorio para criar crianca.");
+      }
+
+      if (!form.consentAccepted || !form.consentAcceptedByName.trim()) {
+        throw new Error(
+          "E necessario o consentimento do responsavel legal, com o nome de quem aceitou, para cadastrar a crianca.",
+        );
       }
 
       return createChildAdmin(effectiveCompanyId, buildChildAdminPayload(form));
@@ -481,6 +489,27 @@ export function ChildrenSection({ companyId }: { companyId?: string }) {
               disabled
             />
           </ProfileModalSection>
+
+          <ProfileModalSection label="Consentimento (LGPD)">
+            <div className="profile-form-fields-grid profile-form-personal-grid">
+              <div className="field field-span-6">
+                <label>Consentimento registrado</label>
+                <input
+                  value={form.consentAccepted ? "Sim" : "Não informado"}
+                  disabled
+                  className="field-readonly"
+                />
+              </div>
+              <div className="field field-span-6">
+                <label>Responsável que consentiu</label>
+                <input
+                  value={form.consentAcceptedByName || "-"}
+                  disabled
+                  className="field-readonly"
+                />
+              </div>
+            </div>
+          </ProfileModalSection>
         </ProfileModal>,
         document.body,
       )}
@@ -763,6 +792,48 @@ export function ChildrenSection({ companyId }: { companyId?: string }) {
                 }))
               }
             />
+          </ProfileModalSection>
+
+          <ProfileModalSection label="Consentimento (LGPD)">
+            <div className="profile-form-fields-grid profile-form-personal-grid">
+              <div className="field field-span-12">
+                <label htmlFor="master-child-consent-name">
+                  Nome do responsável legal que está consentindo
+                </label>
+                <input
+                  id="master-child-consent-name"
+                  value={form.consentAcceptedByName}
+                  onChange={(e) =>
+                    setForm((current) => ({
+                      ...current,
+                      consentAcceptedByName: e.target.value,
+                    }))
+                  }
+                  placeholder="Nome completo do responsável"
+                  required
+                />
+              </div>
+              <div className="field field-span-12 child-inherit-address-field">
+                <label className="child-inherit-address-toggle">
+                  <input
+                    type="checkbox"
+                    checked={form.consentAccepted}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        consentAccepted: e.target.checked,
+                      }))
+                    }
+                    required
+                  />
+                  <span>
+                    Confirma que o responsável legal aceitou o tratamento dos
+                    dados desta criança, incluindo dados de saúde, conforme a
+                    LGPD.
+                  </span>
+                </label>
+              </div>
+            </div>
           </ProfileModalSection>
         </ProfileModal>,
         document.body,

@@ -14,6 +14,8 @@ function createBaseChildForm(): ChildFormState {
     birthDate: " 2026-05-21 ",
     parents: "parent-1, parent-2",
     inheritParentAddress: false,
+    consentAccepted: true,
+    consentAcceptedByName: "Responsavel Legal",
     healthInfo: {
       dietaryRestrictions: ["  lactose  ", "", "  glúten "],
       allergies: [" poeira "],
@@ -105,6 +107,12 @@ describe("buildCreateChildPayload", () => {
         medicalConditions: ["asma"],
         fearsOrSensitivities: ["barulho"],
         medications: [{ name: "Dipirona", dosage: "10ml", schedule: "07:03" }],
+      },
+      consent: {
+        accepted: true,
+        acceptedByName: "Responsavel Legal",
+        acceptedByParentId: "parent-1",
+        termsVersion: "1.0",
       },
       address: {
         address: "Av. Central",
