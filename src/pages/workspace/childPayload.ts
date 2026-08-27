@@ -2,6 +2,7 @@ import { buildBackendAddressPayload } from "../../api/address";
 import type { ChildFormState } from "./types";
 import type { CreateChildPayload } from "../../api/modules/childApi";
 import type { ListItem } from "./types";
+import { CHILD_CONSENT_TERMS_VERSION } from "./constants";
 import {
   extractId,
   formatMedicationSchedule,
@@ -67,6 +68,10 @@ export function buildCreateChildPayload({
       ? buildBackendAddressPayload(toParentFormState(selectedParent))
       : buildBackendAddressPayload(childForm);
 
+  const consentAcceptedByName =
+    childForm.consentAcceptedByName.trim() ||
+    String(selectedParent?.name || "").trim();
+
   return {
     name,
     document: document || undefined,
@@ -77,6 +82,12 @@ export function buildCreateChildPayload({
     healthInfo: buildHealthInfoPayload(childForm.healthInfo),
     address: addressPayload,
     companyId: currentCompanyScope,
+    consent: {
+      accepted: childForm.consentAccepted,
+      acceptedByName: consentAcceptedByName,
+      acceptedByParentId: selectedParentId,
+      termsVersion: CHILD_CONSENT_TERMS_VERSION,
+    },
   };
 }
 

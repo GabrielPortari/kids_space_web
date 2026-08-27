@@ -248,6 +248,11 @@ export function toChildFormState(item: ListItem): ChildFormState {
     ? item.parents.map((value) => String(value)).join(", ")
     : String(item.parents || "");
 
+  const consent =
+    item.consent && typeof item.consent === "object" && !Array.isArray(item.consent)
+      ? (item.consent as Record<string, unknown>)
+      : {};
+
   return {
     name: String(item.name || ""),
     document: normalizeDigits(String(item.document || "")).slice(0, 11),
@@ -257,6 +262,8 @@ export function toChildFormState(item: ListItem): ChildFormState {
     parents,
     inheritParentAddress: false,
     healthInfo: toChildHealthInfoFormState(item),
+    consentAccepted: Boolean(consent.accepted),
+    consentAcceptedByName: String(consent.acceptedByName || ""),
     addressStreet: String(address.address || address.street || ""),
     addressNumber: String(address.number || ""),
     addressDistrict: String(address.neighborhood || address.district || ""),

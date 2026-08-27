@@ -5,6 +5,7 @@ import type {
   CreateParentAdminDto,
 } from "../../api/modules/adminEndpoints";
 import { normalizeDigits, parseIdList } from "../workspace/formatter";
+import { CHILD_CONSENT_TERMS_VERSION } from "../workspace/constants";
 
 export type AdminAddressFormState = {
   addressStreet: string;
@@ -66,6 +67,8 @@ export type ChildAdminFormState = AdminAddressFormState & {
     medicalConditions: string[];
     fearsOrSensitivities: string[];
   };
+  consentAccepted: boolean;
+  consentAcceptedByName: string;
 };
 
 export function buildCollaboratorAdminPayload(
@@ -125,6 +128,11 @@ export function buildChildAdminPayload(
         .filter((item) => item.name || item.dosage || item.schedule),
       medicalConditions: form.healthInfo.medicalConditions,
       fearsOrSensitivities: form.healthInfo.fearsOrSensitivities,
+    },
+    consent: {
+      accepted: form.consentAccepted,
+      acceptedByName: form.consentAcceptedByName.trim(),
+      termsVersion: CHILD_CONSENT_TERMS_VERSION,
     },
   };
 }

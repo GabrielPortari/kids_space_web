@@ -136,6 +136,13 @@ export type HealthInfoPayload = {
   fearsOrSensitivities?: string[];
 };
 
+export type ConsentPayload = {
+  accepted: boolean;
+  acceptedByName: string;
+  acceptedByParentId?: string;
+  termsVersion: string;
+};
+
 export type CreateChildAdminDto = {
   name: string;
   parents?: string[];
@@ -146,6 +153,7 @@ export type CreateChildAdminDto = {
   healthInfo?: HealthInfoPayload;
   birthDate?: string;
   companyId?: string;
+  consent: ConsentPayload;
 };
 
 export type UpdateChildAdminDto = Partial<CreateChildAdminDto>;

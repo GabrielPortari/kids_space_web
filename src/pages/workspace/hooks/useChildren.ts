@@ -233,6 +233,13 @@ export function useChildren() {
       return;
     }
 
+    if (!payload.consent.accepted || !payload.consent.acceptedByName) {
+      setStatusMessage(
+        "E necessario o consentimento do responsavel legal, com o nome de quem aceitou, para cadastrar a crianca.",
+      );
+      return;
+    }
+
     if (childForm.inheritParentAddress && !payload.parents?.[0]) {
       setStatusMessage(
         "Selecione um responsavel para herdar o endereco antes de salvar.",
